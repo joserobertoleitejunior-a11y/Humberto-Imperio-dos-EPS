@@ -43,14 +43,18 @@
 </head>
 <body>
   <!-- ===== SPLASH (CSS puro: aparece no 1º quadro, sem esperar JS) -->
-  <div id="splash" role="button" tabindex="0" aria-label="Entrar no site">
+  <div id="splash" role="dialog" aria-label="Boas-vindas ao Império do EPS">
     <div class="splash__bloco" aria-hidden="true">
       <div class="splash__metade splash__metade--e"><i class="c"></i><i class="e"></i><i class="c"></i></div>
       <div class="splash__metade splash__metade--d"><i class="c"></i><i class="e"></i><i class="c"></i></div>
     </div>
     <p class="splash__nome" aria-hidden="true"><span style="--i:0">IMPÉRIO</span> <span class="az" style="--i:1">DO</span> <span class="az" style="--i:2">EPS</span></p>
     <p class="splash__sub" aria-hidden="true">Fábrica do Blocão · Itapetininga</p>
-    <p class="splash__toque">toque pra entrar</p>
+    <div class="splash__acoes">
+      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#por-dentro"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
+      <button type="button" class="btn-redondo btn-redondo--azul" data-ir="#calculadora"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M15.5 12h0M8.5 16h1M12 16h1M15.5 16h0"/></svg></span><span class="btn-redondo__tx">Orçamento</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
+    </div>
+    <p class="splash__toque">toque fora dos botões pra entrar</p>
   </div>
 
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
@@ -106,6 +110,14 @@
     <a class="atalho" data-link-tel href="#" aria-label="Ligar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2z"/></svg>
       <span class="atalho__txt"><b>Ligar</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
+    </a>
+    <a class="atalho" data-ir-link href="#calculadora" aria-label="Calcular minha obra">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M8.5 16h1M12 16h1"/></svg>
+      <span class="atalho__txt"><b>Orçamento</b><small>Calcule sua obra</small></span>
+    </a>
+    <a class="atalho" data-link-email href="#" aria-label="E-mail" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 7 8.5-7"/></svg>
+      <span class="atalho__txt"><b>E-mail</b><small data-texto="email">Enviar e-mail</small></span>
     </a>
     <a class="atalho" data-link-facebook href="#" aria-label="Facebook" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1z"/></svg>
@@ -501,9 +513,8 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="bv__onda" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
     </button>
     <div class="bv__txt">
-      <p class="bv__titulo">Sua obra <span>em 1 minuto</span></p>
-      <button type="button" class="bv__botao bv__botao--azul" data-bv-calcular><span class="bv__ico" aria-hidden="true">m²</span><span class="bv__tx">Calcular minha obra<small>medidas → WhatsApp, sem cadastro</small></span><span class="bv__seta" aria-hidden="true">›</span></button>
-      <button type="button" class="bv__botao" data-bv-site><span class="bv__ico" aria-hidden="true">▦</span><span class="bv__tx">Ver o site<small>conhecer o Blocão por dentro</small></span><span class="bv__seta" aria-hidden="true">›</span></button>
+      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#por-dentro"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
+      <button type="button" class="btn-redondo btn-redondo--azul" data-ir="#calculadora"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M15.5 12h0M8.5 16h1M12 16h1M15.5 16h0"/></svg></span><span class="btn-redondo__tx">Orçamento</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
     </div>
   </div>
 

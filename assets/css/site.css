@@ -96,7 +96,7 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- Splash (engenharia reversa da Pizza em Dobro: CSS puro, 1º quadro) ---------- */
 #splash {
   position: fixed; inset: 0; z-index: 10000; height: 100vh; height: calc(var(--vh, 1vh) * 100);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 0 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 0 24px;
   background: var(--cal); cursor: pointer; transition: opacity 0.6s ease;
   animation: splashSeguranca 0.4s 5.5s forwards; /* trava de segurança se o JS morrer */
 }
@@ -123,6 +123,69 @@ button, input, select { font: inherit; color: inherit; }
 .splash__sub { margin: -6px 0 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--texto-suave); opacity: 0; animation: splashAviso 0.6s 1.35s forwards; }
 .splash__toque { position: absolute; bottom: calc(28px + env(safe-area-inset-bottom)); margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--concreto-esc); opacity: 0; animation: splashAviso 0.6s 1.6s forwards; }
 @keyframes splashAviso { to { opacity: 1; } }
+
+
+/* ---------- Botões redondos (splash e boas-vindas): HTML + CSS puro, com efeitos ----------
+   Efeitos: borda que gira (conic), brilho que passa, pulso de luz no principal, onda ao tocar (JS mínimo em
+   boas-vindas.js) e sobe ao passar o mouse. Aparelho fraco / "reduzir movimento": ficam só os estáticos. */
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+.btn-redondo {
+  --fundo: rgba(251, 250, 247, 0.92); --texto: var(--grafite); --borda: rgba(30, 32, 35, 0.18); --giro: var(--azul); --ico-fundo: var(--azul-claro); --ico-cor: var(--azul);
+  position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 62px; padding: 8px 14px 8px 8px; border: 0; border-radius: 999px; background: var(--fundo); color: var(--texto);
+  font: inherit; font-weight: 800; font-size: 1.02rem; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 10px 26px -14px rgba(30, 32, 35, 0.55), inset 0 0 0 1px var(--borda);
+  opacity: 0; transform: translateY(22px) scale(0.96); transition: transform 0.22s var(--ease), box-shadow 0.3s;
+}
+.btn-redondo--azul { --fundo: var(--azul); --texto: #fff; --borda: rgba(255, 255, 255, 0.28); --giro: #fff; --ico-fundo: rgba(255, 255, 255, 0.2); --ico-cor: #fff; }
+.btn-redondo:hover { transform: translateY(-3px) scale(1.01); }
+.btn-redondo:active { transform: scale(0.97); }
+.btn-redondo__ico { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--ico-fundo); color: var(--ico-cor); }
+.btn-redondo__ico svg { width: 24px; height: 24px; }
+.btn-redondo__tx { flex: 1; min-width: 0; line-height: 1.15; }
+.btn-redondo__seta { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 1.3rem; font-weight: 900; background: rgba(30, 32, 35, 0.08); transition: transform 0.25s var(--ease); }
+.btn-redondo--azul .btn-redondo__seta { background: rgba(255, 255, 255, 0.2); }
+.btn-redondo:hover .btn-redondo__seta { transform: translateX(3px); }
+/* borda que gira */
+.btn-redondo::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px; z-index: -1; pointer-events: none;
+  background: conic-gradient(from var(--ang), transparent 0 55%, var(--giro) 78%, transparent 92%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: btnGira 3.4s linear infinite; }
+@keyframes btnGira { to { --ang: 360deg; } }
+/* brilho que passa */
+.btn-redondo::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 38%; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent); transform: skewX(-20deg); animation: btnBrilho 4.2s ease-in-out infinite; }
+.btn-redondo--azul::after { animation-delay: 1.4s; }
+@keyframes btnBrilho { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+/* pulso de luz no principal (Orçamento) */
+.btn-redondo--azul { animation: btnPulso 2.6s ease-in-out 1.5s infinite; }
+@keyframes btnPulso { 0%, 100% { box-shadow: 0 10px 26px -14px rgba(31, 75, 216, 0.9), 0 0 0 0 rgba(31, 75, 216, 0.4), inset 0 0 0 1px var(--borda); } 50% { box-shadow: 0 10px 26px -14px rgba(31, 75, 216, 0.9), 0 0 0 9px rgba(31, 75, 216, 0), inset 0 0 0 1px var(--borda); } }
+/* onda ao tocar */
+.btn-redondo .onda { position: absolute; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: rgba(255, 255, 255, 0.55); pointer-events: none; transform: scale(0); animation: btnOnda 0.65s ease-out forwards; z-index: -1; }
+.btn-redondo--claro .onda { background: rgba(31, 75, 216, 0.28); }
+@keyframes btnOnda { to { transform: scale(26); opacity: 0; } }
+/* entrada (splash entra sozinho depois da animação; boas-vindas entra quando abre) */
+.splash__acoes { width: min(380px, 100%); display: grid; gap: 10px; margin-top: 10px; }
+.splash__acoes .btn-redondo { animation: btnEntra 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.1) forwards; animation-delay: 2.2s; }
+.splash__acoes .btn-redondo + .btn-redondo { animation-delay: 2.4s; }
+.bv.on .btn-redondo { animation: btnEntra 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.1) forwards; }
+.bv.on .btn-redondo:nth-of-type(1) { animation-delay: 0.25s; }
+.bv.on .btn-redondo:nth-of-type(2) { animation-delay: 0.42s; }
+@keyframes btnEntra { to { opacity: 1; transform: none; } }
+.splash__acoes .btn-redondo--azul, .bv.on .btn-redondo--azul { animation-name: btnEntra, btnPulso; animation-duration: 0.7s, 2.6s; animation-iteration-count: 1, infinite; animation-fill-mode: forwards, none; animation-timing-function: cubic-bezier(0.2, 0.9, 0.25, 1.1), ease-in-out; }
+.splash__acoes .btn-redondo--azul { animation-delay: 2.4s, 3.2s; }
+.bv.on .btn-redondo--azul { animation-delay: 0.42s, 1.4s; }
+/* na boas-vindas (fundo de vídeo): vidro escuro */
+.bv .btn-redondo--claro { --fundo: rgba(30, 32, 35, 0.55); --texto: #fff; --borda: rgba(255, 255, 255, 0.3); --giro: #fff; --ico-fundo: rgba(255, 255, 255, 0.18); --ico-cor: #fff; }
+.bv .btn-redondo--claro .btn-redondo__seta { background: rgba(255, 255, 255, 0.18); }
+.bv .btn-redondo--claro .onda { background: rgba(255, 255, 255, 0.4); }
+/* sem efeitos contínuos em aparelho fraco / sem 3D / movimento reduzido: botão aparece direto e fica estático */
+[data-qualidade="baixa"] .btn-redondo::before, [data-qualidade="baixa"] .btn-redondo::after, [data-qualidade="baixa"] .btn-redondo--azul,
+[data-qualidade="estatica"] .btn-redondo::before, [data-qualidade="estatica"] .btn-redondo::after, [data-qualidade="estatica"] .btn-redondo--azul { animation: none; }
+[data-qualidade="baixa"] .btn-redondo::before, [data-qualidade="baixa"] .btn-redondo::after,
+[data-qualidade="estatica"] .btn-redondo::before, [data-qualidade="estatica"] .btn-redondo::after { display: none; }
+[data-qualidade="baixa"] .splash__acoes .btn-redondo, [data-qualidade="estatica"] .splash__acoes .btn-redondo { animation: btnEntra 0.4s ease forwards; animation-delay: 1.2s; }
+[data-qualidade="baixa"] .bv.on .btn-redondo, [data-qualidade="estatica"] .bv.on .btn-redondo { animation: btnEntra 0.3s ease forwards; }
+@media (prefers-reduced-motion: reduce) { .btn-redondo { opacity: 1; transform: none; } .btn-redondo::before, .btn-redondo::after { display: none; } }
 
 /* ---------- Header ---------- */
 .cabecalho { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--cabecalho); background: rgba(243, 241, 236, 0.94); border-bottom: 1px solid transparent; transition: background-color 0.3s, border-color 0.3s; }
@@ -388,6 +451,7 @@ main { position: relative; z-index: 2; }
 .bv.on { opacity: 1; }
 .bv__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* tela deitada (PC): o vídeo é vertical (Stories), então aparece inteiro no centro */
+.bv__txt { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); display: grid; gap: 10px; color: #fff; }
 @media (min-aspect-ratio: 1/1) { .bv__video { object-fit: contain; } .bv__txt { right: auto; left: max(24px, calc(50vw - 56.25vh / 2 - 500px)); margin: 0; bottom: 40px; } }
 .bv__veu { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 22, 24, 0.15) 0%, transparent 35%, transparent 50%, rgba(20, 22, 24, 0.78) 100%); pointer-events: none; }
 .bv__som { position: absolute; left: 50%; top: 42%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.6); background: rgba(20, 22, 24, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; cursor: pointer; }
@@ -396,20 +460,8 @@ main { position: relative; z-index: 2; }
 .bv__som::before { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.7); animation: bvOnda 1.8s ease-out infinite; }
 .bv__som.some { opacity: 0; transform: scale(0.6); transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
 @keyframes bvOnda { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.7); opacity: 0; } }
-.bv__txt { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); display: grid; gap: 10px; color: #fff; }
 .bv__titulo { margin: 0 0 4px; text-align: center; font-size: 1.45rem; font-weight: 900; font-stretch: 125%; text-transform: uppercase; line-height: 1.05; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
 .bv__titulo span { color: var(--azul-no-escuro); }
-.bv__botao { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 12px; background: rgba(30, 32, 35, 0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: inherit; font-weight: 800; font-size: 1.02rem; text-align: left; cursor: pointer; opacity: 0; transform: translateY(24px); transition: transform 0.2s, background-color 0.2s; }
-.bv.on .bv__botao { animation: bvEntra 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.1) forwards; }
-.bv.on .bv__botao:nth-of-type(1) { animation-delay: 0.25s; }
-.bv.on .bv__botao:nth-of-type(2) { animation-delay: 0.42s; }
-@keyframes bvEntra { to { opacity: 1; transform: none; } }
-.bv__botao--azul { background: var(--azul); border-color: var(--azul); }
-.bv__botao:hover { transform: translateY(-2px); }
-.bv__ico { flex: none; width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.16); font-weight: 900; font-stretch: 125%; }
-.bv__tx { flex: 1; display: grid; gap: 2px; min-width: 0; }
-.bv__tx small { font-weight: 600; font-size: 0.78rem; opacity: 0.88; }
-.bv__seta { font-size: 1.4rem; font-weight: 900; }
 
 .modal, .lightbox { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(30, 32, 35, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.28s; }
 .modal.aberto, .lightbox.aberto { opacity: 1; }
@@ -548,7 +600,7 @@ main { position: relative; z-index: 2; }
 [data-qualidade="estatica"] .jornada__h { position: static; opacity: 1; flex-wrap: wrap; justify-content: center; }
 [data-qualidade="estatica"] .faixas__linha { white-space: normal; font-size: clamp(1.4rem, 5vw, 2.6rem); }
 [data-qualidade="estatica"] [data-revelar] { opacity: 1; transform: none; }
-[data-qualidade="baixa"] .cabecalho, [data-qualidade="baixa"] .bv__botao, [data-qualidade="baixa"] .modal { backdrop-filter: none; -webkit-backdrop-filter: none; }
+[data-qualidade="baixa"] .cabecalho, [data-qualidade="baixa"] .btn-redondo, [data-qualidade="baixa"] .modal { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
 /* ---------- Movimento reduzido ---------- */
 @media (prefers-reduced-motion: reduce) {

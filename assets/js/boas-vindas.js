@@ -54,7 +54,7 @@
         var pl = video.play();
         if (pl && pl.catch) pl.catch(function () { /* autoplay bloqueado: fica a capa */ });
       }
-      var foco = bv.querySelector("[data-bv-calcular]");
+      var foco = bv.querySelector("[data-ir]");
       if (foco) setTimeout(function () { foco.focus({ preventScroll: true }); }, 500);
     }
     // só mostra quando o vídeo realmente carregou (se der erro ou demorar > 2,5 s, o site abre direto)
@@ -89,21 +89,50 @@
     botao.classList.add("some");
   }
 
+  /** Onda de toque nos botões redondos (o resto do efeito é CSS puro). */
+  function onda(e) {
+    var b = e.target.closest(".btn-redondo");
+    if (!b || html.getAttribute("data-qualidade") === "estatica") return;
+    var r = b.getBoundingClientRect();
+    var o = document.createElement("span");
+    o.className = "onda";
+    o.style.left = e.clientX - r.left + "px";
+    o.style.top = e.clientY - r.top + "px";
+    b.appendChild(o);
+    o.addEventListener("animationend", function () { o.remove(); });
+  }
+
+  /** Botão da splash: fecha a splash, pula a boas-vindas (a pessoa já escolheu) e vai pro destino. */
+  function irDaSplash(destino) {
+    marcar(CHAVE_BV);
+    fecharSplash();
+    setTimeout(function () {
+      var alvo = document.querySelector(destino);
+      if (alvo) alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 350);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("pointerdown", onda, { passive: true });
     var s = document.getElementById("splash");
     if (s && !html.classList.contains("sem-splash")) {
-      s.addEventListener("click", fecharSplash);
-      s.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " " || e.key === "Escape") fecharSplash(); });
-      // no vídeo tutorial quem fecha a splash é o próprio vídeo (no tempo certo da cena)
-      if (!window.__gravandoVideo) timer = setTimeout(fecharSplash, html.getAttribute("data-qualidade") === "estatica" ? 900 : 3200);
+      s.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-ir]");
+        if (b) { e.stopPropagation(); return irDaSplash(b.getAttribute("data-ir")); }
+        fecharSplash();
+      });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") fecharSplash(); });
+      // os botões aparecem ~2,4 s depois do começo; fecha sozinha só depois de dar tempo de escolher
+      // (no vídeo tutorial quem fecha a splash é o próprio vídeo, no tempo certo da cena)
+      if (!window.__gravandoVideo) timer = setTimeout(fecharSplash, html.getAttribute("data-qualidade") === "estatica" ? 5000 : 7000);
     } else if (s) {
       s.hidden = true;
     }
     var bv = document.getElementById("boas-vindas");
     if (bv) {
       bv.addEventListener("click", function (e) {
-        if (e.target.closest("[data-bv-calcular]")) return fecharBoasVindas("#calculadora");
-        if (e.target.closest("[data-bv-site]")) return fecharBoasVindas();
+        var b = e.target.closest("[data-ir]");
+        if (b) return fecharBoasVindas(b.getAttribute("data-ir"));
         var som = e.target.closest("[data-bv-som]");
         if (som) ligarSom(som);
       });

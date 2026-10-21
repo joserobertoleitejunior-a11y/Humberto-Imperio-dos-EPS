@@ -31,9 +31,21 @@ test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calcul
   await page.waitForFunction(() => window.ImperioAbertura);
   await page.evaluate(() => window.ImperioAbertura.fecharSplash());
   await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 10000 });
-  await page.click("[data-bv-calcular]");
+  await page.click('#boas-vindas [data-ir="#calculadora"]');
   await expect(page.locator("#boas-vindas")).toBeHidden();
   await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 5000 });
+});
+
+test("splash: botão redondo 'Orçamento' fecha a splash e vai pra calculadora; 'Conhecer nosso produto' vai pro bloco", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('#splash [data-ir="#calculadora"]')).toBeVisible({ timeout: 8000 });
+  await expect(page.locator("#splash .btn-redondo")).toHaveCount(2);
+  const raio = await page.locator('#splash [data-ir="#calculadora"]').evaluate((e) => getComputedStyle(e).borderRadius);
+  expect(parseFloat(raio)).toBeGreaterThan(30);
+  await page.click('#splash [data-ir="#calculadora"]');
+  await expect(page.locator("#splash")).toBeHidden({ timeout: 5000 });
+  await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 6000 });
+  await expect(page.locator("#boas-vindas")).toBeHidden();
 });
 
 test("celular: botões ficam fora da área do bloco 3D", async ({ page }) => {

@@ -13,6 +13,7 @@ window.IMPERIO_CONFIG = {
   whatsappExibicao: "(15) 99121-2917",
   whatsappMensagemPadrao: "Olá! Vim pelo site do Império do EPS e quero um orçamento.",
 
+  email: "", // PENDENTE: e-mail da empresa (vazio = o atalho de e-mail fica escondido)
   instagramUrl: "https://www.instagram.com/humbertoimperioeps/",
   instagramUsuario: "@humbertoimperioeps",
   facebookUrl: "", // PENDENTE: criar página da empresa (hoje o perfil aponta pra um perfil pessoal)

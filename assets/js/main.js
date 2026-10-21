@@ -51,6 +51,11 @@
     document.querySelectorAll("[data-link-tel]").forEach(function (a) {
       a.href = "tel:+" + cfg.whatsappNumero;
     });
+    document.querySelectorAll("[data-link-email]").forEach(function (a) {
+      if (!cfg.email) return; // sem e-mail cadastrado: o ícone nem aparece
+      a.href = "mailto:" + cfg.email;
+      a.hidden = false;
+    });
     document.querySelectorAll("[data-link-facebook]").forEach(function (a) {
       if (!cfg.facebookUrl) return; // sem página da empresa ainda: o ícone nem aparece
       a.href = cfg.facebookUrl;
@@ -64,6 +69,7 @@
       cidade: cfg.cidade,
       area: cfg.areaAtendimento,
       endereco: cfg.enderecoCompleto || "Endereço da fábrica em breve",
+      email: cfg.email,
       ano: String(new Date().getFullYear()),
     };
     document.querySelectorAll("[data-texto]").forEach(function (e) {
