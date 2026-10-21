@@ -22,7 +22,7 @@
   <div id="credito"><canvas id="cuboMini" width="200" height="200"></canvas><div><b>VIBE CODING PROCESS</b><span>Sites para comércio local</span></div></div>
   <div id="vinheta"></div><canvas id="grao" width="270" height="480"></canvas>
 </div>
-<div id="capa"><img src="../assets/img/favicon.svg" alt=""><h1>Sua obra em 1 minuto</h1><p>Blocão por dentro, as 4 espessuras, a calculadora e o orçamento chegando no WhatsApp. Formato Stories (1080×1920).</p>
+<div id="capa"><img src="../assets/img/favicon.svg" alt=""><h1>Sua obra em 1 minuto</h1><p>O Blocão se desmontando peça por peça, a calculadora e o orçamento chegando no WhatsApp. Formato Stories (1080×1920).</p>
   <div><button id="btSom" type="button">▶ Assistir com música</button><button class="sec" id="btMudo" type="button">Sem som</button></div></div>
 <div id="ctl"><button id="btRe" type="button">↺ Recomeçar</button></div>
 <audio id="som" src="trilha-como-orcar.mp3" preload="auto"></audio>
@@ -33,9 +33,10 @@ Video.iniciar({
   cenas:[
     {id:'splash',parte:'Abertura',html:'Sua obra em <b>1 minuto</b>',fala:'Sua obra em um minuto!',min:3.4,splash:true},
     {id:'hero',parte:'Blocão',html:'Conheça o <b>Blocão</b>',fala:'Conheça o Blocão!',min:2.6},
-    {id:'abre',parte:'Por dentro',html:'Ele abre <b>ao meio</b>',fala:'Olha ele abrindo ao meio.',min:3.8,rolar:{el:'por-dentro',frac:.3}},
-    {id:'camadas',parte:'Por dentro',html:'Concreto por fora, <b>EPS por dentro</b>',fala:'Concreto por fora, EPS por dentro.',min:3.2,rolar:{el:'por-dentro',frac:.42}},
-    {id:'espessuras',parte:'Espessuras',html:'<b>4 espessuras</b> pra sua parede',fala:'Quatro espessuras pra sua parede.',min:4.4,rolar:{el:'por-dentro',frac:.97}},
+    {id:'descola',parte:'Por dentro',html:'O concreto <b>descola do EPS</b>',fala:'O concreto descola do EPS.',min:4.0,rolar:{el:'por-dentro',frac:.2}},
+    {id:'abre',parte:'Por dentro',html:'Agora abre <b>ao meio</b>',fala:'Agora, abre ao meio.',min:3.4,rolar:{el:'por-dentro',frac:.34}},
+    {id:'pecas',parte:'Peça por peça',html:'Cada peça com a <b>sua medida</b>',fala:'Cada peça com a sua medida.',min:3.8,rolar:{el:'por-dentro',frac:.64}},
+    {id:'montado',parte:'Peça por peça',html:'E monta <b>de novo</b>',fala:'E monta de novo.',min:3.0,rolar:{el:'por-dentro',frac:.86}},
     {id:'calc',parte:'Calculadora',html:'Agora, <b>calcule</b> sua obra',fala:'Agora, calcule sua obra.',min:2.8,rolar:{el:'calculadora',off:80}},
     {id:'medidas',parte:'Calculadora',html:'Digite as <b>medidas</b>',fala:'Digite as medidas.',min:4.2,
       acoes:[{dt:.2,fn:function(w,el){var f=w.document.querySelector('[data-calculadora]');f.elements.comprimento.value='';f.elements.altura.value='';f.dispatchEvent(new Event('input',{bubbles:true}));}}],

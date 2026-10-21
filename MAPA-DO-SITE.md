@@ -8,7 +8,8 @@
 | Quero mudar... | Arquivo | Onde |
 |---|---|---|
 | WhatsApp, Instagram, cidade, endereço, mapa | `assets/js/config.js` | `window.IMPERIO_CONFIG` (único ponto) |
-| Medida do bloco (habilita "nº de blocos" na calculadora) | `assets/js/config.js` | `medidaBloco: { largura, altura }` em metros + `perdaPercentual` |
+| Medida do bloco (habilita "nº de blocos" na calculadora **e** medidas/peso nas fichas da jornada) | `assets/js/config.js` | `medidaBloco: { largura, altura }` em metros + `perdaPercentual` |
+| Peso real de cada bloco | `assets/js/config.js` | `pesos: { b15: 80, ... }` (substitui a estimativa) · estimativa usa `densidades` |
 | Ficha técnica dos blocos | `config.js` → `blocos` **e** `index.html` → `===== FICHA TÉCNICA` e painéis da `===== JORNADA` | o corte em escala usa `style="--c:3.5;--e:8"` |
 | Promoção/foto exibida sem banco | `config.js` | `promocoesPadrao`, `galeriaPadrao` |
 | Promoções e fotos de obra (dia a dia) | **painel** `admin.html` | abas Promoções e Galeria (sem mexer em código) |
@@ -19,7 +20,8 @@
 | Splash (abertura) | `index.html` `===== SPLASH` + CSS "Splash" em `site.css` | tempo de fechar: `boas-vindas.js` (3,2 s) |
 | Tela de boas-vindas com vídeo | `index.html` `===== BOAS-VINDAS` + `boas-vindas.js` | vídeo em `video/como-orcar.mp4` |
 | Aparência do bloco 3D (concreto, pérolas do EPS, luz) | `assets/js/bloco3d.js` | `texturasConcreto()`, `texturasEPS()`, luzes em `iniciar()` |
-| Onde o bloco fica / quando abre / curva do "L" | `assets/js/cena.js` (`alvoHero`, `alvoJornada`) e `assets/js/motion.js` (`pintarJornada`) | |
+| Roteiro do bloco: desmonta (concreto descola do EPS) → abre ao meio → fichas na horizontal → monta de novo | `assets/js/cena.js` (`alvoJornada`, comentário com as faixas de rolagem) e `assets/js/motion.js` (`pintarJornada`, curva do "L") | |
+| Fichas de cada peça (espessura, comprimento × altura, peso) e botões 10/13/15/20 | `index.html` `===== JORNADA` (`data-espec`/`data-campo`) + `assets/js/especificacoes.js` | testado em `tests/especificacoes.test.js` |
 | Letras que se montam na rolagem | qualquer título com `data-letras` (`"h"` = chegam pela direita) | lógica em `motion.js` |
 | Faixas de texto que andam na horizontal | `index.html` `===== FAIXAS` (`data-faixa-rolagem="1"` ou `"-1"`) | |
 | Conta da calculadora / mensagem do WhatsApp | `assets/js/calculadora-nucleo.js` | testada em `tests/calculadora.test.js` |
@@ -36,7 +38,7 @@
 | `alta` | PC sem toque, ≥ 8 núcleos, ≥ 8 GB | 3D com sombra real, partículas de EPS, 2× resolução |
 | `media` | celular/PC comum | 3D sem sombra real (mancha suave), menos partículas, 1,5× |
 | `baixa` | ≤ 4 GB ou ≤ 4 núcleos | 3D em 1×, texturas 512, sem partículas, títulos por palavra, sem desfoque de vidro |
-| `estatica` | economia de dados, 2G, ≤ 2 GB, "reduzir movimento" | **sem 3D**: imagens prontas (`bloco-fechado/aberto.webp`), jornada vira seção normal |
+| `estatica` | economia de dados, 2G, ≤ 2 GB, "reduzir movimento" | **sem 3D**: imagens prontas (`bloco-fechado/desmontado.webp`), jornada vira seção normal |
 
 Forçar pra testar: `?qualidade=baixa` (ou `alta`, `media`, `estatica`) na URL.
 O que mantém o site leve: Three.js só baixa **depois** do `load` + ociosidade; **um** canvas só (hero + jornada);
@@ -62,6 +64,7 @@ assets/js/boas-vindas.js       Splash (fecha/pula) + tela de boas-vindas com o v
 assets/js/supabase-init.js     SDK sob demanda (não bloqueia a abertura)
 assets/js/analytics.js         Páginas vistas e cliques → tabelas paginas_vistas/cliques
 assets/js/main.js              Links de contato, menu, header, revelar ao rolar, toast
+assets/js/especificacoes.js    Medidas e peso de cada peça (concreto externo, EPS, concreto interno, montado) + espessura escolhida
 assets/js/motion.js            Letras na rolagem, faixas horizontais, jornada em "L" (sticky)
 assets/js/cliente.js           Cadastro "Entrar com WhatsApp" → tabela clientes
 assets/js/calculadora-nucleo.js  Regra da calculadora (sem DOM, roda no Node)
@@ -70,7 +73,7 @@ assets/js/conteudo.js          Promoções e galeria vindas do banco (skeleton +
 assets/js/cena.js              Liga a rolagem ao bloco 3D (carrega o Three.js sob demanda)
 assets/js/bloco3d.js           (ES module) cena Three.js: texturas procedurais, bloco que abre ao meio
 assets/js/admin-*.js, admin.js Painel (dados, métricas testadas, gráficos SVG, interface)
-assets/img/                    marca, favicon, og-image, bloco-fechado/aberto (render do próprio 3D), foto de obra
+assets/img/                    marca, favicon, og-image, bloco-fechado/desmontado (render do próprio 3D), foto de obra
 
 video/index.html               Vídeo tutorial "Sua obra em 1 minuto" (Stories 1080×1920) — motor da Pizza em Dobro
 video/motion.js / motion.css   Motor: celular com o site de verdade, legendas animadas, WhatsApp chegando
@@ -88,5 +91,5 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 - Sem rolagem lateral de 320 px a 1920 px (coberto pelo E2E).
 - `[hidden]` sempre esconde (regra global).
 - O canvas 3D fica **fixo atrás** do conteúdo: hero e jornada são transparentes; as outras seções têm fundo e cobrem o canvas.
-- Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena`.
+- Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena`.
 - Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).

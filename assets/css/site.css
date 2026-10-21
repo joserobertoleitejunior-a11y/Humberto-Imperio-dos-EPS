@@ -174,7 +174,7 @@ main { position: relative; z-index: 2; }
 .faixas__linha--vazada { color: transparent; -webkit-text-stroke: 1.5px var(--concreto-esc); transform: translateX(-30%); }
 
 /* ---------- Jornada em L ---------- */
-.jornada { position: relative; height: 560vh; }
+.jornada { position: relative; height: 720vh; }
 .jornada__fixo { position: sticky; top: 0; height: 100vh; height: calc(var(--vh, 1vh) * 100); overflow: hidden; }
 .jornada__janela { position: absolute; inset: 0; }
 .jornada__v { position: absolute; left: 0; right: 0; top: calc(var(--cabecalho) + 6vh); width: min(1200px, 100% - 32px); margin-inline: auto; will-change: transform; }
@@ -184,21 +184,33 @@ main { position: relative; z-index: 2; }
 .jornada__rotulos { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 .rot { position: absolute; padding: 8px 12px; font-size: 0.78rem; line-height: 1.3; color: var(--texto-suave); background: rgba(251, 250, 247, 0.92); border: 1px solid var(--linha); border-radius: 6px; max-width: 12rem; }
 .rot b { display: block; font-size: 0.9rem; font-stretch: 115%; color: var(--grafite); }
-.rot--b b { color: var(--azul); }
-.jornada__rotulos { --bx: 60vw; --by: 52vh; --bw: 40vw; }
-/* posições relativas ao bloco (cena.js publica centro e largura dele em --bx/--by/--bw) */
-.rot--a { left: calc(var(--bx) - var(--bw) * 0.52); top: calc(var(--by) - var(--bw) * 0.3); transform: translate(-100%, 0); }
-.rot--b { left: calc(var(--bx) - var(--bw) * 0.06); top: calc(var(--by) + var(--bw) * 0.27); }
-.rot--c { left: calc(var(--bx) + var(--bw) * 0.5); top: calc(var(--by) - var(--bw) * 0.22); }
+.rot { left: 0; top: 0; will-change: transform; white-space: nowrap; max-width: none; }
+.rot span { display: block; font-size: 1.05rem; font-weight: 850; font-stretch: 120%; color: var(--grafite); }
+.rot--eps span, .rot--eps b { color: var(--azul); }
+.rot::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: var(--haste, 10px); background: var(--concreto-esc); }
+.rot[data-rot="1"] { --haste: 56px; }
+.rot[data-rot="2"] { --haste: 102px; }
 .jornada__estatico { display: none; }
 .jornada__h { position: absolute; left: 0; bottom: 6vh; display: flex; gap: 16px; padding-inline: max(16px, calc((100vw - 1200px) / 2)); opacity: 0; will-change: transform; }
-.painel { flex: none; width: min(78vw, 360px); padding: 22px; border-radius: var(--raio-g); background: rgba(251, 250, 247, 0.94); border: 1px solid var(--linha); transition: border-color 0.3s, transform 0.4s var(--ease), box-shadow 0.4s; }
+.painel { flex: none; width: min(80vw, 340px); padding: 22px; border-radius: var(--raio-g); background: rgba(251, 250, 247, 0.94); border: 1px solid var(--linha); transition: border-color 0.3s, transform 0.4s var(--ease), box-shadow 0.4s; }
 .painel.em-foco { border-color: var(--azul); transform: translateY(-6px); box-shadow: 0 20px 40px -26px rgba(30, 32, 35, 0.5); }
 .painel__num { margin: 0 0 6px; font-size: 3.4rem; line-height: 1; font-weight: 900; font-stretch: 125%; color: var(--grafite); }
 .painel__num small { font-size: 0.4em; margin-left: 4px; color: var(--texto-suave); }
 .painel.em-foco .painel__num { color: var(--azul); }
 .painel h3 { font-size: 1.25rem; text-transform: uppercase; font-stretch: 120%; }
 .painel p:last-child { margin: 0; color: var(--texto-suave); }
+.painel__tag { margin: 0 0 8px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--texto-suave); }
+.painel.em-foco .painel__tag { color: var(--azul); }
+.espec { margin: 4px 0 14px; display: grid; gap: 0; border-top: 1px solid var(--linha); }
+.espec div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+.espec dt { font-size: 0.82rem; color: var(--texto-suave); }
+.espec dd { margin: 0; font-weight: 800; font-stretch: 115%; text-align: right; }
+.espec dd.a-confirmar { font-weight: 600; font-style: italic; color: var(--concreto-esc); }
+.painel--total { border-color: var(--grafite); }
+.espessuras { position: absolute; z-index: 3; right: max(16px, calc((100vw - 1200px) / 2)); top: calc(var(--cabecalho) + 14px); display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 8px; background: rgba(251, 250, 247, 0.92); border: 1px solid var(--linha); font-size: 0.78rem; font-weight: 700; color: var(--texto-suave); }
+.espessuras span { padding: 0 4px; }
+.espessuras button { min-width: 40px; min-height: 36px; border: 0; border-radius: 6px; background: transparent; font-weight: 850; font-stretch: 120%; color: var(--grafite); cursor: pointer; }
+.espessuras button[aria-pressed="true"] { background: var(--azul); color: #fff; }
 .painel--cta { display: grid; align-content: center; gap: 14px; background: var(--grafite); color: var(--cal); border-color: var(--grafite); }
 
 /* ---------- Seções ---------- */
@@ -433,9 +445,11 @@ main { position: relative; z-index: 2; }
   .jornada__v { top: 4vh; }
   .jornada__v h2 { font-size: clamp(1.5rem, 7vw, 2.2rem); }
   .jornada__texto { margin-bottom: 26vh; font-size: 1rem; }
-  .rot { font-size: 0.7rem; padding: 6px 9px; max-width: 9.5rem; }
-  .rot--a { transform: translate(-60%, -110%); }
-  .rot--c { transform: translate(-40%, -120%); }
+  .rot { font-size: 0.66rem; padding: 5px 8px; }
+  .rot[data-rot="1"] { --haste: 40px; }
+  .rot[data-rot="2"] { --haste: 70px; }
+  .espessuras { top: auto; right: auto; left: 50%; bottom: calc(44vh + 10px); transform: translateX(-50%); }
+  .rot span { font-size: 0.9rem; }
   .jornada__h { bottom: 4vh; }
   .painel { padding: 18px; }
   .painel__num { font-size: 2.6rem; }
@@ -467,6 +481,7 @@ main { position: relative; z-index: 2; }
 [data-qualidade="estatica"] .jornada__texto { margin-bottom: 1.2em; }
 [data-qualidade="estatica"] .jornada__estatico { display: block; width: min(640px, 100% - 32px); margin: 10px auto 24px; }
 [data-qualidade="estatica"] .jornada__rotulos { display: none; }
+[data-qualidade="estatica"] .espessuras { position: static; width: max-content; margin: 0 auto 16px; }
 [data-qualidade="estatica"] .jornada__h { position: static; opacity: 1; flex-wrap: wrap; justify-content: center; }
 [data-qualidade="estatica"] .faixas__linha { white-space: normal; font-size: clamp(1.4rem, 5vw, 2.6rem); }
 [data-qualidade="estatica"] [data-revelar] { opacity: 1; transform: none; }

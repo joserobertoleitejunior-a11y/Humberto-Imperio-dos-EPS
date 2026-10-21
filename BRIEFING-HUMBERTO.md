@@ -130,6 +130,6 @@
 - [ ] Depoimentos de clientes (nome + cidade + foto da obra)
 - [ ] 2 ou 3 logos de qualquer marca que o Vinicius goste (referência de estilo pro designer)
 - [ ] Acesso ao Instagram/Facebook pra reforma
-- [ ] Medida da face do Blocão (comprimento × altura) e peso — liga a contagem de blocos na calculadora
+- [ ] Medida da face do Blocão (comprimento × altura) e peso de cada espessura — liga a contagem de blocos na calculadora e preenche as fichas "peça por peça" do site (hoje mostram "a confirmar")
 - [ ] Domínio próprio (ex.: `imperiodoeps.com.br`)
 - [ ] Prints dos concorrentes (fase 2 — José vai enviar)

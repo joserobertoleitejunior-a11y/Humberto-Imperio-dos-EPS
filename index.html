@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261021b"></script>
+  <script src="assets/js/dispositivo.js?v=20261021c"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261021b">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261021c">
 
   <script type="application/ld+json">
   {
@@ -107,7 +107,7 @@
         </div>
         <div class="hero__palco" data-ancora="hero">
           <img class="poster" src="assets/img/bloco-fechado.webp" alt="Blocão: bloco de concreto com miolo de EPS" width="900" height="600" fetchpriority="high">
-          <p class="hero__dica" aria-hidden="true">role pra abrir o bloco ↓</p>
+          <p class="hero__dica" aria-hidden="true">role pra desmontar o bloco ↓</p>
         </div>
       </div>
     </section>
@@ -118,47 +118,78 @@
       <p class="faixas__linha faixas__linha--vazada" data-faixa-rolagem="-1">MENOS TIJOLO · MENOS REBOCO · MAIS CONFORTO · MENOS TIJOLO · MENOS REBOCO · MAIS CONFORTO · MENOS TIJOLO ·</p>
     </div>
 
-    <!-- ===== JORNADA EM "L": rola na vertical (o bloco abre), faz a curva e segue na horizontal (as 4 espessuras) -->
-    <section class="jornada" id="por-dentro" data-jornada aria-label="O Blocão por dentro">
+    <!-- ===== JORNADA EM "L": rolando na VERTICAL o Blocão se desmonta (o concreto descola do EPS) e depois
+         abre ao meio; a rolagem faz a curva e segue na HORIZONTAL com a ficha de cada peça (medidas + peso). -->
+    <section class="jornada" id="por-dentro" data-jornada aria-label="O Blocão desmontado, peça por peça">
       <div class="jornada__fixo">
+        <div class="espessuras" role="group" aria-label="Escolha a espessura do Blocão">
+          <span>Espessura</span>
+          <button type="button" data-escolher-espessura="b10">10</button>
+          <button type="button" data-escolher-espessura="b13">13</button>
+          <button type="button" data-escolher-espessura="b15" aria-pressed="true">15</button>
+          <button type="button" data-escolher-espessura="b20">20</button>
+          <span>cm</span>
+        </div>
         <div class="jornada__janela">
         <div class="jornada__v" data-jornada-v>
           <p class="sobretitulo">Por dentro do Blocão</p>
-          <h2 data-letras data-faixa-p="0,0.12">Abre ele <em>ao meio.</em></h2>
-          <p class="jornada__texto">Duas faces de concreto fazem a força e o acabamento. No meio, o EPS segura o calor e o barulho do lado de fora.</p>
-          <h2 data-letras data-faixa-p="0.14,0.28">Concreto <em>por fora.</em> EPS <em>por dentro.</em></h2>
-          <p class="jornada__texto">Leve pra carregar, firme pra construir. E a parede já sai pronta pra receber o acabamento.</p>
+          <h2 data-letras data-faixa-p="0,0.08">Role e veja ele <em>se desmontar.</em></h2>
+          <p class="jornada__texto">Um bloco montado. Agora, peça por peça.</p>
+          <h2 data-letras data-faixa-p="0.1,0.22">O concreto <em>descola do EPS.</em></h2>
+          <p class="jornada__texto">Duas placas de concreto por fora e um miolo de EPS por dentro. Três peças, um bloco só.</p>
+          <h2 data-letras data-faixa-p="0.26,0.38">Agora, abre <em>ao meio.</em></h2>
+          <p class="jornada__texto">O corte mostra tudo: concreto maciço nas faces e o EPS inteiro no miolo, de ponta a ponta.</p>
         </div>
         </div>
         <ul class="jornada__rotulos" data-jornada-rotulos aria-hidden="true">
-          <li class="rot rot--a"><b>Concreto</b> face resistente</li>
-          <li class="rot rot--b"><b>EPS</b> isolamento térmico e acústico</li>
-          <li class="rot rot--c"><b>Concreto</b> pronta pro acabamento</li>
+          <li class="rot" data-rot="0"><b>Concreto externo</b><span data-espec="concreto-externo" data-campo="espessura">3,5 cm</span></li>
+          <li class="rot rot--eps" data-rot="1"><b>EPS</b><span data-espec="eps" data-campo="espessura">8 cm</span></li>
+          <li class="rot" data-rot="2"><b>Concreto interno</b><span data-espec="concreto-interno" data-campo="espessura">3,5 cm</span></li>
         </ul>
-        <img class="jornada__estatico" src="assets/img/bloco-aberto.webp" alt="Blocão aberto ao meio mostrando concreto, EPS e concreto" width="900" height="600" loading="lazy">
+        <img class="jornada__estatico" src="assets/img/bloco-desmontado.webp" alt="Blocão desmontado: placa de concreto, miolo de EPS e placa de concreto" width="900" height="600" loading="lazy">
         <div class="jornada__h" data-jornada-h>
           <article class="painel" data-painel>
-            <p class="painel__num">10<small>cm</small></p>
-            <h3 data-letras="h">Divisórias</h3>
-            <p>2,5 concreto · 5 EPS · 2,5 concreto. Paredes internas leves.</p>
+            <p class="painel__tag">Peça 1 de 3</p>
+            <h3 data-letras="h">Concreto externo</h3>
+            <dl class="espec">
+              <div><dt>Espessura</dt><dd data-espec="concreto-externo" data-campo="espessura">3,5 cm</dd></div>
+              <div><dt>Comprimento × altura</dt><dd data-espec="concreto-externo" data-campo="face">a confirmar</dd></div>
+              <div><dt>Peso</dt><dd data-espec="concreto-externo" data-campo="peso">a confirmar</dd></div>
+            </dl>
+            <p>A face que fica pra fora: resistente e lisa, pronta pro acabamento.</p>
           </article>
           <article class="painel" data-painel>
-            <p class="painel__num">13<small>cm</small></p>
-            <h3 data-letras="h">Mais silêncio</h3>
-            <p>3,5 · 6 · 3,5. Quartos e paredes entre cômodos.</p>
+            <p class="painel__tag">Peça 2 de 3</p>
+            <h3 data-letras="h">EPS (miolo)</h3>
+            <dl class="espec">
+              <div><dt>Espessura</dt><dd data-espec="eps" data-campo="espessura">8 cm</dd></div>
+              <div><dt>Comprimento × altura</dt><dd data-espec="eps" data-campo="face">a confirmar</dd></div>
+              <div><dt>Peso</dt><dd data-espec="eps" data-campo="peso">a confirmar</dd></div>
+            </dl>
+            <p>O "isopor" da construção: segura o calor e o barulho e deixa o bloco leve.</p>
           </article>
           <article class="painel" data-painel>
-            <p class="painel__num">15<small>cm</small></p>
-            <h3 data-letras="h">A casa toda</h3>
-            <p>3,5 · 8 · 3,5. O mais pedido pra parede externa.</p>
+            <p class="painel__tag">Peça 3 de 3</p>
+            <h3 data-letras="h">Concreto interno</h3>
+            <dl class="espec">
+              <div><dt>Espessura</dt><dd data-espec="concreto-interno" data-campo="espessura">3,5 cm</dd></div>
+              <div><dt>Comprimento × altura</dt><dd data-espec="concreto-interno" data-campo="face">a confirmar</dd></div>
+              <div><dt>Peso</dt><dd data-espec="concreto-interno" data-campo="peso">a confirmar</dd></div>
+            </dl>
+            <p>A face de dentro de casa: firme pra fixar armário e prateleira.</p>
           </article>
-          <article class="painel" data-painel>
-            <p class="painel__num">20<small>cm</small></p>
-            <h3 data-letras="h">Máximo conforto</h3>
-            <p>3,5 · 13 · 3,5. Para quem quer a casa fresca de verdade.</p>
+          <article class="painel painel--total" data-painel>
+            <p class="painel__tag">Montado</p>
+            <h3 data-espec="total" data-campo="nome">Blocão 15 cm</h3>
+            <dl class="espec">
+              <div><dt>Espessura total</dt><dd data-espec="total" data-campo="espessura">15 cm</dd></div>
+              <div><dt>Comprimento × altura</dt><dd data-espec="total" data-campo="face">a confirmar</dd></div>
+              <div><dt>Peso do bloco</dt><dd data-espec="total" data-campo="peso">a confirmar</dd></div>
+              <div><dt>Blocos por m²</dt><dd data-espec="total" data-campo="porm2">a confirmar</dd></div>
+            </dl>
           </article>
           <article class="painel painel--cta">
-            <h3>Qual é o da sua obra?</h3>
+            <h3>Quantos blocos a sua obra precisa?</h3>
             <a class="botao botao--azul" href="#calculadora">Calcular agora</a>
           </article>
         </div>
@@ -473,17 +504,18 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261021b"></script>
-  <script src="assets/js/observabilidade.js?v=20261021b"></script>
-  <script src="assets/js/boas-vindas.js?v=20261021b"></script>
-  <script src="assets/js/supabase-init.js?v=20261021b"></script>
-  <script src="assets/js/analytics.js?v=20261021b"></script>
-  <script src="assets/js/main.js?v=20261021b"></script>
-  <script src="assets/js/motion.js?v=20261021b"></script>
-  <script src="assets/js/cliente.js?v=20261021b"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261021b"></script>
-  <script src="assets/js/calculadora.js?v=20261021b"></script>
-  <script src="assets/js/conteudo.js?v=20261021b"></script>
-  <script src="assets/js/cena.js?v=20261021b"></script>
+  <script src="assets/js/config.js?v=20261021c"></script>
+  <script src="assets/js/observabilidade.js?v=20261021c"></script>
+  <script src="assets/js/boas-vindas.js?v=20261021c"></script>
+  <script src="assets/js/supabase-init.js?v=20261021c"></script>
+  <script src="assets/js/analytics.js?v=20261021c"></script>
+  <script src="assets/js/main.js?v=20261021c"></script>
+  <script src="assets/js/especificacoes.js?v=20261021c"></script>
+  <script src="assets/js/motion.js?v=20261021c"></script>
+  <script src="assets/js/cliente.js?v=20261021c"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261021c"></script>
+  <script src="assets/js/calculadora.js?v=20261021c"></script>
+  <script src="assets/js/conteudo.js?v=20261021c"></script>
+  <script src="assets/js/cena.js?v=20261021c"></script>
 </body>
 </html>

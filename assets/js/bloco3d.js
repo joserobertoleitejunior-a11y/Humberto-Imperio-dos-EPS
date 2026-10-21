@@ -14,7 +14,9 @@
  *
  * API (window.ImperioBloco3D, criada quando este módulo carrega):
  *   iniciar(canvas) → Promise
- *   estado({ abertura, giro, inclinar, cx, cy, larg, espessura })  — valores-alvo;
+ *   estado({ separacao, abertura, giro, inclinar, cx, cy, larg, espessura, dim0, dim1, dim2 })  — valores-alvo;
+ *     separacao 0→1 = o concreto DESCOLA do EPS (bloco desmontado peça por peça);
+ *     abertura 0→1 = o bloco abre AO MEIO (mostra o corte); dimK = apaga a camada K (0 concreto ext., 1 EPS, 2 concreto int.)
  *     cx/cy/larg = onde o bloco deve ficar NA TELA (px): o layout (CSS) decide o lugar
  *   renderAgora()   — desenha já (usado pelo vídeo, quadro a quadro)
  */
@@ -233,7 +235,11 @@ function caixa(lx, ly, lz, desloc = 0) {
 /* ------------------------------------------------------------------ */
 /* Cena                                                                */
 /* ------------------------------------------------------------------ */
-const alvo = { abertura: 0, giro: -0.55, inclinar: 0.32, cx: -1, cy: 0, larg: 0, espessura: 15 };
+const alvo = { separacao: 0, abertura: 0, giro: -0.55, inclinar: 0.32, cx: -1, cy: 0, larg: 0, espessura: 15, dim0: 0, dim1: 0, dim2: 0 };
+// Distância (m) que cada placa de concreto se afasta do EPS quando o bloco é desmontado
+const SEPARAR = 0.2;
+const ouvintesPosicao = [];
+const _p = new Vector3();
 const atual = { ...alvo };
 let renderer;
 let cena;
@@ -249,6 +255,7 @@ let lentos = 0;
 let ativo = true;
 let geoAtual = 0;
 let mats;
+let matsCamada;
 
 function camadas(esp) {
   const c = esp <= 10 ? 0.025 : 0.035;
@@ -263,10 +270,11 @@ function montarMetade(lado) {
   const geoPele = caixa(meio, ALTURA, c, desloc);
   const geoMiolo = caixa(meio, ALTURA, eps, desloc);
   // Concreto: faces grandes (±z) = face lisa; bordas e corte = concreto serrado
-  const matPele = [mats.serrado, mats.serrado, mats.serrado, mats.serrado, mats.liso, mats.liso];
-  const peleA = new Mesh(geoPele, matPele);
-  const peleB = new Mesh(geoPele, matPele);
-  const miolo = new Mesh(geoMiolo, mats.eps);
+  // cada camada tem o próprio material (dá pra destacar uma e apagar as outras)
+  const pele = (m) => [m.serrado, m.serrado, m.serrado, m.serrado, m.liso, m.liso];
+  const peleA = new Mesh(geoPele, pele(matsCamada[0]));
+  const peleB = new Mesh(geoPele, pele(matsCamada[2]));
+  const miolo = new Mesh(geoMiolo, matsCamada[1].eps);
   [peleA, peleB, miolo].forEach((m) => {
     m.castShadow = nivel.sombra;
     m.receiveShadow = nivel.sombra;
@@ -347,11 +355,18 @@ function aplicar() {
   const escalaZ = atual.espessura / geoAtual;
   metades.forEach((g) => {
     const lado = g.userData.lado;
-    g.position.x = lado * (COMPRIMENTO / 4 + a * 0.1);
+    // desmontado (sep = 1) as metades abrem mais pro lado e giram menos: as 6 peças ficam lado a lado
+    const sep = MathUtils.smootherstep(atual.separacao, 0, 1);
+    g.position.x = lado * (COMPRIMENTO / 4 + a * (0.1 + sep * 0.16));
     g.position.y = a * 0.02;
-    g.rotation.y = lado * a * 0.95;
+    g.rotation.y = lado * a * (0.95 - sep * 0.55);
     g.scale.z = escalaZ;
-    posicionarCamadas(g, 0);
+    posicionarCamadas(g, MathUtils.smootherstep(atual.separacao, 0, 1) * SEPARAR / escalaZ);
+  });
+  // destaque: a camada em foco fica com a cor real, as outras escurecem
+  matsCamada.forEach((m, k) => {
+    const f = 1 - 0.58 * MathUtils.clamp(atual["dim" + k], 0, 1);
+    Object.values(m).forEach((mat) => mat.color.setScalar(f));
   });
   raiz.rotation.y = atual.giro;
   raiz.rotation.x = atual.inclinar;
@@ -386,6 +401,27 @@ function suavizar(dt) {
 function desenhar() {
   aplicar();
   renderer.render(cena, camera);
+  if (ouvintesPosicao.length) avisarPosicoes();
+}
+
+/** Onde está o topo de cada camada NA TELA (px) — as etiquetas de medida seguem as peças. */
+function avisarPosicoes() {
+  const el = renderer.domElement;
+  const w = el.clientWidth;
+  const h = el.clientHeight;
+  const pos = ["peleA", "miolo", "peleB"].map((nome) => {
+    let x = 0;
+    let y = 0;
+    metades.forEach((g) => {
+      _p.set(0, ALTURA / 2, 0);
+      g.userData[nome].localToWorld(_p);
+      _p.project(camera);
+      x += ((_p.x + 1) / 2) * w;
+      y += ((1 - _p.y) / 2) * h;
+    });
+    return { x: x / metades.length, y: y / metades.length };
+  });
+  ouvintesPosicao.forEach((fn) => fn(pos));
 }
 
 function laco(t) {
@@ -468,6 +504,9 @@ function iniciar(canvas) {
     eps: new MeshStandardMaterial({ map: textura(eps.cor, true, anis), bumpMap: textura(eps.rel, false, anis), bumpScale: 3, roughness: 0.97, metalness: 0, color: new Color(1, 1, 1) }),
   };
 
+  const clonar = (lista) => Object.fromEntries(Object.entries(lista).map(([k, m]) => [k, m.clone()]));
+  matsCamada = [clonar({ liso: mats.liso, serrado: mats.serrado }), clonar({ eps: mats.eps }), clonar({ liso: mats.liso, serrado: mats.serrado })];
+
   raiz = new Group();
   cena.add(raiz);
   reconstruir();
@@ -532,6 +571,11 @@ window.ImperioBloco3D = {
     const antes = ativo;
     ativo = !sim && !document.hidden;
     if (ativo && !antes) requestAnimationFrame(laco);
+  },
+  /** fn(posicoes) a cada desenho: [{x,y} concreto externo, {x,y} EPS, {x,y} concreto interno] */
+  aoPosicionar: (fn) => {
+    ouvintesPosicao.push(fn);
+    sujo = true;
   },
   renderAgora: () => {
     Object.assign(atual, alvo);

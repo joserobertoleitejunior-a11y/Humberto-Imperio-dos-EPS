@@ -42,6 +42,18 @@ window.IMPERIO_CONFIG = {
   medidaBloco: null, // ex.: { largura: 1.0, altura: 0.5 }
   perdaPercentual: 5,
 
+  /**
+   * Peso REAL de cada bloco (kg), pesado na fábrica — PENDENTE com o Vinicius.
+   * Ex.: { b10: 0, b13: 0, b15: 0, b20: 0 }. Quando preenchido, substitui a estimativa.
+   */
+  pesos: {},
+
+  /**
+   * Densidades típicas (kg/m³) usadas SÓ pra estimar o peso enquanto `pesos` não vem
+   * (e só aparecem quando `medidaBloco` estiver preenchida). Ajustar com o traço da fábrica.
+   */
+  densidades: { concreto: 2400, eps: 15 },
+
   /** Promoção exibida quando o banco ainda não tem nenhuma cadastrada. */
   promocoesPadrao: [
     {

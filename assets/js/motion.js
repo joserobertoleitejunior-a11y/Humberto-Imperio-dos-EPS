@@ -127,15 +127,14 @@
     j.entrada = limitar(1 - r.top / vh); // 0 quando a seção encosta no pé da tela, 1 quando chega no topo
     if (parado) return;
     var largura = j.trilho.scrollWidth - window.innerWidth;
-    var v = suave(p / 0.54);                 // perna vertical
-    var hz = suave((p - 0.38) / 0.62);       // perna horizontal (começa antes da vertical terminar)
+    var v = suave(p / 0.5);                  // perna vertical: o bloco desmonta e abre
+    var hz = suave((p - 0.44) / 0.56);       // perna horizontal: ficha de cada peça (começa antes da vertical terminar)
     var alturaV = j.vertical.scrollHeight - j.vertical.parentElement.clientHeight * 0.6;
     j.vertical.style.transform = "translate3d(" + -hz * 22 + "vw," + -v * Math.max(0, alturaV) + "px,0)";
-    j.vertical.style.opacity = 1 - suave((p - 0.42) / 0.12);
+    j.vertical.style.opacity = 1 - suave((p - 0.42) / 0.08);
     var tx = (1 - hz) * 30 - hz * largura;
-    j.trilho.style.transform = "translate3d(" + tx + "px," + (1 - suave((p - 0.3) / 0.24)) * 40 + "vh,0)";
-    j.trilho.style.opacity = suave((p - 0.36) / 0.1);
-    if (j.rotulos) j.rotulos.style.opacity = suave((p - 0.22) / 0.08) * (1 - suave((p - 0.4) / 0.06));
+    j.trilho.style.transform = "translate3d(" + tx + "px," + (1 - suave((p - 0.38) / 0.14)) * 40 + "vh,0)";
+    j.trilho.style.opacity = suave((p - 0.42) / 0.08);
     // painel em foco = o mais perto do centro da tela
     var foco = 0;
     var melhor = 1e9;
@@ -143,8 +142,8 @@
       var b = pn.getBoundingClientRect();
       var d = Math.abs(b.left + b.width / 2 - window.innerWidth / 2);
       if (d < melhor) { melhor = d; foco = i; }
-      pn.classList.toggle("em-foco", hz > 0.05 && d < b.width * 0.6);
     });
+    Array.prototype.forEach.call(j.paineis, function (pn, i) { pn.classList.toggle("em-foco", hz > 0.05 && i === foco); });
     j.foco = foco;
     j.hz = hz;
   }

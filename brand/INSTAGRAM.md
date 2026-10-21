@@ -53,7 +53,7 @@ Os destaques atuais ("Blocão sanduíche", "Molduras de EPS", "Chegamos Itape!!"
 | Quarta | **Quebra de objeção** (carrossel) | "Isopor pega fogo?" · "Segura armário?" · "E a umidade?" |
 | Sexta | **Prova/oferta** | depoimento de cliente ou promoção do mês |
 
-Padrão visual dos posts (o mesmo do site): fundo **cal** `#F3F1EC` ou foto real da obra, títulos em **Archivo Expandida** caixa-alta (grafite `#1E2023`), destaque em **azul técnico** `#1F4BD8`, texto corrido em Archivo normal. Nada de preto + dourado (cara de arte feita por IA). Fotos sempre em cor natural, sem filtro. Modelo de render 3D do Blocão: `assets/img/bloco-fechado.webp` e `bloco-aberto.webp`.
+Padrão visual dos posts (o mesmo do site): fundo **cal** `#F3F1EC` ou foto real da obra, títulos em **Archivo Expandida** caixa-alta (grafite `#1E2023`), destaque em **azul técnico** `#1F4BD8`, texto corrido em Archivo normal. Nada de preto + dourado (cara de arte feita por IA). Fotos sempre em cor natural, sem filtro. Modelo de render 3D do Blocão: `assets/img/bloco-fechado.webp` e `bloco-desmontado.webp`.
 
 ## 5. Primeiros 9 posts (grade de lançamento)
 1. **Nova fase**: "O Império mudou. O bloco continua o mesmo." (Blocão 3D abrindo ao meio — mesmo efeito do site)
