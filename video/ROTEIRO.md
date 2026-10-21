@@ -1,23 +1,26 @@
-# Roteiro do vídeo — "Sua obra em 1 minuto" (Império do EPS)
+# Roteiro do vídeo — "O Blocão em 30 segundos" (Império do EPS)
 
-Formato Stories 1080×1920 · ~40 s · celular mostrando o **site de verdade** · música de fundo + locução.
-Voz: **a mesma da Pizza em Dobro** (Kokoro pt-BR masculina "pm_santa", velocidade 1,15, mesmo tratamento: EQ leve, compressão e sala curta, música abaixa quando a voz fala).
-Tom: animado, simples, de vizinho que entende de obra. Frases curtas. Nenhuma promessa técnica sem comprovação.
+Formato Stories 1080×1920 · **~38 s, rápido e explicativo** · celular mostrando o **site de verdade rolando sem parar**
+(igual ao "Como pedir" da Pizza em Dobro): a rolagem é o que monta, afasta e abre o Blocão 3D na tela.
+Voz: **a mesma da Pizza em Dobro** (Kokoro pt-BR masculina "pm_santa", velocidade 1,15, EQ leve, compressão e sala curta; a música abaixa quando a voz fala).
+Tom: animado, frases de 2 a 4 palavras (uma ideia por cena), nenhuma promessa técnica sem comprovação.
 
 > Regra de comunicação: o concreto **não descola** do EPS. As peças só se afastam **pra demonstrar**, e o vídeo diz isso.
 
-| # | Cena (tela) | Legenda na tela | Locução (como é lida) | Texto normal |
+| # | Cena (o que o site faz) | Legenda | Locução (como é lida) | ~s |
 |---|---|---|---|---|
-| 1 | Abertura (splash: bloco se monta + botões redondos) | Sua obra em **1 minuto** | "Sua obra em um minuto! Vem ver!" | Sua obra em um minuto! Vem ver! |
-| 2 | Topo do site, bloco 3D girando | Conheça o **Blocão** | "Conheça o Blocão! Concreto por fora, **Épê-ésse** por dentro." | …EPS por dentro. |
-| 3 | Rola: peças se afastam (vista demonstrativa) | Pra mostrar, **afastamos as peças** | "Pra você ver, a gente afasta as peças. Mas na obra, é um bloco só!" | (igual) |
-| 4 | Bloco abre ao meio | Agora abre **ao meio** | "Agora, abre ao meio." | (igual) |
-| 5 | Fichas andam na horizontal (espessura, medida, peso) | Cada peça com a **sua medida** | "Cada peça com a sua medida." | (igual) |
-| 6 | Ficha do bloco real, peças se juntam | Na obra, é **um bloco só** | "Na obra, é um bloco só. Leve e forte!" | (igual) |
-| 7 | Seção da calculadora | Agora, **calcule** sua obra | "Agora, calcule a sua obra!" | (igual) |
-| 8 | Digitando 52 m × 2,80 m | Digite as **medidas** | "Digite as medidas da parede." | (igual) |
-| 9 | WhatsApp recebendo a simulação | Chegou no **WhatsApp**! | "E o orçamento chega no **Uótsap** da fábrica!" | …no WhatsApp da fábrica! |
-| 10 | Cartão final (marca + contato) | Construa com o Império | "Império do **Épê-ésse**. Construa com o Império!" | Império do EPS. Construa com o Império! |
+| 1 | Abertura (splash: bloco se monta + botões redondos) | Parede pronta **rapidinho?** | "Parede pronta rapidinho? Vem ver!" | 3,5 |
+| 2 | Topo: o Blocão 3D girando, leve rolagem | Esse é o **Blocão** | "Esse é o Blocão!" | 2,2 |
+| 3 | Rola direto pro "Por dentro": as peças se afastam NA rolagem | Role e veja **por dentro** | "Role e veja por dentro!" | 2,5 |
+| 4 | Continua rolando devagar, etiquetas com as medidas | Só demonstração: na obra é **peça única** | "Só demonstração! Na obra, é peça única." | 3,6 |
+| 5 | O bloco abre ao meio | Abre **ao meio** | "Abre ao meio!" | 2,2 |
+| 6 | Curva do "L": as fichas andam na horizontal | Cada peça, **sua medida** | "Cada peça, sua medida!" | 2,6 |
+| 7 | Ficha do bloco real: as peças se juntam | Concreto + EPS: **um bloco só** | "Concreto e Épê-ésse: um bloco só!" | 2,7 |
+| 8 | Rola até a calculadora | Calcule a **sua obra** | "Calcule a sua obra!" | 3,6 |
+| 9 | Digita 52 m × 2,80 m e desce pro resultado | Digite as **medidas** | "Digite as medidas!" | 3,0 |
+| 10 | WhatsApp recebendo a simulação | Orçamento no **WhatsApp**! | "Orçamento direto no **Uótsap**!" | 3,0 |
+| 11 | Rola até o rodapé | Site por **Vibe Coding Process** | "Site feito pela **Váib Côudim Prócess**!" | 3,3 |
+| 12 | Cartão final (marca + contato) | Construa com o Império | "Império do **Épê-ésse**. Construa com o Império!" | 5,5 |
 
 ## Grafia fonética (a voz neural lê "como escrito")
 | Escreve | Pra soar |

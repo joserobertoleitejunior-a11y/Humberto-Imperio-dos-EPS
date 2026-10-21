@@ -21,19 +21,18 @@ npm run vendor       # regera assets/vendor/three-imperio.min.js (Three.js só c
 
 Testar como aparelho fraco: abra com `?qualidade=baixa` ou `?qualidade=estatica` (ver MAPA §2).
 
-## Vídeo tutorial ("Sua obra em 1 minuto")
+## Vídeo tutorial ("O Blocão em 30 segundos")
 
 Engenharia reversa do vídeo "Como pedir" da Pizza em Dobro: o celular mostra o **site de verdade** e o vídeo
-comanda rolagem, digitação e o WhatsApp chegando. Cenas em `video/index.html`.
+comanda rolagem (o Blocão 3D abre na rolagem), digitação e o WhatsApp chegando. Cenas em `video/index.html`, roteiro em `video/ROTEIRO.md`.
 
 ```bash
 npm run dev                                                    # servidor na porta 8765 (outro terminal)
 node scripts/exportar-roteiro.js index.html /tmp/roteiro.json  # lê as cenas
-python3 scripts/gerar-trilha-video.py /tmp/roteiro.json video/trilha-como-orcar.mp3   # trilha + tempos
-node scripts/renderizar-video.js index.html /tmp/bruto.mp4 35.2 video/trilha-como-orcar.mp3   # ~40 min; depois comprimir pra 720p (ffmpeg -vf scale=720:1280 -crf 27) e salvar em video/como-orcar.mp4
+KOKORO_DIR=/tmp/tts/kokoro-multi-lang-v1_0 python3 scripts/gerar-audio-video.py /tmp/roteiro.json video/trilha-como-orcar.mp3   # locução + música + tempos
+node scripts/renderizar-video.js index.html /tmp/bruto.mp4 37.76 video/trilha-como-orcar.mp3   # ~40 min; depois comprimir pra 720p (ffmpeg -vf scale=720:1280 -crf 27) e salvar em video/como-orcar.mp4
 ```
-Sem locução por enquanto (a voz neural da Pizza depende de baixar um modelo que este ambiente não alcança).
-Melhor ainda: gravar a voz do Vinicius e trocar a trilha (`MUSICA=arquivo.mp3`).
+Locução com a mesma voz da Pizza em Dobro (Kokoro, como baixar em `video/ROTEIRO.md`). Trocar a música: `MUSICA=arquivo.mp3`.
 
 ## Publicação (Netlify)
 
