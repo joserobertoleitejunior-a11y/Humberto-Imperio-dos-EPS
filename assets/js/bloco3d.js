@@ -27,10 +27,12 @@ import {
   ShadowMaterial, SRGBColorSpace, WebGLRenderer, Raycaster, Vector2, Plane,
 } from "../vendor/three-imperio.min.js";
 
+// min/max = resolução de desenho em múltiplos da tela. min > 1 faz SUPERAMOSTRAGEM: em tela comum (1×)
+// o bloco é desenhado em 2× e reduzido, o que suaviza as bordas (antes ficavam serrilhadas).
 const NIVEIS = {
-  alta: { dpr: 2, tex: 1024, sombra: true, particulas: 70, antialias: true },
-  media: { dpr: 1.5, tex: 1024, sombra: false, particulas: 34, antialias: true },
-  baixa: { dpr: 1, tex: 512, sombra: false, particulas: 0, antialias: false },
+  alta: { min: 2, max: 3, tex: 2048, sombra: true, mapaSombra: 2048, aniso: 16, particulas: 70, antialias: true },
+  media: { min: 1.5, max: 2, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 34, antialias: true },
+  baixa: { min: 1, max: 1.5, tex: 512, sombra: false, mapaSombra: 1024, aniso: 4, particulas: 0, antialias: true },
 };
 
 // Medidas em metros. Face do bloco PROVISÓRIA (confirmar com o Vinicius).
@@ -587,7 +589,7 @@ function redimensionar() {
 function iniciar(canvas) {
   nivel = NIVEIS[document.documentElement.getAttribute("data-qualidade")] || NIVEIS.media;
   renderer = new WebGLRenderer({ canvas, antialias: nivel.antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: !!window.__gravandoVideo });
-  renderer.setPixelRatio(Math.min(nivel.dpr, window.devicePixelRatio || 1));
+  renderer.setPixelRatio(Math.min(nivel.max, Math.max(nivel.min, window.devicePixelRatio || 1)));
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = SRGBColorSpace;
@@ -606,10 +608,10 @@ function iniciar(canvas) {
   sol.position.set(-1.1, 3.0, 2.6);
   sol.castShadow = nivel.sombra;
   if (nivel.sombra) {
-    sol.shadow.mapSize.set(1024, 1024);
+    sol.shadow.mapSize.set(nivel.mapaSombra, nivel.mapaSombra);
     sol.shadow.camera.left = sol.shadow.camera.bottom = -1.8;
     sol.shadow.camera.right = sol.shadow.camera.top = 1.8;
-    sol.shadow.radius = 6;
+    sol.shadow.radius = 4;
     sol.shadow.bias = -0.0004;
     sol.shadow.normalBias = 0.02;
   }
@@ -620,7 +622,7 @@ function iniciar(canvas) {
   cena.add(new HemisphereLight(0xffffff, 0xbdb6a8, 0.5));
   cena.add(new AmbientLight(0xffffff, 0.08));
 
-  const anis = Math.min(nivel.tex >= 1024 ? 8 : 2, renderer.capabilities.getMaxAnisotropy());
+  const anis = Math.min(nivel.aniso, renderer.capabilities.getMaxAnisotropy());
   const liso = texturasConcreto(nivel.tex, false, 7);
   const serrado = texturasConcreto(nivel.tex, true, 19);
   const eps = texturasEPS(nivel.tex, 5);
