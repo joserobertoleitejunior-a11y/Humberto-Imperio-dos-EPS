@@ -51,6 +51,30 @@
 8. Destaques bons mas sem capa padronizada (Blokão sanduíche · Molduras · Chegamos Itape).
 9. Texto escrito em cima da foto torto/sem padrão; artes com texto cortado nas bordas.
 
+## 3.1 Concorrência (prints enviados pelo José em 2026-10-21, 10:04–10:10)
+
+> Os sites `blotec.com.br` e `amslajes.com.br` não abriram deste ambiente (bloqueio de rede); a análise abaixo é dos prints.
+
+| Perfil | Números | O que fazem bem | Onde falham (nossa brecha) |
+|---|---|---|---|
+| **@inovablocos.petrolina** — Inova Blocos (franquia) | 99 posts · 8.634 seg. · 48 seguindo | Marca única (verde + ícone de blocos), bio perfeita (o quê · benefício · cidade · telefone · link), destaques com ícone padronizado, posts que atacam **dor local** ("Petrolina é sempre quente…", barulho) | Visual de franquia genérico, link só `wa.me`, sem site, sem calculadora, sem preço/medida do bloco |
+| **@paredesblotec** — Blotec Paredes Modulares | 181 posts · 16,4 mil · 207 | Melhor conteúdo do grupo: fundador na câmera, fotografia P&B cinematográfica, **quebra de objeção** ("isopor pega fogo", "sem resistência"), mapa de licenciados, prova em fábrica | Logo fraco (fonte técnica fina), foco em vender licença (não atende quem quer **construir**), linktree |
+| **@ams.lajes** — AMS Lajes e Ferragens (Blocok) | 834 posts · 18,4 mil · 3.926 | Identidade corporativa sólida (laranja + grafite), linktree com botões por intenção ("Quero comprar Blocok / Lajes…"), "+5.000 clientes satisfeitos", site próprio | Paredes prontas são só 1 linha entre muitas; linktree fora da marca |
+| **@edsoncostadesousas** — Edson Costa / Re9con | 971 posts · 18,1 mil · 6.335 | Volume, verificado, posts técnicos comparativos (pilar em bloco × caixaria) | Perfil pessoal de corretor, mistura imóveis e blocos, sem marca de produto |
+| **@vagnercasaleve** — Vagner Eduardo | 911 posts · 3.716 · 1.507 | Bastidores reais (formas, concretagem), autoridade de "formando em engenharia" | Fotos amadoras, sem identidade, sem CTA, bio sem cidade nem link |
+| **@naldoalvesofisial** — Naldo Alves / Las Blocos | 371 posts · 3.761 · 280 | Prova de produção em volume (fábrica cheia) | Perfil pessoal, sem bio, arte "kit fábrica R$ 50.000" poluída |
+
+### Como o Império do EPS fica melhor que todos
+
+1. **Marca única e premium**: só o Blotec e a AMS têm identidade; nenhum é "premium". Coroa + bloco em corte, grafite + dourado, aplicado igual em tudo (perfil, destaques, posts, site, fardamento, caminhão).
+2. **Site de verdade, não linktree/wa.me**: ninguém tem **calculadora de blocos**, comparativo interativo, galeria filtrável, promoções com validade e cadastro do cliente. Nós temos tudo isso, e os botões do link na bio levam pra seções do site por intenção (copiando o melhor da AMS, mas dentro da nossa marca).
+3. **Ficha técnica pública**: as medidas reais dos 4 blocos (10/13/15/20 cm) num lugar só. Os concorrentes escondem.
+4. **Quebra de objeção como pilar de conteúdo** (o melhor do Blotec): "pega fogo?", "aguenta peso?", "segura prego/armário?", "e a umidade?". Vira FAQ no site + série de Reels.
+5. **Dor local** (o melhor da Inova): "Itapetininga no verão / inverno", obra parada na chuva, falta de pedreiro.
+6. **Rosto da marca** (Blotec): Vinicius na câmera mostrando fábrica e obra, sem perder o padrão visual.
+7. **Prova social organizada**: destaque "Clientes" + depoimentos no site com cidade e foto da obra (a AMS só diz "+5.000").
+8. **Seguindo < seguidores**: limpar os 2.069 seguindo (concorrentes sérios seguem 48–280).
+
 ## 4. Engenharia reversa dos repositórios da agência (só leitura — nada foi alterado neles)
 
 | Vem de | O que reaproveitar | Adaptação pro Humberto |
