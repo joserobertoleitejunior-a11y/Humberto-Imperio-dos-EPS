@@ -603,15 +603,28 @@ main { position: relative; z-index: 2; }
   .calc__resultado { grid-template-columns: 1fr; }
 }
 
+/* celular deitado (tela muito baixa): só a espessura fica, fichas compactas e menores */
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 1079px) {
+  .ferramentas, .toque-pronto .ferramentas, .jornada__rotulos { display: none; }
+  .controles { top: calc(var(--cabecalho) + 6px); }
+  .jornada__h { bottom: 10px; }
+  .painel { width: min(46vw, 320px); padding: 12px 14px; }
+  .painel > p:last-child, .painel__tag { display: none; }
+  .painel h3 { font-size: 1rem; margin-bottom: 0.2em; }
+  .painel .espec { margin-bottom: 0; }
+  .painel .espec div { padding: 4px 0; }
+}
+
 /* ---------- Nível "estatica" (sem 3D, sem movimento): a jornada vira seção normal ---------- */
 [data-qualidade="estatica"] .jornada { height: auto; }
 [data-qualidade="estatica"] .jornada__fixo { position: static; height: auto; overflow: visible; padding: 60px 0; }
-[data-qualidade="estatica"] .jornada__v { position: static; }
+[data-qualidade="estatica"] .jornada__janela { position: static; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+[data-qualidade="estatica"] .jornada__v { position: static; padding-top: 0; transform: none !important; opacity: 1 !important; visibility: visible !important; }
 [data-qualidade="estatica"] .jornada__texto { margin-bottom: 1.2em; }
-[data-qualidade="estatica"] .jornada__estatico { display: block; width: min(640px, 100% - 32px); margin: 10px auto 24px; }
+[data-qualidade="estatica"] .jornada__estatico { display: block; width: auto; max-width: min(640px, 100% - 32px); height: auto; max-height: 52vh; object-fit: contain; margin: 10px auto 24px; }
 [data-qualidade="estatica"] .jornada__rotulos { display: none; }
 [data-qualidade="estatica"] .controles { position: static; transform: none; width: auto; justify-items: center; margin: 0 auto 16px; }
-[data-qualidade="estatica"] .jornada__h { position: static; opacity: 1; flex-wrap: wrap; justify-content: center; }
+[data-qualidade="estatica"] .jornada__h { position: static; opacity: 1 !important; visibility: visible !important; transform: none !important; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
 [data-qualidade="estatica"] .faixas__linha { white-space: normal; font-size: clamp(1.4rem, 5vw, 2.6rem); }
 [data-qualidade="estatica"] [data-revelar] { opacity: 1; transform: none; }
 [data-qualidade="baixa"] .cabecalho, [data-qualidade="baixa"] .btn-redondo, [data-qualidade="baixa"] .modal { backdrop-filter: none; -webkit-backdrop-filter: none; }

@@ -65,7 +65,7 @@
       cy: celular ? cm : mix(h * 0.58, h * 0.36, curva),
       larg: celular
         ? Math.min(w * mix(0.6, 0.54, curva), (zona - 68) * 0.95)
-        : mix(Math.min(w * 0.4, 640), Math.min(w * 0.32, 500), curva),
+        : Math.min(mix(Math.min(w * 0.4, 640), Math.min(w * 0.32, 500), curva), h * 0.72), // tela baixa (celular deitado): bloco cabe na altura
       giro: giro,
       inclinar: mix(0.28, 0.2, aberto),
       dim0: foco >= 0 && foco <= 2 && foco !== 0 ? 1 : 0,
@@ -143,7 +143,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261021f")
+    import("./bloco3d.js?v=20261021g")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);

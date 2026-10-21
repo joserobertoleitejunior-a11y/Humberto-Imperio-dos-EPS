@@ -129,6 +129,11 @@
     j.medido = true;
   }
 
+  /** Deslocamento do trilho que deixa a ficha i no meio da tela (sem passar das pontas). */
+  function centralizar(j, i) {
+    return Math.min(j.largura, Math.max(0, j.medidasPaineis[i].centro - window.innerWidth / 2));
+  }
+
   function pintarJornada() {
     var j = jornada;
     if (!j.medido) medirJornada();
@@ -145,6 +150,15 @@
     // perna horizontal: LINEAR (1 px de rolagem = 1 px de movimento; o easing antigo "empacava" nas pontas)
     var hz = limitar((p - 0.44) / 0.5);
     var tx = (1 - hz) * 30 - hz * j.largura;
+    // celular (1 ficha por tela): vai de ficha em ficha e cada uma passa CENTRALIZADA (desacelera nela, sem travar)
+    var n = j.medidasPaineis.length;
+    if (window.innerWidth < 760 && n > 1) {
+      var k = hz * (n - 1);
+      var a = Math.min(n - 2, Math.floor(k));
+      var x0 = centralizar(j, a);
+      var x1 = centralizar(j, a + 1);
+      tx = -(x0 + (x1 - x0) * suave(k - a)) + Math.max(0, 1 - k) * 30;
+    }
     j.vertical.style.transform = "translate3d(" + -hz * 22 + "vw," + -v * j.alturaV + "px,0)";
     var opV = 1 - suave((p - 0.42) / 0.08);
     j.vertical.style.opacity = opV;
