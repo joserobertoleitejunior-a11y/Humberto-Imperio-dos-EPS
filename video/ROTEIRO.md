@@ -7,28 +7,34 @@ Tom: animado, frases de 2 a 4 palavras (uma ideia por cena), nenhuma promessa t�
 
 > Regra de comunicação: o concreto **não descola** do EPS. As peças só se afastam **pra demonstrar**, e o vídeo diz isso.
 
-| # | Cena (o que o site faz) | Legenda | Locução (como é lida) | ~s |
+| # | Cena (o que o site faz) | Legenda | Locução (como é escrita pra voz) | ~s |
 |---|---|---|---|---|
-| 1 | Abertura (splash: bloco se monta + botões redondos) | Parede pronta **rapidinho?** | "Parede pronta rapidinho? Vem ver!" | 3,5 |
-| 2 | Topo: o Blocão 3D girando, leve rolagem | Esse é o **Blocão** | "Esse é o Blocão!" | 2,2 |
+| 1 | Abertura (splash: bloco se monta + botões redondos) | Parede pronta **rapidinho?** | "Quer parede pronta rapidinho? Vem ver!" | 3,9 |
+| 2 | Topo: o Blocão 3D, leve rolagem | Conheça o nosso **Blocão** | "Conheça o nosso Blocão!" | 2,2 |
 | 3 | Rola direto pro "Por dentro": as peças se afastam NA rolagem | Role e veja **por dentro** | "Role e veja por dentro!" | 2,5 |
-| 4 | Continua rolando devagar, etiquetas com as medidas | Só demonstração: na obra é **peça única** | "Só demonstração! Na obra, é peça única." | 3,6 |
+| 4 | Continua rolando, etiquetas com as medidas | É só demonstração: na obra é **peça única** | "É só demonstração! Na obra, é peça única." | 3,8 |
 | 5 | O bloco abre ao meio | Abre **ao meio** | "Abre ao meio!" | 2,2 |
 | 6 | Curva do "L": as fichas andam na horizontal | Cada peça, **sua medida** | "Cada peça, sua medida!" | 2,6 |
-| 7 | Ficha do bloco real: as peças se juntam | Concreto + EPS: **um bloco só** | "Concreto e Épê-ésse: um bloco só!" | 2,7 |
-| 8 | Rola até a calculadora | Calcule a **sua obra** | "Calcule a sua obra!" | 3,6 |
-| 9 | Digita 52 m × 2,80 m e desce pro resultado | Digite as **medidas** | "Digite as medidas!" | 3,0 |
-| 10 | WhatsApp recebendo a simulação | Orçamento no **WhatsApp**! | "Orçamento direto no **Uótsap**!" | 3,0 |
-| 11 | Rola até o rodapé | Site por **Vibe Coding Process** | "Site feito pela **Váib Côudim Prócess**!" | 3,3 |
-| 12 | Cartão final (marca + contato) | Construa com o Império | "Império do **Épê-ésse**. Construa com o Império!" | 5,5 |
+| 7 | Ficha do bloco real: as peças se juntam | Concreto + EPS: **um bloco só** | "Concreto e é, pê, ésse: um bloco só!" | 2,7 |
+| 8 | Rola até os campos da calculadora | Calcule a **sua obra** | "Calcule a sua obra!" | 3,6 |
+| 9 | Digita 52 m × 2,80 m e desce pro resultado | Digite as **medidas** | "Agora, digite as medidas!" | 3,0 |
+| 10 | WhatsApp recebendo a simulação | Orçamento no **WhatsApp**! | "Orçamento direto no Uótsap!" | 3,0 |
+| 11 | Rola até o rodapé | Site por **Vibe Coding Process** | "Site feito pela Váib Côudim Prócess!" | 3,3 |
+| 12 | Cartão final (marca + contato) | A fábrica do Blocão | "Império do é, pê, ésse: a fábrica do Blocão!" | 4,9 |
 
-## Grafia fonética (a voz neural lê "como escrito")
-| Escreve | Pra soar |
-|---|---|
-| EPS | **Épê-ésse** |
-| WhatsApp | **Uótsap** |
-| Blocão | Blocão (lê certo) |
-| números | por extenso ("um minuto"); nunca "52 m²" na fala |
+## Pronúncia — testada com reconhecimento de voz (Whisper), com a música por baixo
+A voz neural lê "como está escrito". Cada fala foi gerada e transcrita de volta; só ficou o que voltou certo.
+| Escreve | Resultado | Por quê |
+|---|---|---|
+| **é, pê, ésse** (com vírgulas) | "EPS" ✅ | "Épê-ésse" e "EPS" saíam "APS" / "rapéia-se" |
+| "Império do EPS" **no fim da frase** | "APS" ❌ | por isso o fecho é "Império do é, pê, ésse: **a fábrica do Blocão!**" |
+| **Uótsap** | "WhatsApp" ✅ | |
+| **Váib Côudim Prócess** | "Vibe Coding Process" ✅ | |
+| "Esse é o Blocão!" / "Este é o Blocão!" | "e se o bloco" ❌ | trocado por **"Conheça o nosso Blocão!"** ✅ |
+| "Só demonstração!" | "sua demonstração" ❌ | trocado por **"É só demonstração!"** ✅ |
+| "Parede pronta rapidinho?" | "Parei de pronta…" ❌ | trocado por **"Quer parede pronta rapidinho?"** ✅ |
+
+Voz confirmada pela gravação da Pizza em Dobro (comparação do envelope da fala): **pm_santa (VOZ_SID=44), velocidade 1,15**.
 
 ## Como gerar de novo
 ```bash
