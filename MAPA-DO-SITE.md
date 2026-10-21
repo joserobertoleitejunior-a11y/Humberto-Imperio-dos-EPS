@@ -79,7 +79,7 @@ assets/img/                    marca, favicon, og-image, bloco-fechado/desmontad
 
 video/index.html               Vídeo tutorial "Sua obra em 1 minuto" (Stories 1080×1920) — motor da Pizza em Dobro
 video/motion.js / motion.css   Motor: celular com o site de verdade, legendas animadas, WhatsApp chegando
-video/como-orcar.mp4 (+ capa)  Vídeo pronto (usado na tela de boas-vindas)
+video/como-orcar.mp4 (+ capa)  Vídeo pronto, 720p ~2 MB (tela de boas-vindas; liga/desliga em config.boasVindasComVideo)
 video/trilha-como-orcar.mp3    Trilha sintetizada (sem direitos autorais, sem locução)
 scripts/                       vendor-three.js, exportar-roteiro.js, gerar-trilha-video.py, renderizar-video.js
 

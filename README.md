@@ -30,7 +30,7 @@ comanda rolagem, digitação e o WhatsApp chegando. Cenas em `video/index.html`.
 npm run dev                                                    # servidor na porta 8765 (outro terminal)
 node scripts/exportar-roteiro.js index.html /tmp/roteiro.json  # lê as cenas
 python3 scripts/gerar-trilha-video.py /tmp/roteiro.json video/trilha-como-orcar.mp3   # trilha + tempos
-node scripts/renderizar-video.js index.html video/como-orcar.mp4 32.4 video/trilha-como-orcar.mp3   # ~25 min
+node scripts/renderizar-video.js index.html /tmp/bruto.mp4 35.2 video/trilha-como-orcar.mp3   # ~40 min; depois comprimir pra 720p (ffmpeg -vf scale=720:1280 -crf 27) e salvar em video/como-orcar.mp4
 ```
 Sem locução por enquanto (a voz neural da Pizza depende de baixar um modelo que este ambiente não alcança).
 Melhor ainda: gravar a voz do Vinicius e trocar a trilha (`MUSICA=arquivo.mp3`).

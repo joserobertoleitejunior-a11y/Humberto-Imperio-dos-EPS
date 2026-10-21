@@ -10,7 +10,8 @@ async function abrir(page, url = "/") {
   await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
 }
 
-test("sem vídeo pronto, a boas-vindas não aparece e o site abre direto", async ({ page }) => {
+test("vídeo não carrega: a boas-vindas não aparece e o site abre direto", async ({ page }) => {
+  await page.route("**/video/como-orcar.mp4", (rota) => rota.abort());
   await page.goto("/");
   await page.waitForFunction(() => window.ImperioAbertura);
   await page.evaluate(() => window.ImperioAbertura.fecharSplash());
@@ -18,6 +19,21 @@ test("sem vídeo pronto, a boas-vindas não aparece e o site abre direto", async
   await page.waitForTimeout(3000);
   await expect(page.locator("#boas-vindas")).toBeHidden();
   await expect(page.locator("body")).not.toHaveClass(/travado/);
+});
+
+test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calculadora", async ({ page }) => {
+  // simula um vídeo que carrega (o Chromium do teste não decodifica H.264)
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.load = function () { setTimeout(() => this.dispatchEvent(new Event("loadeddata")), 50); };
+    HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+  });
+  await page.goto("/");
+  await page.waitForFunction(() => window.ImperioAbertura);
+  await page.evaluate(() => window.ImperioAbertura.fecharSplash());
+  await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 10000 });
+  await page.click("[data-bv-calcular]");
+  await expect(page.locator("#boas-vindas")).toBeHidden();
+  await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 5000 });
 });
 
 test("celular: botões ficam fora da área do bloco 3D", async ({ page }) => {
