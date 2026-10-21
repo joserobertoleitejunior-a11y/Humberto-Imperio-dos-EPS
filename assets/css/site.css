@@ -214,6 +214,10 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- Palco 3D (um canvas fixo atrás da hero e da jornada) ---------- */
 .palco3d { position: fixed; inset: 0; width: 100vw; height: 100vh; height: calc(var(--vh, 1vh) * 100); z-index: 1; pointer-events: none; opacity: 0; transition: opacity 0.5s; }
 .com-3d .palco3d { opacity: 1; }
+/* celular: o canvas mora DENTRO do que rola (o navegador move o bloco junto com a página, sem atraso) */
+.palco3d.palco3d--local { position: absolute; z-index: 1; transition: none; }
+.hero__palco > .palco3d--local { inset: -20% 0; width: 100%; height: 140%; }
+.jornada__fixo > .palco3d--local { inset: 0 0 auto 0; width: 100%; height: calc(var(--zona) + 24px); }
 main { position: relative; z-index: 2; }
 .rodape { position: relative; z-index: 2; }
 
@@ -246,7 +250,7 @@ main { position: relative; z-index: 2; }
 .jornada__v > * { max-width: 30rem; }
 .jornada__v h2 { font-size: clamp(1.8rem, 6.4vw, 3.6rem); margin-bottom: 0.35em; }
 .jornada__texto { color: var(--texto-suave); font-size: 1.08rem; margin-bottom: 38vh; }
-.jornada__rotulos { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.jornada__rotulos { list-style: none; margin: 0; padding: 0; position: absolute; z-index: 2; inset: 0; pointer-events: none; opacity: 0; }
 .rot { position: absolute; padding: 8px 12px; font-size: 0.78rem; line-height: 1.3; color: var(--texto-suave); background: rgba(251, 250, 247, 0.92); border: 1px solid var(--linha); border-radius: 6px; max-width: 12rem; }
 .rot b { display: block; font-size: 0.9rem; font-stretch: 115%; color: var(--grafite); }
 .rot { left: 0; top: 0; white-space: nowrap; max-width: none; transition: opacity 0.3s; }
@@ -552,7 +556,7 @@ main { position: relative; z-index: 2; }
   .jornada__v { padding-top: 22px; }
   .jornada__v { top: 0; }
   .jornada__v h2 { font-size: clamp(1.5rem, 7vw, 2.2rem); }
-  .jornada__texto { margin-bottom: 26vh; font-size: 1rem; }
+  .jornada__texto { margin-bottom: 26vh; font-size: 1.04rem; line-height: 1.55; color: var(--texto); }
   .jornada__toque { top: calc(var(--by) - var(--bw) * 0.4); height: calc(var(--bw) * 0.8); }
   .rot { font-size: 0.66rem; padding: 4px 7px; }
   .rot[data-rot="1"] { --haste: 36px; }

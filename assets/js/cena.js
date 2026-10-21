@@ -1,8 +1,11 @@
 /**
  * Liga a rolagem da página ao Blocão 3D (bloco3d.js).
  * - Só baixa o Three.js depois que a página abriu (load + ocioso): não atrasa a primeira tela.
- * - Um único <canvas> fixo atrás do conteúdo serve à hero E à jornada em "L"
+ * - PC: um único <canvas> fixo atrás do conteúdo serve à hero E à jornada em "L"
  *   (o bloco "viaja" de uma pra outra sem corte). Seções com fundo próprio cobrem o canvas.
+ * - CELULAR: o canvas MORA dentro do que rola (palco da hero → parte fixa da jornada). Assim quem move o
+ *   bloco é o próprio navegador, junto com a página (canvas fixo + JS sempre fica 1-2 quadros atrás
+ *   da rolagem do celular e o bloco "escorrega").
  * - Fora da hero/jornada o desenho para (0 % de GPU).
  * - Sem WebGL ou nível "estatica": ficam as imagens prontas (assets/img/bloco-*.webp).
  */
@@ -64,7 +67,7 @@
       cx: mix(w * (celular ? 0.5 : 0.64), w * (celular ? 0.5 : 0.68), curva),
       cy: celular ? cm : mix(h * 0.58, h * 0.36, curva),
       larg: celular
-        ? Math.min(w * mix(0.6, 0.54, curva), (zona - 68) * 0.95)
+        ? Math.min(w * (mix(0.72, 0.66, curva) - 0.2 * aberto), (zona - 68) * 0.98) // maior no celular; encolhe só aberto ao meio (ocupa mais largura)
         : Math.min(mix(Math.min(w * 0.4, 640), Math.min(w * 0.32, 500), curva), h * 0.72), // tela baixa (celular deitado): bloco cabe na altura
       giro: giro,
       inclinar: mix(0.28, 0.2, aberto),
@@ -81,8 +84,65 @@
     return b ? b.total : 15;
   }
 
+  /* ---------- Celular: canvas dentro do palco da hero ou da parte fixa da jornada ---------- */
+  var celular = false;
+  var casa = null;          // elemento onde o canvas está agora
+  var palco = null;
+  var fixo = null;
+  var palcoVisivel = true;
+  var tamPalco = null;      // medidas em cache (só mudam no resize)
+
+  function modoCelular() { return window.innerWidth < 760; }
+
+  function morarEm(el) {
+    if (casa === el) return;
+    casa = el;
+    el.appendChild(canvas);
+    tamPalco = null;
+    B.redimensionar();
+  }
+
+  function trocarModo() {
+    celular = modoCelular();
+    canvas.classList.toggle("palco3d--local", celular);
+    if (!celular) { casa = null; document.body.appendChild(canvas); B.redimensionar(); }
+  }
+
+  function atualizarCelular(j) {
+    var naJornada = j && j.dentro && j.entrada > 0 && !palcoVisivel;
+    morarEm(naJornada ? fixo : palco);
+    var alvo;
+    if (naJornada) {
+      alvo = alvoJornada(j);  // coordenadas da parte fixa = da tela quando ela gruda no topo
+    } else {
+      if (!tamPalco) tamPalco = { pw: palco.offsetWidth, ph: palco.offsetHeight, cw: canvas.clientWidth, ch: canvas.clientHeight };
+      var t = tamPalco;
+      alvo = { cx: t.cw / 2, cy: t.ch / 2 + t.ph * 0.02, larg: t.pw * 0.9, abertura: 0, giro: -0.55, inclinar: 0.3, separacao: 0, dim0: 0, dim1: 0, dim2: 0, rotulos: 0 };
+    }
+    alvo.espessura = espessuraEscolhida();
+    if (areaToque && naJornada) {
+      var chave = Math.round(alvo.cx) + "," + Math.round(alvo.cy) + "," + Math.round(alvo.larg);
+      if (chave !== ultimaArea) {
+        ultimaArea = chave;
+        areaToque.style.setProperty("--bx", alvo.cx + "px");
+        areaToque.style.setProperty("--by", alvo.cy + "px");
+        areaToque.style.setProperty("--bw", alvo.larg + "px");
+      }
+    }
+    var opRotulos = naJornada ? alvo.rotulos : 0;
+    if (rotulos && opRotulos !== ultimaOpRot) { ultimaOpRot = opRotulos; rotulos.style.opacity = opRotulos; }
+    var visivel = naJornada ? true : palcoVisivel;
+    if (visivel !== ultimaVis) { ultimaVis = visivel; canvas.style.opacity = visivel ? 1 : 0; }
+    B.pausar(!visivel);
+    B.respirar(!naJornada);
+    delete alvo.rotulos;
+    B.estado(alvo);
+  }
+
   function atualizar(j) {
     if (!B) return;
+    if (celular !== modoCelular()) trocarModo();
+    if (celular) return atualizarCelular(j);
     var hero = alvoHero();
     var dentroJ = j && j.dentro;
     var e = j ? suave(j.entrada) : 0;
@@ -143,7 +203,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261021g")
+    import("./bloco3d.js?v=20261021i")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);
@@ -158,6 +218,16 @@
         }
         rotulos = document.querySelector("[data-jornada-rotulos]");
         areaToque = document.querySelector(".jornada__toque");
+        palco = document.querySelector('[data-ancora="hero"]');
+        fixo = document.querySelector(".jornada__fixo");
+        if ("IntersectionObserver" in window && palco) {
+          new IntersectionObserver(function (en) {
+            palcoVisivel = en[0].isIntersecting;
+            atualizar(window.ImperioMotion && window.ImperioMotion.jornada());
+          }, { rootMargin: "-56px 0px 0px 0px" }).observe(palco);
+        }
+        window.addEventListener("resize", function () { tamPalco = null; }, { passive: true });
+        celular = !modoCelular(); // força a primeira arrumação em atualizar()
         B.aoPosicionar(posicionarRotulos);
         if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);
         if (window.ImperioEspessura) window.ImperioEspessura.aoMudar(function () { atualizar(window.ImperioMotion && window.ImperioMotion.jornada()); });

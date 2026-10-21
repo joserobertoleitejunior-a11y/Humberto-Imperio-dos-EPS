@@ -424,9 +424,14 @@ function suavizarToque(dt) {
   return mudou;
 }
 
+/** Toque (px da tela) → coordenada normalizada do canvas, onde quer que ele esteja na página. */
+function paraNdc(px, py) {
+  const r = renderer.domElement.getBoundingClientRect();
+  _ndc.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1);
+}
+
 function pegarPeca(px, py) {
-  const el = renderer.domElement;
-  _ndc.set((px / el.clientWidth) * 2 - 1, -(py / el.clientHeight) * 2 + 1);
+  paraNdc(px, py);
   raio.setFromCamera(_ndc, camera);
   const pecas = [];
   metades.forEach((g) => ["peleA", "miolo", "peleB"].forEach((n) => { if (g.userData[n].visible) pecas.push(g.userData[n]); }));
@@ -460,8 +465,7 @@ const interacao = {
       toque.alvo.giro = a.giro + (px - a.x) * 0.009;
       toque.alvo.inclinar = MathUtils.clamp(a.inclinar + (py - a.y) * 0.006, -1, 0.9);
     } else {
-      const el = renderer.domElement;
-      _ndc.set((px / el.clientWidth) * 2 - 1, -(py / el.clientHeight) * 2 + 1);
+      paraNdc(px, py);
       raio.setFromCamera(_ndc, camera);
       if (!raio.ray.intersectPlane(_plano, _hit)) return;
       const local = a.mesh.parent.worldToLocal(_hit.clone()).sub(a.inicioLocal);

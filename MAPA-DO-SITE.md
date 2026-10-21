@@ -92,6 +92,8 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 ## 4. Regras de layout
 - Sem rolagem lateral de 320 px a 1920 px (coberto pelo E2E).
 - `[hidden]` sempre esconde (regra global).
-- O canvas 3D fica **fixo atrás** do conteúdo: hero e jornada são transparentes; as outras seções têm fundo e cobrem o canvas.
+- PC: o canvas 3D fica **fixo atrás** do conteúdo: hero e jornada são transparentes; as outras seções têm fundo e cobrem o canvas.
+- Celular (< 760 px): o canvas **mora dentro do que rola** — no palco da hero e, depois, na parte fixa (sticky) da jornada.
+  Quem move o bloco é o navegador, junto com a página (canvas fixo + JS fica 1–2 quadros atrás da rolagem do celular e o bloco "escorrega").
 - Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena` → `toque`.
 - Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).
