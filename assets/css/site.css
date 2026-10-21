@@ -494,6 +494,12 @@ main { position: relative; z-index: 2; }
 .atalho__txt { display: grid; justify-items: center; }
 .atalho__txt small { display: none; }
 .atalho:hover, .atalho:focus-visible { transform: translateY(-2px); color: var(--azul); }
+@media (max-width: 1359px) {
+  /* celular/tablet: faixa única que sempre cabe na largura (nenhum nome cortado nas pontas) */
+  .atalhos { justify-content: space-between; gap: 0; max-width: 560px; margin-inline: auto; padding: 0 6px; overflow: visible; }
+  .atalho { flex: 1 1 0; min-width: 0; padding: 4px 2px; font-size: 0.62rem; }
+  .atalho__txt b { white-space: nowrap; }
+}
 .hero { padding-top: calc(var(--cabecalho) + 64px); }
 /* PC largo: coluna fixa no canto, só os ícones; ao passar o mouse abre a informação ao lado */
 @media (min-width: 1360px) {
@@ -542,19 +548,24 @@ main { position: relative; z-index: 2; }
 /* ---------- Celular: rótulos da jornada e painéis menores ---------- */
 @media (max-width: 759px) {
   /* celular: o bloco fica em cima e o texto rola numa "janela" embaixo (sem passar por cima do bloco) */
-  .jornada__janela { top: calc(var(--zona) + 108px); overflow: hidden; }
+  .jornada__janela { top: calc(var(--zona) + 84px); overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 28px); mask-image: linear-gradient(transparent, #000 28px); }
+  .jornada__v { padding-top: 22px; }
   .jornada__v { top: 0; }
   .jornada__v h2 { font-size: clamp(1.5rem, 7vw, 2.2rem); }
   .jornada__texto { margin-bottom: 26vh; font-size: 1rem; }
   .jornada__toque { top: calc(var(--by) - var(--bw) * 0.4); height: calc(var(--bw) * 0.8); }
   .rot { font-size: 0.66rem; padding: 4px 7px; }
-  .rot[data-rot="1"] { --haste: 34px; }
-  .rot[data-rot="2"] { --haste: 58px; }
-  .rot b { font-size: 0.66rem; }
+  .rot[data-rot="1"] { --haste: 36px; }
+  .rot[data-rot="2"] { --haste: 62px; }
+  .rot b, .rot span { display: inline; }
+  .rot b { font-size: 0.66rem; margin-right: 4px; }
   .rot span { font-size: 0.8rem; }
-  .controles { top: var(--zona); right: auto; left: 50%; transform: translateX(-50%); justify-items: center; width: calc(100% - 20px); }
-  .ferramentas button { padding: 0 7px; font-size: 0.72rem; min-height: 32px; }
-  .ferramentas, .espessuras { justify-content: center; }
+  /* botões em 2 linhas fixas e compactas (nada quebra em 3 linhas nem cobre o título) */
+  .controles { top: var(--zona); right: auto; left: 50%; transform: translateX(-50%); justify-items: center; width: calc(100% - 16px); gap: 4px; }
+  .ferramentas, .espessuras { justify-content: center; flex-wrap: nowrap; padding: 3px 4px; gap: 2px; max-width: 100%; }
+  .ferramentas button { padding: 0 6px; font-size: 0.7rem; min-height: 30px; white-space: nowrap; }
+  .espessuras button { min-height: 30px; min-width: 40px; }
+  .so-pc { display: none; }
   .rot span { font-size: 0.9rem; }
   .jornada__h { bottom: 4vh; }
   .painel { padding: 16px; }
@@ -583,6 +594,9 @@ main { position: relative; z-index: 2; }
 }
 @media (max-width: 359px) {
   .cabecalho__logo img { height: 22px; }
+  .ferramentas button { padding: 0 4px; font-size: 0.64rem; }
+  .ferramentas { flex-wrap: wrap; }
+  .atalho { padding: 4px 0; font-size: 0.56rem; letter-spacing: 0; }
   .hero__selos { grid-template-columns: 1fr; }
   .hero__selos li + li { padding-left: 0; border-left: 0; }
   .campos-duplos, .alternador--3 { grid-template-columns: 1fr; }

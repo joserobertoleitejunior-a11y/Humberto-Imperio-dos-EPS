@@ -4,8 +4,8 @@
  *     encaixam, o nome sobe palavra por palavra e o bloco abre ao meio "deixando entrar".
  *     Fecha sozinha (~3,2 s) e pode ser pulada com um toque.
  *     Não reaparece ao navegar dentro do site na mesma sessão (só em recarregar/visita nova).
- *  2. BOAS-VINDAS (1x por sessão): o vídeo "Sua obra em 1 minuto" no fundo + 2 caminhos:
- *     "Calcular minha obra" (vai direto pra calculadora) ou "Ver o site".
+ *  2. BOAS-VINDAS (1x por sessão): o vídeo "O Blocão em 30 segundos" no fundo + 2 caminhos:
+ *     "Conhecer nosso produto" (vai pro Blocão por dentro) ou "Orçamento" (calculadora).
  * Aparelho fraco / economia de dados: o vídeo não baixa sozinho (fica a capa; toca no toque).
  */
 (function () {

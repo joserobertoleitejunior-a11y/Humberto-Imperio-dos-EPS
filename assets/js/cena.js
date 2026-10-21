@@ -127,7 +127,7 @@
     larguraTela = window.innerWidth;
     pos.forEach(function (pt, k) {
       // escalonadas na altura (a do meio mais alta) pra não se sobreporem com o bloco de lado
-      var sobe = (window.innerWidth < 760 ? [0, 18, 36] : [0, 40, 80])[k];
+      var sobe = (window.innerWidth < 760 ? [0, 26, 52] : [0, 40, 80])[k];
       if (!itens[k]) return;
       // etiqueta nunca sai da tela (largura medida uma vez por etiqueta)
       var larg = larguras[k] || (larguras[k] = itens[k].offsetWidth || 120);
@@ -143,7 +143,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js")
+    import("./bloco3d.js?v=20261021f")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);

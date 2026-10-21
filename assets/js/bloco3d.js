@@ -510,11 +510,14 @@ const interacao = {
   mexido() { return toque.mexeu; },
 };
 
+const GRUDA = { cx: 1, cy: 1 };
 function suavizar(dt) {
   let mudou = false;
   const k = 1 - Math.exp(-dt * 9);
   for (const chave in alvo) {
     const d = alvo[chave] - atual[chave];
+    // lugar na tela segue a rolagem na hora (senão o bloco "flutua" atrás do conteúdo no celular)
+    if (GRUDA[chave] && atual.larg > 0) { if (d !== 0) { atual[chave] = alvo[chave]; mudou = true; } continue; }
     if (Math.abs(d) > 0.0004) {
       atual[chave] += d * k;
       mudou = true;

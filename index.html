@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261021e"></script>
+  <script src="assets/js/dispositivo.js?v=20261021f"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261021e">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261021f">
 
   <script type="application/ld+json">
   {
@@ -165,7 +165,7 @@
       <div class="jornada__fixo">
         <div class="controles">
           <div class="espessuras" role="group" aria-label="Escolha a espessura do Blocão">
-            <span>Espessura</span>
+            <span class="so-pc">Espessura</span>
             <button type="button" data-escolher-espessura="b10">10</button>
             <button type="button" data-escolher-espessura="b13">13</button>
             <button type="button" data-escolher-espessura="b15" aria-pressed="true">15</button>
@@ -178,7 +178,7 @@
             <button type="button" data-filtro-peca="eps" aria-pressed="false">Só EPS</button>
             <button type="button" data-filtro-peca="concreto" aria-pressed="false">Só concreto</button>
             <button type="button" data-filtro-peca="tudo" aria-pressed="true">Tudo</button>
-            <button type="button" class="ferramentas__livre" data-girar-livre aria-pressed="false" title="Libera girar em todas as direções">↻ Girar livre</button>
+            <button type="button" class="ferramentas__livre" data-girar-livre aria-pressed="false" title="Libera girar em todas as direções">↻ Girar<span class="so-pc"> livre</span></button>
           </div>
         </div>
         <div class="jornada__toque" data-toque aria-label="Blocão 3D: arraste as peças com o dedo ou gire o bloco">
@@ -505,7 +505,7 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
   </a>
 
-  <!-- ===== BOAS-VINDAS: vídeo "Sua obra em 1 minuto" + 2 caminhos (1x por sessão, depois da splash) -->
+  <!-- ===== BOAS-VINDAS: vídeo "O Blocão em 30 segundos" + 2 caminhos (1x por sessão, depois da splash) -->
   <div class="bv" id="boas-vindas" hidden role="dialog" aria-modal="true" aria-label="Como você quer começar?">
     <video class="bv__video" src="video/como-orcar.mp4" poster="video/como-orcar-capa.jpg" muted playsinline loop preload="none"></video>
     <div class="bv__veu"></div>
@@ -557,19 +557,19 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261021e"></script>
-  <script src="assets/js/observabilidade.js?v=20261021e"></script>
-  <script src="assets/js/boas-vindas.js?v=20261021e"></script>
-  <script src="assets/js/supabase-init.js?v=20261021e"></script>
-  <script src="assets/js/analytics.js?v=20261021e"></script>
-  <script src="assets/js/main.js?v=20261021e"></script>
-  <script src="assets/js/especificacoes.js?v=20261021e"></script>
-  <script src="assets/js/motion.js?v=20261021e"></script>
-  <script src="assets/js/cliente.js?v=20261021e"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261021e"></script>
-  <script src="assets/js/calculadora.js?v=20261021e"></script>
-  <script src="assets/js/conteudo.js?v=20261021e"></script>
-  <script src="assets/js/cena.js?v=20261021e"></script>
-  <script src="assets/js/toque.js?v=20261021e"></script>
+  <script src="assets/js/config.js?v=20261021f"></script>
+  <script src="assets/js/observabilidade.js?v=20261021f"></script>
+  <script src="assets/js/boas-vindas.js?v=20261021f"></script>
+  <script src="assets/js/supabase-init.js?v=20261021f"></script>
+  <script src="assets/js/analytics.js?v=20261021f"></script>
+  <script src="assets/js/main.js?v=20261021f"></script>
+  <script src="assets/js/especificacoes.js?v=20261021f"></script>
+  <script src="assets/js/motion.js?v=20261021f"></script>
+  <script src="assets/js/cliente.js?v=20261021f"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261021f"></script>
+  <script src="assets/js/calculadora.js?v=20261021f"></script>
+  <script src="assets/js/conteudo.js?v=20261021f"></script>
+  <script src="assets/js/cena.js?v=20261021f"></script>
+  <script src="assets/js/toque.js?v=20261021f"></script>
 </body>
 </html>
