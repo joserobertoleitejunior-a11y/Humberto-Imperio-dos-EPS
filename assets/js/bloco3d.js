@@ -526,7 +526,9 @@ function suavizar(dt) {
   return mudou;
 }
 
+let contagem = 0;
 function desenhar() {
+  contagem++;
   aplicar();
   renderer.render(cena, camera);
   if (ouvintesPosicao.length) avisarPosicoes();
@@ -716,9 +718,16 @@ window.ImperioBloco3D = {
     return Promise.resolve();
   },
   estado: (novo) => {
-    Object.assign(alvo, novo);
-    sujo = true;
+    // só marca "sujo" (pede novo desenho) se algum valor mudou de verdade: rolar a página sem mudar o
+    // bloco (ex.: fase horizontal das fichas) não gasta GPU
+    for (const k in novo) {
+      if (typeof novo[k] === "number" ? Math.abs(novo[k] - alvo[k]) > 0.0005 : novo[k] !== alvo[k]) {
+        alvo[k] = novo[k];
+        sujo = true;
+      }
+    }
   },
+  desenhos: () => contagem,
   /** Pula a suavização (vídeo quadro a quadro e testes). */
   instantaneo: (novo) => {
     Object.assign(alvo, novo);

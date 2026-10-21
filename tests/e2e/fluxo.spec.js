@@ -98,6 +98,23 @@ test("cliente mexe nas peças com o dedo e a rolagem põe tudo no lugar", async 
   await expect(page.locator('[data-filtro-peca="tudo"]')).toHaveAttribute("aria-pressed", "true");
 });
 
+test("fichas andam na horizontal com o gesto lateral (trackpad) e o aviso 'arraste' não existe mais", async ({ page }) => {
+  await abrir(page, "/?qualidade=baixa");
+  await page.waitForFunction(() => window.ImperioMotion);
+  await expect(page.locator(".dica-toque")).toHaveCount(0);
+  await page.evaluate(() => {
+    const j = document.querySelector("#por-dentro");
+    const r = j.getBoundingClientRect();
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.55, behavior: "instant" });
+  });
+  await page.waitForTimeout(600);
+  const x = () => page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector("[data-jornada-h]")).transform).m41);
+  const antes = await x();
+  await page.mouse.move(700, 700);
+  await page.mouse.wheel(200, 0);
+  await expect.poll(x).toBeLessThan(antes - 100);
+});
+
 test("aparelho fraco / economia de dados: sem 3D, imagens prontas", async ({ page }) => {
   await abrir(page, "/?qualidade=estatica");
   await page.waitForTimeout(1500);

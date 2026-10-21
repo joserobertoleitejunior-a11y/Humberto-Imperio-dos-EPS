@@ -142,12 +142,17 @@
     if (parado) return;
     if (!j.dentro) { if (j.faseH) { j.faseH = false; document.documentElement.classList.remove("fase-h"); } return; }
     var v = suave(p / 0.5);                  // perna vertical: o bloco desmonta e abre
-    var hz = suave((p - 0.44) / 0.56);       // perna horizontal: ficha de cada peça (começa antes da vertical terminar)
+    // perna horizontal: LINEAR (1 px de rolagem = 1 px de movimento; o easing antigo "empacava" nas pontas)
+    var hz = limitar((p - 0.44) / 0.5);
     var tx = (1 - hz) * 30 - hz * j.largura;
     j.vertical.style.transform = "translate3d(" + -hz * 22 + "vw," + -v * j.alturaV + "px,0)";
-    j.vertical.style.opacity = 1 - suave((p - 0.42) / 0.08);
+    var opV = 1 - suave((p - 0.42) / 0.08);
+    j.vertical.style.opacity = opV;
+    j.vertical.style.visibility = opV < 0.01 ? "hidden" : "visible"; // sem pintar o que não se vê
     j.trilho.style.transform = "translate3d(" + tx + "px," + (1 - suave((p - 0.38) / 0.14)) * 40 + "vh,0)";
-    j.trilho.style.opacity = suave((p - 0.42) / 0.08);
+    var opH = suave((p - 0.42) / 0.08);
+    j.trilho.style.opacity = opH;
+    j.trilho.style.visibility = opH < 0.01 ? "hidden" : "visible";
     // painel em foco = o mais perto do centro da tela (conta feita com os números em cache)
     var foco = 0;
     var melhor = 1e9;
@@ -207,10 +212,51 @@
     requestAnimationFrame(quadro);
   }
 
+  /**
+   * Gesto HORIZONTAL nas fichas (dedo pro lado ou trackpad/shift+roda) também avança a jornada:
+   * converte o deslize em rolagem vertical na proporção certa (rolagem da fase horizontal ÷ largura da trilha).
+   */
+  function ligarGestoHorizontal() {
+    if (!jornada) return;
+    var area = jornada.trilho;
+    var x0 = null;
+    var y0 = null;
+    var decidiu = false;
+    var horiz = false;
+    function razao() {
+      var j = jornada;
+      if (!j.medido) medirJornada();
+      var total = j.alturaSecao - window.innerHeight;
+      return j.largura > 0 ? (0.5 * total) / j.largura : 0;
+    }
+    area.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse") return;
+      x0 = e.clientX; y0 = e.clientY; decidiu = false; horiz = false;
+    });
+    area.addEventListener("pointermove", function (e) {
+      if (x0 === null || e.pointerType === "mouse") return;
+      var dx = e.clientX - x0;
+      var dy = e.clientY - y0;
+      if (!decidiu && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) { decidiu = true; horiz = Math.abs(dx) > Math.abs(dy); }
+      if (!horiz) return;
+      window.scrollBy({ top: -(e.clientX - x0) * razao(), behavior: "instant" });
+      x0 = e.clientX; y0 = e.clientY;
+    });
+    function fim() { x0 = null; }
+    area.addEventListener("pointerup", fim);
+    area.addEventListener("pointercancel", fim);
+    // trackpad / roda com shift: deltaX vira rolagem
+    jornada.el.addEventListener("wheel", function (e) {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      window.scrollBy({ top: e.deltaX * razao(), behavior: "instant" });
+    }, { passive: true });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     if (!parado) prepararTitulos();
     prepararFaixas();
     prepararJornada();
+    ligarGestoHorizontal();
     window.addEventListener("scroll", agendar, { passive: true });
     window.addEventListener("resize", function () { if (jornada) jornada.medido = false; agendar(); }, { passive: true });
     window.addEventListener("load", function () { if (jornada) jornada.medido = false; agendar(); }, { once: true });

@@ -96,13 +96,17 @@
     alvo.espessura = espessuraEscolhida();
     // área de toque da jornada acompanha o bloco
     if (areaToque) {
-      areaToque.style.setProperty("--bx", alvo.cx + "px");
-      areaToque.style.setProperty("--by", alvo.cy + "px");
-      areaToque.style.setProperty("--bw", alvo.larg + "px");
+      var chave = Math.round(alvo.cx) + "," + Math.round(alvo.cy) + "," + Math.round(alvo.larg);
+      if (chave !== ultimaArea) {
+        ultimaArea = chave;
+        areaToque.style.setProperty("--bx", alvo.cx + "px");
+        areaToque.style.setProperty("--by", alvo.cy + "px");
+        areaToque.style.setProperty("--bw", alvo.larg + "px");
+      }
     }
-    if (rotulos) rotulos.style.opacity = opRotulos;
+    if (rotulos && opRotulos !== ultimaOpRot) { ultimaOpRot = opRotulos; rotulos.style.opacity = opRotulos; }
     var visivel = heroVisivel || dentroJ;
-    canvas.style.opacity = visivel ? 1 : 0;
+    if (visivel !== ultimaVis) { ultimaVis = visivel; canvas.style.opacity = visivel ? 1 : 0; }
     B.pausar(!visivel);
     B.respirar(heroVisivel && !dentroJ);
     B.estado(alvo);
@@ -112,6 +116,9 @@
   var rotulos = null;
   var areaToque = null;
   var larguras = [];
+  var ultimaArea = "";
+  var ultimaOpRot = -1;
+  var ultimaVis = null;
   var larguraTela = 0;
   function posicionarRotulos(pos) {
     if (!rotulos || rotulos.style.opacity === "0") return;

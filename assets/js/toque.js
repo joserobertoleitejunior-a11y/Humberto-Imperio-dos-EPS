@@ -35,7 +35,6 @@
 
   function interagiu() {
     yInteracao = window.scrollY;
-    document.documentElement.classList.add("ja-mexeu");
   }
 
   function ligarArea(area) {
