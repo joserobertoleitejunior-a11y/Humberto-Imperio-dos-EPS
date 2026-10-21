@@ -13,6 +13,8 @@
 }
 
 :root {
+  /* celular: altura da zona do bloco na jornada (o bloco fica em cima; botões e texto ficam embaixo, sem sobrepor) */
+  --zona: max(44vh, 310px);
   --cal: #f3f1ec;
   --cal-2: #eae6de;
   --branco: #fbfaf7;
@@ -59,7 +61,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* Letras dos títulos (motion.js) */
 [data-letras] .palavra { display: inline-block; white-space: nowrap; }
-[data-letras] .letra { display: inline-block; will-change: transform, opacity; }
+[data-letras] .letra { display: inline-block; }
 [data-letras] .palavra.destaque { color: var(--azul); }
 .cta-final [data-letras] .palavra.destaque, .comparativo [data-letras] .palavra.destaque { color: var(--azul-no-escuro); }
 
@@ -123,8 +125,8 @@ button, input, select { font: inherit; color: inherit; }
 @keyframes splashAviso { to { opacity: 1; } }
 
 /* ---------- Header ---------- */
-.cabecalho { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--cabecalho); background: rgba(243, 241, 236, 0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid transparent; transition: background-color 0.3s, border-color 0.3s; }
-.cabecalho.compacto { background: rgba(243, 241, 236, 0.95); border-color: var(--linha); }
+.cabecalho { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--cabecalho); background: rgba(243, 241, 236, 0.94); border-bottom: 1px solid transparent; transition: background-color 0.3s, border-color 0.3s; }
+.cabecalho.compacto { background: rgba(243, 241, 236, 0.98); border-color: var(--linha); }
 .cabecalho__inner { height: 100%; width: min(1280px, 100% - 24px); margin-inline: auto; display: flex; align-items: center; gap: 12px; }
 .cabecalho__logo img { width: auto; height: 28px; }
 .cabecalho__acoes { margin-left: auto; display: flex; align-items: center; gap: 8px; }
@@ -184,7 +186,7 @@ main { position: relative; z-index: 2; }
 .jornada__rotulos { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 .rot { position: absolute; padding: 8px 12px; font-size: 0.78rem; line-height: 1.3; color: var(--texto-suave); background: rgba(251, 250, 247, 0.92); border: 1px solid var(--linha); border-radius: 6px; max-width: 12rem; }
 .rot b { display: block; font-size: 0.9rem; font-stretch: 115%; color: var(--grafite); }
-.rot { left: 0; top: 0; will-change: transform; white-space: nowrap; max-width: none; transition: opacity 0.3s; }
+.rot { left: 0; top: 0; white-space: nowrap; max-width: none; transition: opacity 0.3s; }
 .rot span { display: block; font-size: 1.05rem; font-weight: 850; font-stretch: 120%; color: var(--grafite); }
 .rot--eps span, .rot--eps b { color: var(--azul); }
 .rot::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: var(--haste, 10px); background: var(--concreto-esc); }
@@ -435,6 +437,11 @@ main { position: relative; z-index: 2; }
 .toast.visivel { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---------- Tablet / desktop ---------- */
+@media (min-width: 760px) {
+  /* tablet / tela quadrada: a coluna de texto da jornada nunca passa de 42% da largura (o bloco fica à direita) */
+  .jornada__v h2 { font-size: clamp(1.5rem, 3.4vw, 3.6rem); }
+  .jornada__v > * { max-width: min(30rem, 42vw); }
+}
 @media (min-width: 720px) {
   .cabecalho__whats { display: inline-flex; }
   .calc { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: start; }
@@ -459,22 +466,24 @@ main { position: relative; z-index: 2; }
 /* ---------- Celular: rótulos da jornada e painéis menores ---------- */
 @media (max-width: 759px) {
   /* celular: o bloco fica em cima e o texto rola numa "janela" embaixo (sem passar por cima do bloco) */
-  .jornada__janela { top: 56vh; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent); }
-  .jornada__v { top: 4vh; }
+  .jornada__janela { top: calc(var(--zona) + 108px); overflow: hidden; }
+  .jornada__v { top: 0; }
   .jornada__v h2 { font-size: clamp(1.5rem, 7vw, 2.2rem); }
   .jornada__texto { margin-bottom: 26vh; font-size: 1rem; }
-  .rot { font-size: 0.66rem; padding: 5px 8px; }
+  .jornada__toque { top: calc(var(--by) - var(--bw) * 0.4); height: calc(var(--bw) * 0.8); }
+  .rot { font-size: 0.66rem; padding: 4px 7px; }
   .rot[data-rot="1"] { --haste: 34px; }
   .rot[data-rot="2"] { --haste: 58px; }
   .rot b { font-size: 0.66rem; }
   .rot span { font-size: 0.8rem; }
-  .controles { top: auto; right: auto; left: 50%; bottom: calc(44vh + 6px); transform: translateX(-50%); justify-items: center; width: calc(100% - 20px); }
+  .controles { top: var(--zona); right: auto; left: 50%; transform: translateX(-50%); justify-items: center; width: calc(100% - 20px); }
   .ferramentas button { padding: 0 7px; font-size: 0.72rem; min-height: 32px; }
   .ferramentas, .espessuras { justify-content: center; }
   .rot span { font-size: 0.9rem; }
   .jornada__h { bottom: 4vh; }
-  .painel { padding: 18px; }
-  .painel__num { font-size: 2.6rem; }
+  .painel { padding: 16px; }
+  .painel__num { font-size: 2.2rem; }
+  .painel .espec div { padding: 6px 0; }
 }
 @media (max-width: 1079px) {
   /* celular/tablet: o bloco aparece logo abaixo do título, já na primeira tela */
@@ -487,6 +496,14 @@ main { position: relative; z-index: 2; }
   .hero__selos { order: 6; }
   .hero__grid { gap: 0; }
   .hero__dica { display: none; }
+}
+/* celular de tela curta: fichas compactas (sem o parágrafo) pra caberem embaixo dos botões */
+@media (max-width: 759px) and (max-height: 780px) {
+  .painel > p:last-child { display: none; }
+  /* na fase horizontal os botões de peça saem de cena (as fichas precisam do espaço); a espessura continua */
+  .fase-h .ferramentas { display: none; }
+  .painel__tag { margin-bottom: 4px; }
+  .painel h3 { font-size: 1.1rem; margin-bottom: 0.3em; }
 }
 @media (max-width: 359px) {
   .cabecalho__logo img { height: 22px; }

@@ -75,6 +75,13 @@ window.IMPERIO_CONFIG = {
     },
   ],
 
+  /**
+   * Tela de boas-vindas com o vídeo "Sua obra em 1 minuto". FICA DESLIGADA até o vídeo existir:
+   * quando video/como-orcar.mp4 estiver pronto (e testado), mude para true.
+   * Mesmo ligada, só aparece se o vídeo carregar; se falhar, o site abre direto.
+   */
+  boasVindasComVideo: false,
+
   // Supabase (banco do painel). A anon key NÃO é segredo — a proteção é o
   // RLS (ver supabase/schema.sql). Vazio = site funciona só com WhatsApp
   // e o painel abre em modo demonstração.

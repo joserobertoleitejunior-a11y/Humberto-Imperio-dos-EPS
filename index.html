@@ -118,9 +118,9 @@
       <p class="faixas__linha faixas__linha--vazada" data-faixa-rolagem="-1">MENOS TIJOLO · MENOS REBOCO · MAIS CONFORTO · MENOS TIJOLO · MENOS REBOCO · MAIS CONFORTO · MENOS TIJOLO ·</p>
     </div>
 
-    <!-- ===== JORNADA EM "L": rolando na VERTICAL o Blocão se desmonta (o concreto descola do EPS) e depois
+    <!-- ===== JORNADA EM "L": rolando na VERTICAL o Blocão aparece em vista explodida (SÓ DEMONSTRAÇÃO: o concreto não solta do EPS) e depois
          abre ao meio; a rolagem faz a curva e segue na HORIZONTAL com a ficha de cada peça (medidas + peso). -->
-    <section class="jornada" id="por-dentro" data-jornada aria-label="O Blocão desmontado, peça por peça">
+    <section class="jornada" id="por-dentro" data-jornada aria-label="O Blocão por dentro: vista demonstrativa com as peças afastadas">
       <div class="jornada__fixo">
         <div class="controles">
           <div class="espessuras" role="group" aria-label="Escolha a espessura do Blocão">
@@ -132,7 +132,7 @@
             <span>cm</span>
           </div>
           <div class="ferramentas" role="toolbar" aria-label="Mexer nas peças do Blocão">
-            <button type="button" data-acao-peca="separar">Separar</button>
+            <button type="button" data-acao-peca="separar">Afastar</button>
             <button type="button" data-acao-peca="juntar">Juntar</button>
             <button type="button" data-filtro-peca="eps" aria-pressed="false">Só EPS</button>
             <button type="button" data-filtro-peca="concreto" aria-pressed="false">Só concreto</button>
@@ -141,17 +141,17 @@
           </div>
         </div>
         <div class="jornada__toque" data-toque aria-label="Blocão 3D: arraste as peças com o dedo ou gire o bloco">
-          <p class="dica-toque" aria-hidden="true">👆 arraste as peças</p>
+          <p class="dica-toque" aria-hidden="true">👆 arraste (demonstração)</p>
         </div>
         <div class="jornada__janela">
         <div class="jornada__v" data-jornada-v>
           <p class="sobretitulo">Por dentro do Blocão</p>
-          <h2 data-letras data-faixa-p="0,0.08">Role e veja ele <em>se desmontar.</em></h2>
-          <p class="jornada__texto">Um bloco montado. Agora, peça por peça.</p>
-          <h2 data-letras data-faixa-p="0.1,0.22">O concreto <em>descola do EPS.</em></h2>
-          <p class="jornada__texto">Duas placas de concreto por fora e um miolo de EPS por dentro. Três peças, um bloco só.</p>
+          <h2 data-letras data-faixa-p="0,0.08">Role e veja o Blocão <em>por dentro.</em></h2>
+          <p class="jornada__texto">Montado, ele é uma peça única. Pra você conhecer cada material, a gente "desmonta" aqui no site.</p>
+          <h2 data-letras data-faixa-p="0.1,0.22">Só uma <em>demonstração.</em></h2>
+          <p class="jornada__texto">Na obra o concreto não solta do EPS: é um bloco só, bem resistente. Aqui as peças se afastam pra você ver cada material.</p>
           <h2 data-letras data-faixa-p="0.26,0.38">Agora, abre <em>ao meio.</em></h2>
-          <p class="jornada__texto">O corte mostra tudo: concreto maciço nas faces e o EPS inteiro no miolo, de ponta a ponta.</p>
+          <p class="jornada__texto">O corte mostra os materiais: concreto nas duas faces e o EPS inteiro no miolo, de ponta a ponta.</p>
         </div>
         </div>
         <ul class="jornada__rotulos" data-jornada-rotulos aria-hidden="true">
@@ -159,7 +159,7 @@
           <li class="rot rot--eps" data-rot="1"><b>EPS</b><span data-espec="eps" data-campo="espessura">8 cm</span></li>
           <li class="rot" data-rot="2"><b>Concreto interno</b><span data-espec="concreto-interno" data-campo="espessura">3,5 cm</span></li>
         </ul>
-        <img class="jornada__estatico" src="assets/img/bloco-desmontado.webp" alt="Blocão desmontado: placa de concreto, miolo de EPS e placa de concreto" width="900" height="600" loading="lazy">
+        <img class="jornada__estatico" src="assets/img/bloco-desmontado.webp" alt="Vista demonstrativa do Blocão: placa de concreto, miolo de EPS e placa de concreto afastados pra mostrar cada material" width="900" height="600" loading="lazy">
         <div class="jornada__h" data-jornada-h>
           <article class="painel" data-painel>
             <p class="painel__tag">Peça 1 de 3</p>
@@ -192,7 +192,7 @@
             <p>A face de dentro de casa: firme pra fixar armário e prateleira.</p>
           </article>
           <article class="painel painel--total" data-painel>
-            <p class="painel__tag">Montado</p>
+            <p class="painel__tag">Bloco real · peça única</p>
             <h3 data-espec="total" data-campo="nome">Blocão 15 cm</h3>
             <dl class="espec">
               <div><dt>Espessura total</dt><dd data-espec="total" data-campo="espessura">15 cm</dd></div>
@@ -423,6 +423,7 @@
         </header>
         <div class="faq">
           <details data-revelar><summary>Isopor pega fogo?</summary><p>No Blocão o EPS não fica exposto: ele fica encapsulado entre duas faces de concreto, que é o que fica à mostra na parede. Peça a ficha técnica completa pelo WhatsApp.</p></details>
+          <details data-revelar><summary>O concreto descola do EPS?</summary><p>Não. Concreto e EPS formam uma peça única e resistente. A animação do site, com as peças se afastando, é só uma demonstração pra você conhecer cada material.</p></details>
           <details data-revelar><summary>A parede aguenta peso, armário e prateleira?</summary><p>As faces são de concreto, então dá pra fixar armários e prateleiras com a bucha indicada. A fábrica orienta o tipo de fixação pra cada caso.</p></details>
           <details data-revelar><summary>Como passa a parte elétrica e hidráulica?</summary><p>Os conduítes e tubos passam pelo miolo de EPS, que é fácil de recortar. A fábrica orienta sua equipe na primeira parede.</p></details>
           <details data-revelar><summary>Precisa de reboco?</summary><p>A face de concreto já sai pronta pra receber o acabamento, o que elimina boa parte das camadas de massa da obra tradicional.</p></details>

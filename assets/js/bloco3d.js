@@ -348,6 +348,7 @@ function telaParaMundo(px, py) {
 }
 
 let respiro = 0;
+let ultimoRespiro = 0;
 
 function aplicar() {
   if (Math.abs(atual.espessura - geoAtual) > 0.01 && Math.abs(atual.espessura - alvo.espessura) < 0.05) {
@@ -551,6 +552,19 @@ function avisarPosicoes() {
   ouvintesPosicao.forEach((fn) => fn(pos));
 }
 
+/* Resolução adaptativa: ENQUANTO MEXE (rolagem, arrasto) desenha leve (nativa da tela, com antialias de
+   hardware); PARADO por 160 ms refaz o quadro em HD (superamostragem) — a borda fica nítida sem pesar. */
+let ratioHD = 1;
+let ratioLeve = 1;
+let paradoDesde = 0;
+let emHD = true;
+
+function usarRatio(r) {
+  if (renderer.getPixelRatio() === r) return;
+  renderer.setPixelRatio(r);
+  renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
+}
+
 function laco(t) {
   if (!ativo) return;
   requestAnimationFrame(laco);
@@ -559,17 +573,34 @@ function laco(t) {
   ultimoTempo = t;
   let mudou = suavizar(dt);
   if (suavizarToque(dt)) mudou = true;
-  if (respirar && nivel !== NIVEIS.baixa) {
+  // "respiro" (bloco flutuando na hero) só em PC forte e a ~30 quadros/s: não gasta GPU à toa
+  if (respirar && nivel === NIVEIS.alta && t - ultimoRespiro > 33) {
+    ultimoRespiro = t;
     respiro = Math.sin(t / 1400) * 0.012;
     mudou = true;
   }
-  if (!mudou && !sujo) return;
+  if (!mudou && !sujo) {
+    // parado: promove pra HD uma vez
+    if (!emHD && t - paradoDesde > 160) {
+      emHD = true;
+      usarRatio(ratioHD);
+      desenhar();
+    }
+    return;
+  }
+  paradoDesde = t;
   sujo = false;
+  if (emHD && ratioLeve < ratioHD) {
+    emHD = false;
+    usarRatio(ratioLeve);
+  }
   desenhar();
-  // Aparelho engasgando? Baixa a resolução (uma vez por nível).
-  if (gasto > 32 && gasto < 200 && ++lentos > 40 && renderer.getPixelRatio() > 1) {
-    renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() - 0.5));
+  // Aparelho engasgando mesmo no modo leve? Reduz o teto da resolução HD e o leve (até 1×).
+  if (gasto > 34 && gasto < 250 && ++lentos > 24) {
     lentos = 0;
+    ratioLeve = Math.max(1, ratioLeve - 0.25);
+    ratioHD = Math.max(ratioLeve, ratioHD - 0.5);
+    usarRatio(emHD ? ratioHD : ratioLeve);
   }
 }
 
@@ -589,7 +620,10 @@ function redimensionar() {
 function iniciar(canvas) {
   nivel = NIVEIS[document.documentElement.getAttribute("data-qualidade")] || NIVEIS.media;
   renderer = new WebGLRenderer({ canvas, antialias: nivel.antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: !!window.__gravandoVideo });
-  renderer.setPixelRatio(Math.min(nivel.max, Math.max(nivel.min, window.devicePixelRatio || 1)));
+  const nativo = window.devicePixelRatio || 1;
+  ratioHD = Math.min(nivel.max, Math.max(nivel.min, nativo));
+  ratioLeve = Math.min(ratioHD, Math.max(1, Math.min(nativo, 1.5))); // em movimento: nativa da tela (máx. 1,5×)
+  renderer.setPixelRatio(ratioHD);
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = SRGBColorSpace;

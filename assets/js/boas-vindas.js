@@ -17,7 +17,7 @@
   var fechada = false;
   var timer = null;
 
-  function pegar(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function pegarSessao(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
   function marcar(k) { try { sessionStorage.setItem(k, "1"); } catch (e) { /* sem storage */ } }
 
   function fecharSplash() {
@@ -34,22 +34,35 @@
 
   /* ---------- Boas-vindas com vídeo ---------- */
   function abrirBoasVindas() {
-    if (pegar(CHAVE_BV) || window.__gravandoVideo) return;
+    if (pegarSessao(CHAVE_BV) || window.__gravandoVideo) return;
+    var cfg = window.IMPERIO_CONFIG || {};
     var bv = document.getElementById("boas-vindas");
-    if (!bv) return;
-    marcar(CHAVE_BV);
+    // Sem vídeo pronto (config) → nem monta a tela: o visitante entra direto no site
+    if (!bv || cfg.boasVindasComVideo !== true) return;
     var video = bv.querySelector("video");
-    var leve = /^(baixa|estatica)$/.test(html.getAttribute("data-qualidade"));
-    bv.hidden = false;
-    requestAnimationFrame(function () { bv.classList.add("on"); });
-    document.body.classList.add("travado");
-    if (video && !leve) {
-      video.preload = "auto";
-      var pl = video.play();
-      if (pl && pl.catch) pl.catch(function () { /* autoplay bloqueado: fica a capa */ });
+    if (!video) return;
+    var mostrou = false;
+    function mostrar() {
+      if (mostrou || fechada === false) return;
+      mostrou = true;
+      marcar(CHAVE_BV);
+      var leve = /^(baixa|estatica)$/.test(html.getAttribute("data-qualidade"));
+      bv.hidden = false;
+      requestAnimationFrame(function () { bv.classList.add("on"); });
+      document.body.classList.add("travado");
+      if (!leve) {
+        var pl = video.play();
+        if (pl && pl.catch) pl.catch(function () { /* autoplay bloqueado: fica a capa */ });
+      }
+      var foco = bv.querySelector("[data-bv-calcular]");
+      if (foco) setTimeout(function () { foco.focus({ preventScroll: true }); }, 500);
     }
-    var foco = bv.querySelector("[data-bv-calcular]");
-    if (foco) setTimeout(function () { foco.focus({ preventScroll: true }); }, 500);
+    // só mostra quando o vídeo realmente carregou (se der erro ou demorar > 2,5 s, o site abre direto)
+    video.addEventListener("loadeddata", mostrar, { once: true });
+    video.addEventListener("error", function () { mostrou = true; }, { once: true });
+    video.preload = "auto";
+    video.load();
+    setTimeout(function () { if (!mostrou) mostrou = true; }, 2500);
   }
 
   function fecharBoasVindas(destino) {

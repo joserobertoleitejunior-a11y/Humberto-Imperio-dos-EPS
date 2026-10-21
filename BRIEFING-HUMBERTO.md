@@ -130,6 +130,7 @@
 - [ ] Depoimentos de clientes (nome + cidade + foto da obra)
 - [ ] 2 ou 3 logos de qualquer marca que o Vinicius goste (referência de estilo pro designer)
 - [ ] Acesso ao Instagram/Facebook pra reforma
+- Regra de comunicação: o concreto **não descola** do EPS no bloco real (peça única, hiper resistente). A animação de afastar as peças é só demonstração e o site avisa isso.
 - [ ] Medida da face do Blocão (comprimento × altura) e peso de cada espessura — liga a contagem de blocos na calculadora e preenche as fichas "peça por peça" do site (hoje mostram "a confirmar")
 - [ ] Domínio próprio (ex.: `imperiodoeps.com.br`)
 - [ ] Prints dos concorrentes (fase 2 — José vai enviar)

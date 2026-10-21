@@ -10,13 +10,30 @@ async function abrir(page, url = "/") {
   await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
 }
 
-test("splash fecha sozinha e a boas-vindas leva pra calculadora", async ({ page }) => {
+test("sem vídeo pronto, a boas-vindas não aparece e o site abre direto", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 15000 });
-  await expect(page.locator("#splash")).toBeHidden();
-  await page.click("[data-bv-calcular]");
+  await page.waitForFunction(() => window.ImperioAbertura);
+  await page.evaluate(() => window.ImperioAbertura.fecharSplash());
+  await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
+  await page.waitForTimeout(3000);
   await expect(page.locator("#boas-vindas")).toBeHidden();
-  await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 4000 });
+  await expect(page.locator("body")).not.toHaveClass(/travado/);
+});
+
+test("celular: botões ficam fora da área do bloco 3D", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await abrir(page, "/?qualidade=media");
+  await page.waitForFunction(() => window.ImperioCena && window.ImperioCena.pronto(), null, { timeout: 30000 });
+  await page.evaluate(() => {
+    const j = document.querySelector("#por-dentro");
+    const r = j.getBoundingClientRect();
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.2, behavior: "instant" });
+  });
+  await expect.poll(async () => {
+    const toque = await page.locator(".jornada__toque").boundingBox();
+    const botoes = await page.locator(".ferramentas").boundingBox();
+    return botoes.y - (toque.y + toque.height);
+  }, { timeout: 10000 }).toBeGreaterThanOrEqual(-2);
 });
 
 test("calculadora monta a mensagem e abre o WhatsApp", async ({ page, context }) => {

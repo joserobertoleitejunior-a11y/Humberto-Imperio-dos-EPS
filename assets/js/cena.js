@@ -37,10 +37,10 @@
   /**
    * Roteiro do bloco na jornada (p = 0..1 da seção):
    *   0,00–0,08  chega e vira de lado
-   *   0,08–0,22  DESMONTA: as placas de concreto descolam do EPS
+   *   0,08–0,22  VISTA EXPLODIDA (só demonstração: no bloco real o concreto NÃO solta do EPS): as peças se afastam
    *   0,26–0,38  ABRE AO MEIO (já desmontado: 6 peças, corte à mostra)
    *   0,42–0,50  fecha o corte (continua desmontado) — curva do "L"
-   *   0,50–1,00  horizontal: cada ficha acende a sua peça; na ficha "Montado" o bloco se monta de novo
+   *   0,50–1,00  horizontal: cada ficha acende a sua peça; na ficha do bloco real as peças se juntam de novo
    */
   function alvoJornada(j) {
     var w = window.innerWidth;
@@ -55,12 +55,17 @@
     var giro = mix(-0.55, -1.05, sep);
     giro = mix(giro, -0.12, aberto);
     giro = mix(giro, foco >= 3 ? -0.5 : -0.95, curva);
+    // celular: o bloco fica na "zona" de cima; os botões e o texto ficam embaixo (CSS --zona), sem sobrepor
+    var zona = Math.max(h * 0.44, 310);
+    var cm = 68 + (zona - 68) * 0.58;
     var v = {
       separacao: sep,
       abertura: aberto,
       cx: mix(w * (celular ? 0.5 : 0.64), w * (celular ? 0.5 : 0.68), curva),
-      cy: mix(h * (celular ? 0.34 : 0.58), h * (celular ? 0.3 : 0.36), curva),
-      larg: mix(Math.min(w * (celular ? 0.62 : 0.4), 640), Math.min(w * (celular ? 0.62 : 0.32), 500), curva),
+      cy: celular ? cm : mix(h * 0.58, h * 0.36, curva),
+      larg: celular
+        ? Math.min(w * mix(0.6, 0.54, curva), (zona - 68) * 0.95)
+        : mix(Math.min(w * 0.4, 640), Math.min(w * 0.32, 500), curva),
       giro: giro,
       inclinar: mix(0.28, 0.2, aberto),
       dim0: foco >= 0 && foco <= 2 && foco !== 0 ? 1 : 0,
@@ -106,14 +111,21 @@
   /** Etiquetas (concreto / EPS / concreto) presas no topo de cada peça. */
   var rotulos = null;
   var areaToque = null;
+  var larguras = [];
+  var larguraTela = 0;
   function posicionarRotulos(pos) {
     if (!rotulos || rotulos.style.opacity === "0") return;
     var itens = rotulos.querySelectorAll("[data-rot]");
+    if (larguras.length && window.innerWidth !== larguraTela) { larguras = []; }
+    larguraTela = window.innerWidth;
     pos.forEach(function (pt, k) {
       // escalonadas na altura (a do meio mais alta) pra não se sobreporem com o bloco de lado
-      var sobe = (window.innerWidth < 760 ? [0, 24, 48] : [0, 40, 80])[k];
+      var sobe = (window.innerWidth < 760 ? [0, 18, 36] : [0, 40, 80])[k];
       if (!itens[k]) return;
-      itens[k].style.transform = "translate3d(" + pt.x.toFixed(1) + "px," + (pt.y - sobe).toFixed(1) + "px,0) translate(-50%,-115%)";
+      // etiqueta nunca sai da tela (largura medida uma vez por etiqueta)
+      var larg = larguras[k] || (larguras[k] = itens[k].offsetWidth || 120);
+      var x = Math.min(window.innerWidth - larg / 2 - 8, Math.max(larg / 2 + 8, pt.x));
+      itens[k].style.transform = "translate3d(" + x.toFixed(1) + "px," + (pt.y - sobe).toFixed(1) + "px,0) translate(-50%,-115%)";
       itens[k].style.opacity = pt.visivel ? 1 : 0; // "Só EPS" / "Só concreto": some a etiqueta da peça escondida
     });
   }

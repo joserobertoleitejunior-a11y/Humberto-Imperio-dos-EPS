@@ -117,33 +117,50 @@
    * A curva do "L": o trecho vertical desacelera ENQUANTO o horizontal acelera
    * (as duas curvas se sobrepõem entre 38% e 54%), então o olho não percebe a troca de direção.
    */
+  /** Medidas que só mudam no resize: lidas UMA vez (ler layout a cada quadro travava a rolagem). */
+  function medirJornada() {
+    var j = jornada;
+    if (!j) return;
+    j.largura = Math.max(0, j.trilho.scrollWidth - window.innerWidth);
+    j.alturaV = Math.max(0, j.vertical.scrollHeight - j.vertical.parentElement.clientHeight * 0.6);
+    j.alturaSecao = j.el.offsetHeight;
+    j.topoSecao = j.el.getBoundingClientRect().top + window.scrollY;
+    j.medidasPaineis = Array.prototype.map.call(j.paineis, function (pn) { return { centro: pn.offsetLeft + pn.offsetWidth / 2 }; });
+    j.medido = true;
+  }
+
   function pintarJornada() {
     var j = jornada;
-    var r = j.el.getBoundingClientRect();
-    var total = r.height - vh;
-    var p = total > 0 ? limitar(-r.top / total) : 0;
+    if (!j.medido) medirJornada();
+    // posição da seção calculada com o scrollY (sem getBoundingClientRect = sem forçar layout)
+    var topo = j.topoSecao - window.scrollY;
+    var total = j.alturaSecao - vh;
+    var p = total > 0 ? limitar(-topo / total) : 0;
     j.p = p;
-    j.dentro = r.top < vh && r.bottom > 0;
-    j.entrada = limitar(1 - r.top / vh); // 0 quando a seção encosta no pé da tela, 1 quando chega no topo
+    j.dentro = topo < vh && topo + j.alturaSecao > 0;
+    j.entrada = limitar(1 - topo / vh); // 0 quando a seção encosta no pé da tela, 1 quando chega no topo
     if (parado) return;
-    var largura = j.trilho.scrollWidth - window.innerWidth;
+    if (!j.dentro) { if (j.faseH) { j.faseH = false; document.documentElement.classList.remove("fase-h"); } return; }
     var v = suave(p / 0.5);                  // perna vertical: o bloco desmonta e abre
     var hz = suave((p - 0.44) / 0.56);       // perna horizontal: ficha de cada peça (começa antes da vertical terminar)
-    var alturaV = j.vertical.scrollHeight - j.vertical.parentElement.clientHeight * 0.6;
-    j.vertical.style.transform = "translate3d(" + -hz * 22 + "vw," + -v * Math.max(0, alturaV) + "px,0)";
+    var tx = (1 - hz) * 30 - hz * j.largura;
+    j.vertical.style.transform = "translate3d(" + -hz * 22 + "vw," + -v * j.alturaV + "px,0)";
     j.vertical.style.opacity = 1 - suave((p - 0.42) / 0.08);
-    var tx = (1 - hz) * 30 - hz * largura;
     j.trilho.style.transform = "translate3d(" + tx + "px," + (1 - suave((p - 0.38) / 0.14)) * 40 + "vh,0)";
     j.trilho.style.opacity = suave((p - 0.42) / 0.08);
-    // painel em foco = o mais perto do centro da tela
+    // painel em foco = o mais perto do centro da tela (conta feita com os números em cache)
     var foco = 0;
     var melhor = 1e9;
-    Array.prototype.forEach.call(j.paineis, function (pn, i) {
-      var b = pn.getBoundingClientRect();
-      var d = Math.abs(b.left + b.width / 2 - window.innerWidth / 2);
+    for (var i = 0; i < j.medidasPaineis.length; i++) {
+      var d = Math.abs(tx + j.medidasPaineis[i].centro - window.innerWidth / 2);
       if (d < melhor) { melhor = d; foco = i; }
-    });
-    Array.prototype.forEach.call(j.paineis, function (pn, i) { pn.classList.toggle("em-foco", hz > 0.05 && i === foco); });
+    }
+    if (foco !== j.foco || (hz > 0.05) !== j.focoLigado) {
+      Array.prototype.forEach.call(j.paineis, function (pn, k) { pn.classList.toggle("em-foco", hz > 0.05 && k === foco); });
+      j.focoLigado = hz > 0.05;
+    }
+    var faseH = hz > 0.05;
+    if (faseH !== j.faseH) { j.faseH = faseH; document.documentElement.classList.toggle("fase-h", faseH); }
     j.foco = foco;
     j.hz = hz;
   }
@@ -155,14 +172,21 @@
     var y = window.scrollY;
     if (jornada) pintarJornada();
     if (!parado) {
+      var ativos = [];
       titulos.forEach(function (t) {
         if (!t.visivel) return;
-        var p;
         if (t.faixa && jornada) {
           var f = t.faixa.split(",").map(Number);
-          p = limitar((jornada.p - f[0]) / (f[1] - f[0]));
+          ativos.push([t, limitar((jornada.p - f[0]) / (f[1] - f[0]))]);
         } else {
-          var r = t.el.getBoundingClientRect();
+          ativos.push([t, t.el.getBoundingClientRect()]); // 1) só leituras
+        }
+      });
+      ativos.forEach(function (par) {                      // 2) só escritas
+        var t = par[0];
+        var p = par[1];
+        if (typeof p !== "number") {
+          var r = p;
           // "h": monta conforme entra pela DIREITA (painéis da jornada andam na horizontal)
           p = t.modo === "h" && t.el.closest("[data-jornada-h]")
             ? limitar((window.innerWidth - r.left) / (window.innerWidth * 0.45))
@@ -188,7 +212,9 @@
     prepararFaixas();
     prepararJornada();
     window.addEventListener("scroll", agendar, { passive: true });
-    window.addEventListener("resize", agendar, { passive: true });
+    window.addEventListener("resize", function () { if (jornada) jornada.medido = false; agendar(); }, { passive: true });
+    window.addEventListener("load", function () { if (jornada) jornada.medido = false; agendar(); }, { once: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (jornada) jornada.medido = false; agendar(); });
     agendar();
   });
 
