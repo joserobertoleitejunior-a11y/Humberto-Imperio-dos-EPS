@@ -21,6 +21,7 @@
 | Tela de boas-vindas com vídeo | `index.html` `===== BOAS-VINDAS` + `boas-vindas.js` | vídeo em `video/como-orcar.mp4` |
 | Aparência do bloco 3D (concreto, pérolas do EPS, luz) | `assets/js/bloco3d.js` | `texturasConcreto()`, `texturasEPS()`, luzes em `iniciar()` |
 | Roteiro do bloco: desmonta (concreto descola do EPS) → abre ao meio → fichas na horizontal → monta de novo | `assets/js/cena.js` (`alvoJornada`, comentário com as faixas de rolagem) e `assets/js/motion.js` (`pintarJornada`, curva do "L") | |
+| Peças interativas (arrastar, girar, Separar/Juntar/Só EPS/Só concreto, volta ao rolar) | `assets/js/toque.js` (gestos e botões) + `bloco3d.js` → objeto `interacao` | área de toque: `[data-toque]` (hero e `.jornada__toque`) |
 | Fichas de cada peça (espessura, comprimento × altura, peso) e botões 10/13/15/20 | `index.html` `===== JORNADA` (`data-espec`/`data-campo`) + `assets/js/especificacoes.js` | testado em `tests/especificacoes.test.js` |
 | Letras que se montam na rolagem | qualquer título com `data-letras` (`"h"` = chegam pela direita) | lógica em `motion.js` |
 | Faixas de texto que andam na horizontal | `index.html` `===== FAIXAS` (`data-faixa-rolagem="1"` ou `"-1"`) | |
@@ -71,6 +72,7 @@ assets/js/calculadora-nucleo.js  Regra da calculadora (sem DOM, roda no Node)
 assets/js/calculadora.js       Interface da calculadora → WhatsApp + tabela orcamentos
 assets/js/conteudo.js          Promoções e galeria vindas do banco (skeleton + lightbox)
 assets/js/cena.js              Liga a rolagem ao bloco 3D (carrega o Three.js sob demanda)
+assets/js/toque.js             Peças interativas: dedo/mouse gira o bloco e puxa cada peça; rolou → volta ao lugar
 assets/js/bloco3d.js           (ES module) cena Three.js: texturas procedurais, bloco que abre ao meio
 assets/js/admin-*.js, admin.js Painel (dados, métricas testadas, gráficos SVG, interface)
 assets/img/                    marca, favicon, og-image, bloco-fechado/desmontado (render do próprio 3D), foto de obra
@@ -83,7 +85,7 @@ scripts/                       vendor-three.js, exportar-roteiro.js, gerar-trilh
 
 supabase/schema.sql            Tabelas + RLS + bucket de fotos + papel admin
 tests/*.test.js                Unitários (npm test) — rodam antes de todo deploy
-tests/e2e/fluxo.spec.js        E2E Playwright (splash → boas-vindas, calculadora, cadastro, 3D/L, nível estático, painel, sem rolagem lateral)
+tests/e2e/fluxo.spec.js        E2E Playwright (splash → boas-vindas, calculadora, cadastro, 3D/L, peças interativas, nível estático, painel, sem rolagem lateral)
 brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md, capas de destaque, scripts geradores
 ```
 
@@ -91,5 +93,5 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 - Sem rolagem lateral de 320 px a 1920 px (coberto pelo E2E).
 - `[hidden]` sempre esconde (regra global).
 - O canvas 3D fica **fixo atrás** do conteúdo: hero e jornada são transparentes; as outras seções têm fundo e cobrem o canvas.
-- Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena`.
+- Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena` → `toque`.
 - Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).

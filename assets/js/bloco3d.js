@@ -24,7 +24,7 @@ import {
   ACESFilmicToneMapping, AmbientLight, BoxGeometry, CanvasTexture, Color, DirectionalLight, Group, HemisphereLight,
   IcosahedronGeometry, InstancedMesh, MathUtils, Matrix4, Mesh, Vector3, MeshBasicMaterial, MeshStandardMaterial, Object3D,
   PCFSoftShadowMap, PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene,
-  ShadowMaterial, SRGBColorSpace, WebGLRenderer,
+  ShadowMaterial, SRGBColorSpace, WebGLRenderer, Raycaster, Vector2, Plane,
 } from "../vendor/three-imperio.min.js";
 
 const NIVEIS = {
@@ -288,9 +288,10 @@ function montarMetade(lado) {
 function posicionarCamadas(g, afastar) {
   const { c, eps } = camadas(geoAtual);
   const { peleA, peleB, miolo } = g.userData;
-  peleA.position.z = eps / 2 + c / 2 + afastar;
-  peleB.position.z = -(eps / 2 + c / 2) - afastar;
-  miolo.position.z = 0;
+  // posição completa (x, y, z) a cada quadro: o deslocamento do dedo é somado depois, sem acumular
+  peleA.position.set(0, 0, eps / 2 + c / 2 + afastar);
+  peleB.position.set(0, 0, -(eps / 2 + c / 2) - afastar);
+  miolo.position.set(0, 0, 0);
 }
 
 function reconstruir() {
@@ -361,15 +362,23 @@ function aplicar() {
     g.position.y = a * 0.02;
     g.rotation.y = lado * a * (0.95 - sep * 0.55);
     g.scale.z = escalaZ;
-    posicionarCamadas(g, MathUtils.smootherstep(atual.separacao, 0, 1) * SEPARAR / escalaZ);
+    const sepTotal = MathUtils.smootherstep(atual.separacao, 0, 1) + toque.sep;
+    posicionarCamadas(g, Math.max(0, sepTotal) * SEPARAR / escalaZ);
+    // peças arrastadas com o dedo: deslocamento extra de cada uma (volta a zero quando a página rola)
+    ["peleA", "miolo", "peleB"].forEach((nome) => {
+      const m = g.userData[nome];
+      const o = toque.desloc.get(m);
+      if (o) m.position.add(o.atual);
+      m.visible = toque.filtro === "tudo" || (toque.filtro === "eps" ? nome === "miolo" : nome !== "miolo");
+    });
   });
   // destaque: a camada em foco fica com a cor real, as outras escurecem
   matsCamada.forEach((m, k) => {
     const f = 1 - 0.58 * MathUtils.clamp(atual["dim" + k], 0, 1);
     Object.values(m).forEach((mat) => mat.color.setScalar(f));
   });
-  raiz.rotation.y = atual.giro;
-  raiz.rotation.x = atual.inclinar;
+  raiz.rotation.y = atual.giro + toque.giro;
+  raiz.rotation.x = MathUtils.clamp(atual.inclinar + toque.inclinar, -0.7, 1.2);
   if (atual.larg > 0) {
     const centro = telaParaMundo(atual.cx, atual.cy);
     const borda = telaParaMundo(atual.cx + atual.larg / 2, atual.cy);
@@ -381,6 +390,122 @@ function aplicar() {
   }
   atualizarParticulas(atual.abertura);
 }
+
+/* ------------------------------------------------------------------ */
+/* Interação: o cliente gira o bloco e arrasta cada peça com o dedo    */
+/* ------------------------------------------------------------------ */
+const toque = {
+  giro: 0, inclinar: 0, sep: 0, filtro: "tudo",
+  alvo: { giro: 0, inclinar: 0, sep: 0 },
+  desloc: new Map(), // mesh → { atual: Vector3, alvo: Vector3 } (no espaço da metade)
+  arrasto: null,
+  mexeu: false,
+};
+const raio = new Raycaster();
+const _ndc = new Vector2();
+const _plano = new Plane();
+const _hit = new Vector3();
+const _tmp = new Vector3();
+
+function suavizarToque(dt) {
+  const k = 1 - Math.exp(-dt * 10);
+  let mudou = false;
+  ["giro", "inclinar", "sep"].forEach((c) => {
+    const d = toque.alvo[c] - toque[c];
+    if (Math.abs(d) > 0.0005) { toque[c] += d * k; mudou = true; } else if (d) { toque[c] = toque.alvo[c]; mudou = true; }
+  });
+  toque.desloc.forEach((o, m) => {
+    if (o.atual.distanceToSquared(o.alvo) > 1e-8) { o.atual.lerp(o.alvo, k); mudou = true; }
+    else if (o.alvo.lengthSq() === 0 && toque.arrasto?.mesh !== m) toque.desloc.delete(m);
+  });
+  return mudou;
+}
+
+function pegarPeca(px, py) {
+  const el = renderer.domElement;
+  _ndc.set((px / el.clientWidth) * 2 - 1, -(py / el.clientHeight) * 2 + 1);
+  raio.setFromCamera(_ndc, camera);
+  const pecas = [];
+  metades.forEach((g) => ["peleA", "miolo", "peleB"].forEach((n) => { if (g.userData[n].visible) pecas.push(g.userData[n]); }));
+  const hit = raio.intersectObjects(pecas, false)[0];
+  return hit ? { mesh: hit.object, ponto: hit.point.clone() } : null;
+}
+
+const interacao = {
+  /** Começo do toque (px na tela). Devolve "peca" (arrastando uma peça) ou "girar". */
+  inicio(px, py) {
+    toque.mexeu = true;
+    const p = pegarPeca(px, py);
+    if (p) {
+      camera.getWorldDirection(_tmp);
+      _plano.setFromNormalAndCoplanarPoint(_tmp, p.ponto);
+      if (!toque.desloc.has(p.mesh)) toque.desloc.set(p.mesh, { atual: new Vector3(), alvo: new Vector3() });
+      const o = toque.desloc.get(p.mesh);
+      const local = p.mesh.parent.worldToLocal(p.ponto.clone());
+      toque.arrasto = { mesh: p.mesh, inicioLocal: local, base: o.alvo.clone() };
+      (Array.isArray(p.mesh.material) ? p.mesh.material : [p.mesh.material]).forEach((m) => m.emissive.setScalar(0.06));
+      sujo = true;
+      return "peca";
+    }
+    toque.arrasto = { girar: true, x: px, y: py, giro: toque.alvo.giro, inclinar: toque.alvo.inclinar };
+    return "girar";
+  },
+  mover(px, py) {
+    const a = toque.arrasto;
+    if (!a) return;
+    if (a.girar) {
+      toque.alvo.giro = a.giro + (px - a.x) * 0.009;
+      toque.alvo.inclinar = MathUtils.clamp(a.inclinar + (py - a.y) * 0.006, -1, 0.9);
+    } else {
+      const el = renderer.domElement;
+      _ndc.set((px / el.clientWidth) * 2 - 1, -(py / el.clientHeight) * 2 + 1);
+      raio.setFromCamera(_ndc, camera);
+      if (!raio.ray.intersectPlane(_plano, _hit)) return;
+      const local = a.mesh.parent.worldToLocal(_hit.clone()).sub(a.inicioLocal);
+      // limite: a peça não some da tela
+      local.clampLength(0, 0.9);
+      toque.desloc.get(a.mesh).alvo.copy(a.base).add(local);
+    }
+    sujo = true;
+  },
+  fim() {
+    const a = toque.arrasto;
+    if (a && a.mesh) {
+      const mats = Array.isArray(a.mesh.material) ? a.mesh.material : [a.mesh.material];
+      mats.forEach((m) => m.emissive.setScalar(0));
+    }
+    toque.arrasto = null;
+    sujo = true;
+  },
+  /** "Separar mais" / "Juntar" (soma à separação da rolagem). */
+  separar(mais) {
+    toque.mexeu = true;
+    toque.alvo.sep = mais ? Math.min(toque.alvo.sep + 0.8, 2.4) : -1;
+    if (!mais) toque.desloc.forEach((o) => o.alvo.set(0, 0, 0));
+    sujo = true;
+  },
+  /** "tudo" | "eps" | "concreto" */
+  filtrar(f) {
+    toque.mexeu = true;
+    toque.filtro = f;
+    sujo = true;
+  },
+  /** Tudo volta pro lugar que a rolagem manda (chamado quando o cliente rola a página). */
+  voltarOrigem() {
+    if (!toque.mexeu) return false;
+    toque.mexeu = false;
+    toque.alvo.giro = 0;
+    toque.alvo.inclinar = 0;
+    toque.alvo.sep = 0;
+    toque.filtro = "tudo";
+    toque.desloc.forEach((o) => o.alvo.set(0, 0, 0));
+    sujo = true;
+    return true;
+  },
+  /** O dedo está em cima de uma peça? (pra mostrar a "mãozinha") */
+  sobrePeca(px, py) { return !!pegarPeca(px, py); },
+  mexido() { return toque.mexeu; },
+};
 
 function suavizar(dt) {
   let mudou = false;
@@ -419,7 +544,7 @@ function avisarPosicoes() {
       x += ((_p.x + 1) / 2) * w;
       y += ((1 - _p.y) / 2) * h;
     });
-    return { x: x / metades.length, y: y / metades.length };
+    return { x: x / metades.length, y: y / metades.length, visivel: metades[0].userData[nome].visible };
   });
   ouvintesPosicao.forEach((fn) => fn(pos));
 }
@@ -431,6 +556,7 @@ function laco(t) {
   const gasto = t - ultimoTempo;
   ultimoTempo = t;
   let mudou = suavizar(dt);
+  if (suavizarToque(dt)) mudou = true;
   if (respirar && nivel !== NIVEIS.baixa) {
     respiro = Math.sin(t / 1400) * 0.012;
     mudou = true;
@@ -572,6 +698,7 @@ window.ImperioBloco3D = {
     ativo = !sim && !document.hidden;
     if (ativo && !antes) requestAnimationFrame(laco);
   },
+  interacao,
   /** fn(posicoes) a cada desenho: [{x,y} concreto externo, {x,y} EPS, {x,y} concreto interno] */
   aoPosicionar: (fn) => {
     ouvintesPosicao.push(fn);

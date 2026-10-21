@@ -59,6 +59,28 @@ test("bloco 3D carrega e a jornada em L anda na horizontal", async ({ page }) =>
   expect(x).toBeLessThan(-100);
 });
 
+test("cliente mexe nas peças com o dedo e a rolagem põe tudo no lugar", async ({ page }) => {
+  await abrir(page, "/?qualidade=media");
+  await page.waitForFunction(() => window.ImperioCena && window.ImperioCena.pronto(), null, { timeout: 30000 });
+  await page.evaluate(() => {
+    const j = document.querySelector("#por-dentro");
+    const r = j.getBoundingClientRect();
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.2, behavior: "instant" });
+  });
+  await page.waitForTimeout(800);
+  const box = await page.locator(".jornada__toque").boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await page.click('[data-filtro-peca="eps"]');
+  await expect(page.locator('[data-filtro-peca="eps"]')).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => window.ImperioBloco3D.interacao.mexido())).toBe(true);
+  await page.mouse.wheel(0, 400);
+  await expect.poll(() => page.evaluate(() => window.ImperioBloco3D.interacao.mexido())).toBe(false);
+  await expect(page.locator('[data-filtro-peca="tudo"]')).toHaveAttribute("aria-pressed", "true");
+});
+
 test("aparelho fraco / economia de dados: sem 3D, imagens prontas", async ({ page }) => {
   await abrir(page, "/?qualidade=estatica");
   await page.waitForTimeout(1500);

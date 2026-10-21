@@ -59,7 +59,7 @@
       separacao: sep,
       abertura: aberto,
       cx: mix(w * (celular ? 0.5 : 0.64), w * (celular ? 0.5 : 0.68), curva),
-      cy: mix(h * (celular ? 0.36 : 0.5), h * (celular ? 0.3 : 0.36), curva),
+      cy: mix(h * (celular ? 0.34 : 0.58), h * (celular ? 0.3 : 0.36), curva),
       larg: mix(Math.min(w * (celular ? 0.62 : 0.4), 640), Math.min(w * (celular ? 0.62 : 0.32), 500), curva),
       giro: giro,
       inclinar: mix(0.28, 0.2, aberto),
@@ -89,6 +89,12 @@
       opRotulos = jj.rotulos * e;
     }
     alvo.espessura = espessuraEscolhida();
+    // área de toque da jornada acompanha o bloco
+    if (areaToque) {
+      areaToque.style.setProperty("--bx", alvo.cx + "px");
+      areaToque.style.setProperty("--by", alvo.cy + "px");
+      areaToque.style.setProperty("--bw", alvo.larg + "px");
+    }
     if (rotulos) rotulos.style.opacity = opRotulos;
     var visivel = heroVisivel || dentroJ;
     canvas.style.opacity = visivel ? 1 : 0;
@@ -99,13 +105,16 @@
 
   /** Etiquetas (concreto / EPS / concreto) presas no topo de cada peça. */
   var rotulos = null;
+  var areaToque = null;
   function posicionarRotulos(pos) {
     if (!rotulos || rotulos.style.opacity === "0") return;
     var itens = rotulos.querySelectorAll("[data-rot]");
     pos.forEach(function (pt, k) {
       // escalonadas na altura (a do meio mais alta) pra não se sobreporem com o bloco de lado
-      var sobe = (window.innerWidth < 760 ? [0, 30, 60] : [0, 46, 92])[k];
-      if (itens[k]) itens[k].style.transform = "translate3d(" + pt.x.toFixed(1) + "px," + (pt.y - sobe).toFixed(1) + "px,0) translate(-50%,-115%)";
+      var sobe = (window.innerWidth < 760 ? [0, 24, 48] : [0, 40, 80])[k];
+      if (!itens[k]) return;
+      itens[k].style.transform = "translate3d(" + pt.x.toFixed(1) + "px," + (pt.y - sobe).toFixed(1) + "px,0) translate(-50%,-115%)";
+      itens[k].style.opacity = pt.visivel ? 1 : 0; // "Só EPS" / "Só concreto": some a etiqueta da peça escondida
     });
   }
 
@@ -129,6 +138,7 @@
           }).observe(heroEl);
         }
         rotulos = document.querySelector("[data-jornada-rotulos]");
+        areaToque = document.querySelector(".jornada__toque");
         B.aoPosicionar(posicionarRotulos);
         if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);
         if (window.ImperioEspessura) window.ImperioEspessura.aoMudar(function () { atualizar(window.ImperioMotion && window.ImperioMotion.jornada()); });

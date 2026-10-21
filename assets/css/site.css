@@ -184,12 +184,12 @@ main { position: relative; z-index: 2; }
 .jornada__rotulos { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 .rot { position: absolute; padding: 8px 12px; font-size: 0.78rem; line-height: 1.3; color: var(--texto-suave); background: rgba(251, 250, 247, 0.92); border: 1px solid var(--linha); border-radius: 6px; max-width: 12rem; }
 .rot b { display: block; font-size: 0.9rem; font-stretch: 115%; color: var(--grafite); }
-.rot { left: 0; top: 0; will-change: transform; white-space: nowrap; max-width: none; }
+.rot { left: 0; top: 0; will-change: transform; white-space: nowrap; max-width: none; transition: opacity 0.3s; }
 .rot span { display: block; font-size: 1.05rem; font-weight: 850; font-stretch: 120%; color: var(--grafite); }
 .rot--eps span, .rot--eps b { color: var(--azul); }
 .rot::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: var(--haste, 10px); background: var(--concreto-esc); }
-.rot[data-rot="1"] { --haste: 56px; }
-.rot[data-rot="2"] { --haste: 102px; }
+.rot[data-rot="1"] { --haste: 50px; }
+.rot[data-rot="2"] { --haste: 90px; }
 .jornada__estatico { display: none; }
 .jornada__h { position: absolute; left: 0; bottom: 6vh; display: flex; gap: 16px; padding-inline: max(16px, calc((100vw - 1200px) / 2)); opacity: 0; will-change: transform; }
 .painel { flex: none; width: min(80vw, 340px); padding: 22px; border-radius: var(--raio-g); background: rgba(251, 250, 247, 0.94); border: 1px solid var(--linha); transition: border-color 0.3s, transform 0.4s var(--ease), box-shadow 0.4s; }
@@ -207,9 +207,27 @@ main { position: relative; z-index: 2; }
 .espec dd { margin: 0; font-weight: 800; font-stretch: 115%; text-align: right; }
 .espec dd.a-confirmar { font-weight: 600; font-style: italic; color: var(--concreto-esc); }
 .painel--total { border-color: var(--grafite); }
-.espessuras { position: absolute; z-index: 3; right: max(16px, calc((100vw - 1200px) / 2)); top: calc(var(--cabecalho) + 14px); display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 8px; background: rgba(251, 250, 247, 0.92); border: 1px solid var(--linha); font-size: 0.78rem; font-weight: 700; color: var(--texto-suave); }
+.controles { position: absolute; z-index: 4; right: max(16px, calc((100vw - 1200px) / 2)); top: calc(var(--cabecalho) + 14px); display: grid; gap: 6px; justify-items: end; }
+.espessuras, .ferramentas { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 8px; background: rgba(251, 250, 247, 0.94); border: 1px solid var(--linha); font-size: 0.78rem; font-weight: 700; color: var(--texto-suave); }
+.ferramentas { display: none; }
+.toque-pronto .ferramentas { display: flex; }
+.ferramentas button { min-height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; font-weight: 750; font-size: 0.78rem; color: var(--grafite); cursor: pointer; }
+.ferramentas button:hover { background: var(--cal-2); }
+.ferramentas button[aria-pressed="true"] { background: var(--grafite); color: #fff; }
+.ferramentas .ferramentas__livre[aria-pressed="true"] { background: var(--azul); }
+/* área onde o dedo mexe no bloco (acompanha o bloco: cena.js publica --bx/--by/--bw) */
+[data-toque] { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.toque-livre [data-toque] { touch-action: none; }
+.toque-pronto [data-toque] { cursor: grab; }
+.toque-pronto [data-toque].sobre-peca { cursor: pointer; }
+.toque-pronto [data-toque].girando, .toque-pronto [data-toque].pegando-peca { cursor: grabbing; }
+.jornada__toque { --bx: 60vw; --by: 50vh; --bw: 40vw; position: absolute; z-index: 3; left: calc(var(--bx) - var(--bw) * 0.75); top: calc(var(--by) - var(--bw) * 0.5); width: calc(var(--bw) * 1.5); height: var(--bw); display: none; }
+.toque-pronto .jornada__toque { display: block; }
+.dica-toque { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--grafite); color: #fff; font-size: 0.78rem; font-weight: 700; white-space: nowrap; pointer-events: none; animation: dicaPulsa 1.6s ease-in-out infinite; transition: opacity 0.4s; }
+.ja-mexeu .dica-toque { opacity: 0; animation: none; }
+@keyframes dicaPulsa { 50% { transform: translateX(-50%) translateY(-5px); } }
 .espessuras span { padding: 0 4px; }
-.espessuras button { min-width: 40px; min-height: 36px; border: 0; border-radius: 6px; background: transparent; font-weight: 850; font-stretch: 120%; color: var(--grafite); cursor: pointer; }
+.espessuras button { min-width: 38px; min-height: 34px; border: 0; border-radius: 6px; background: transparent; font-weight: 850; font-stretch: 120%; color: var(--grafite); cursor: pointer; }
 .espessuras button[aria-pressed="true"] { background: var(--azul); color: #fff; }
 .painel--cta { display: grid; align-content: center; gap: 14px; background: var(--grafite); color: var(--cal); border-color: var(--grafite); }
 
@@ -446,9 +464,13 @@ main { position: relative; z-index: 2; }
   .jornada__v h2 { font-size: clamp(1.5rem, 7vw, 2.2rem); }
   .jornada__texto { margin-bottom: 26vh; font-size: 1rem; }
   .rot { font-size: 0.66rem; padding: 5px 8px; }
-  .rot[data-rot="1"] { --haste: 40px; }
-  .rot[data-rot="2"] { --haste: 70px; }
-  .espessuras { top: auto; right: auto; left: 50%; bottom: calc(44vh + 10px); transform: translateX(-50%); }
+  .rot[data-rot="1"] { --haste: 34px; }
+  .rot[data-rot="2"] { --haste: 58px; }
+  .rot b { font-size: 0.66rem; }
+  .rot span { font-size: 0.8rem; }
+  .controles { top: auto; right: auto; left: 50%; bottom: calc(44vh + 6px); transform: translateX(-50%); justify-items: center; width: calc(100% - 20px); }
+  .ferramentas button { padding: 0 7px; font-size: 0.72rem; min-height: 32px; }
+  .ferramentas, .espessuras { justify-content: center; }
   .rot span { font-size: 0.9rem; }
   .jornada__h { bottom: 4vh; }
   .painel { padding: 18px; }
@@ -481,7 +503,7 @@ main { position: relative; z-index: 2; }
 [data-qualidade="estatica"] .jornada__texto { margin-bottom: 1.2em; }
 [data-qualidade="estatica"] .jornada__estatico { display: block; width: min(640px, 100% - 32px); margin: 10px auto 24px; }
 [data-qualidade="estatica"] .jornada__rotulos { display: none; }
-[data-qualidade="estatica"] .espessuras { position: static; width: max-content; margin: 0 auto 16px; }
+[data-qualidade="estatica"] .controles { position: static; transform: none; width: auto; justify-items: center; margin: 0 auto 16px; }
 [data-qualidade="estatica"] .jornada__h { position: static; opacity: 1; flex-wrap: wrap; justify-content: center; }
 [data-qualidade="estatica"] .faixas__linha { white-space: normal; font-size: clamp(1.4rem, 5vw, 2.6rem); }
 [data-qualidade="estatica"] [data-revelar] { opacity: 1; transform: none; }

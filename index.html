@@ -105,9 +105,9 @@
             <li><strong>Fábrica</strong> <span data-texto="area">Itapetininga e região</span></li>
           </ul>
         </div>
-        <div class="hero__palco" data-ancora="hero">
+        <div class="hero__palco" data-ancora="hero" data-toque aria-label="Blocão 3D: arraste pra girar ou puxar as peças">
           <img class="poster" src="assets/img/bloco-fechado.webp" alt="Blocão: bloco de concreto com miolo de EPS" width="900" height="600" fetchpriority="high">
-          <p class="hero__dica" aria-hidden="true">role pra desmontar o bloco ↓</p>
+          <p class="hero__dica" aria-hidden="true">arraste pra girar · role pra desmontar ↓</p>
         </div>
       </div>
     </section>
@@ -122,13 +122,26 @@
          abre ao meio; a rolagem faz a curva e segue na HORIZONTAL com a ficha de cada peça (medidas + peso). -->
     <section class="jornada" id="por-dentro" data-jornada aria-label="O Blocão desmontado, peça por peça">
       <div class="jornada__fixo">
-        <div class="espessuras" role="group" aria-label="Escolha a espessura do Blocão">
-          <span>Espessura</span>
-          <button type="button" data-escolher-espessura="b10">10</button>
-          <button type="button" data-escolher-espessura="b13">13</button>
-          <button type="button" data-escolher-espessura="b15" aria-pressed="true">15</button>
-          <button type="button" data-escolher-espessura="b20">20</button>
-          <span>cm</span>
+        <div class="controles">
+          <div class="espessuras" role="group" aria-label="Escolha a espessura do Blocão">
+            <span>Espessura</span>
+            <button type="button" data-escolher-espessura="b10">10</button>
+            <button type="button" data-escolher-espessura="b13">13</button>
+            <button type="button" data-escolher-espessura="b15" aria-pressed="true">15</button>
+            <button type="button" data-escolher-espessura="b20">20</button>
+            <span>cm</span>
+          </div>
+          <div class="ferramentas" role="toolbar" aria-label="Mexer nas peças do Blocão">
+            <button type="button" data-acao-peca="separar">Separar</button>
+            <button type="button" data-acao-peca="juntar">Juntar</button>
+            <button type="button" data-filtro-peca="eps" aria-pressed="false">Só EPS</button>
+            <button type="button" data-filtro-peca="concreto" aria-pressed="false">Só concreto</button>
+            <button type="button" data-filtro-peca="tudo" aria-pressed="true">Tudo</button>
+            <button type="button" class="ferramentas__livre" data-girar-livre aria-pressed="false" title="Libera girar em todas as direções">↻ Girar livre</button>
+          </div>
+        </div>
+        <div class="jornada__toque" data-toque aria-label="Blocão 3D: arraste as peças com o dedo ou gire o bloco">
+          <p class="dica-toque" aria-hidden="true">👆 arraste as peças</p>
         </div>
         <div class="jornada__janela">
         <div class="jornada__v" data-jornada-v>
@@ -516,6 +529,7 @@
   <script src="assets/js/calculadora-nucleo.js?v=20261021c"></script>
   <script src="assets/js/calculadora.js?v=20261021c"></script>
   <script src="assets/js/conteudo.js?v=20261021c"></script>
-  <script src="assets/js/cena.js?v=20261021c"></script>
+  <script src="assets/js/cena.js?v=20261021d"></script>
+  <script src="assets/js/toque.js?v=20261021d"></script>
 </body>
 </html>
