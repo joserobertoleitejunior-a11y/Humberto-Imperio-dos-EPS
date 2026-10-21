@@ -31,19 +31,19 @@
 Video.iniciar({
   tema:'imperio', tempos:'tempos-como-orcar.json',
   cenas:[
-    {id:'splash',parte:'Abertura',html:'Sua obra em <b>1 minuto</b>',fala:'Sua obra em um minuto!',min:3.4,splash:true},
-    {id:'hero',parte:'Blocão',html:'Conheça o <b>Blocão</b>',fala:'Conheça o Blocão!',min:2.6},
-    {id:'afasta',parte:'Por dentro',html:'Pra mostrar, <b>afastamos as peças</b>',fala:'Pra mostrar, a gente afasta as peças.',min:4.0,rolar:{el:'por-dentro',frac:.2}},
+    {id:'splash',parte:'Abertura',html:'Sua obra em <b>1 minuto</b>',fala:'Sua obra em um minuto! Vem ver!',min:4.8,splash:true},
+    {id:'hero',parte:'Blocão',html:'Conheça o <b>Blocão</b>',fala:'Conheça o Blocão! Concreto por fora, Épê-ésse por dentro.',min:3.4},
+    {id:'afasta',parte:'Por dentro',html:'Pra mostrar, <b>afastamos as peças</b>',fala:'Pra você ver, a gente afasta as peças. Mas na obra, é um bloco só!',min:4.0,rolar:{el:'por-dentro',frac:.2}},
     {id:'abre',parte:'Por dentro',html:'Agora abre <b>ao meio</b>',fala:'Agora, abre ao meio.',min:3.4,rolar:{el:'por-dentro',frac:.34}},
     {id:'pecas',parte:'Peça por peça',html:'Cada peça com a <b>sua medida</b>',fala:'Cada peça com a sua medida.',min:3.8,rolar:{el:'por-dentro',frac:.64}},
-    {id:'montado',parte:'Peça por peça',html:'Na obra, é <b>um bloco só</b>',fala:'Na obra, é um bloco só.',min:3.0,rolar:{el:'por-dentro',frac:.86}},
-    {id:'calc',parte:'Calculadora',html:'Agora, <b>calcule</b> sua obra',fala:'Agora, calcule sua obra.',min:2.8,rolar:{el:'calculadora',off:80}},
-    {id:'medidas',parte:'Calculadora',html:'Digite as <b>medidas</b>',fala:'Digite as medidas.',min:4.2,
+    {id:'montado',parte:'Peça por peça',html:'Na obra, é <b>um bloco só</b>',fala:'Na obra, é um bloco só. Leve e forte!',min:3.0,rolar:{el:'por-dentro',frac:.86}},
+    {id:'calc',parte:'Calculadora',html:'Agora, <b>calcule</b> sua obra',fala:'Agora, calcule a sua obra!',min:2.8,rolar:{el:'calculadora',off:80}},
+    {id:'medidas',parte:'Calculadora',html:'Digite as <b>medidas</b>',fala:'Digite as medidas da parede.',min:4.2,
       acoes:[{dt:.2,fn:function(w,el){var f=w.document.querySelector('[data-calculadora]');f.elements.comprimento.value='';f.elements.altura.value='';f.dispatchEvent(new Event('input',{bubbles:true}));}}],
       digitar:[{id:'calc-comprimento',texto:'52',dt0:.5,dt1:1.4},{id:'calc-altura',texto:'2,80',dt0:1.7,dt1:2.8}],
       rolagens:[{dt0:2.9,dt1:-.2,el:'calc-resultado',off:420}]},
-    {id:'zap',parte:'WhatsApp',html:'Chegou no <b>WhatsApp</b>!',fala:'Chegou no WhatsApp da fábrica!',zap:true,min:4.2},
-    {id:'fim',fim:true,min:3.8,tag:'Construa com o Império',fala:'Império do EPS. Construa com o Império!'}
+    {id:'zap',parte:'WhatsApp',html:'Chegou no <b>WhatsApp</b>!',fala:'E o orçamento chega no Uótsap da fábrica!',zap:true,min:4.2},
+    {id:'fim',fim:true,min:3.8,tag:'Construa com o Império',fala:'Império do Épê-ésse. Construa com o Império!'}
   ]
 });
 </script>
