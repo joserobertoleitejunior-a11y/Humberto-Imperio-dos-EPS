@@ -127,6 +127,8 @@ Aplicar em 100% das telas:
 - Migration de banco é sempre reversível ou testada em ambiente de staging antes de rodar em produção — nunca alterar schema direto na base de produção sem testar antes.
 - Backup de banco configurado e testado (não só "existe backup", mas "já restauramos um backup pra confirmar que funciona") antes do primeiro cliente real usar o sistema.
 
+**Motion neste projeto**: Three.js restrito a 1 momento (o Blocão na hero + jornada em L, um canvas só). GSAP/Anime não foram usados: um motor próprio de ~4 KB (`motion.js`) faz letras, faixas e o "L" — mais leve pra celular fraco que 110 KB de GSAP. Níveis de qualidade por aparelho em `dispositivo.js`.
+
 **Status neste projeto**: `netlify.toml` roda `npm test` antes de publicar. Lint limpo, ainda fora do gate. Backup do banco: pendente (banco ainda não criado).
 
 ---

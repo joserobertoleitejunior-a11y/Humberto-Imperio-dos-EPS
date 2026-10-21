@@ -6,7 +6,7 @@
  */
 window.IMPERIO_CONFIG = {
   nome: "Império do EPS",
-  slogan: "Blokão Sanduíche",
+  slogan: "Fábrica do Blocão",
 
   // Fonte: bio e artes do Instagram oficial (@humbertoimperioeps).
   whatsappNumero: "5515991212917",
@@ -23,14 +23,14 @@ window.IMPERIO_CONFIG = {
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=Itapetininga+SP",
 
   /**
-   * Ficha técnica do Blokão (composição publicada no catálogo técnico do
+   * Ficha técnica do Blocão (composição publicada no catálogo técnico do
    * próprio Instagram). Espessuras em cm.
    */
   blocos: [
-    { id: "b10", nome: "Blokão 10 cm", total: 10, concreto: 2.5, eps: 5, uso: "Paredes internas e divisórias" },
-    { id: "b13", nome: "Blokão 13 cm", total: 13, concreto: 3.5, eps: 6, uso: "Paredes internas com mais isolamento" },
-    { id: "b15", nome: "Blokão 15 cm", total: 15, concreto: 3.5, eps: 8, uso: "Paredes externas de casas" },
-    { id: "b20", nome: "Blokão 20 cm", total: 20, concreto: 3.5, eps: 13, uso: "Máximo conforto térmico e acústico" },
+    { id: "b10", nome: "Blocão 10 cm", total: 10, concreto: 2.5, eps: 5, uso: "Paredes internas e divisórias" },
+    { id: "b13", nome: "Blocão 13 cm", total: 13, concreto: 3.5, eps: 6, uso: "Paredes internas com mais isolamento" },
+    { id: "b15", nome: "Blocão 15 cm", total: 15, concreto: 3.5, eps: 8, uso: "Paredes externas de casas" },
+    { id: "b20", nome: "Blocão 20 cm", total: 20, concreto: 3.5, eps: 13, uso: "Máximo conforto térmico e acústico" },
   ],
 
   /**
@@ -46,7 +46,7 @@ window.IMPERIO_CONFIG = {
   promocoesPadrao: [
     {
       titulo: "Condições especiais para o Loteamento Pacaembu",
-      descricao: "Morador do Pacaembu tem desconto exclusivo no Blokão e projeto em parceria com Alex Martins Arquitetura.",
+      descricao: "Morador do Pacaembu tem desconto exclusivo no Blocão e projeto em parceria com Alex Martins Arquitetura.",
       selo: "Exclusivo",
       validade: null,
       imagem_url: "",
@@ -56,10 +56,10 @@ window.IMPERIO_CONFIG = {
   /** Fotos exibidas enquanto a galeria do banco estiver vazia. */
   galeriaPadrao: [
     {
-      titulo: "Paredes em Blokão subindo",
+      titulo: "Paredes em Blocão subindo",
       categoria: "obra",
       cidade: "Itapetininga-SP",
-      imagem_url: "assets/img/obra-paredes-blokao.webp",
+      imagem_url: "assets/img/obra-paredes-blocao.webp",
     },
   ],
 

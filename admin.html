@@ -5,18 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Painel · Império do EPS</title>
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#141416">
+  <meta name="theme-color" content="#1e2023">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Cinzel:wght@700&display=swap">
-  <link rel="stylesheet" href="assets/css/admin.css?v=20261021a">
+  <link rel="stylesheet" href="assets/css/admin.css?v=20261021b">
 </head>
 <body>
   <!-- ===== LOGIN -->
   <main class="login" data-tela-login>
     <form class="login__caixa" data-form-login novalidate>
-      <img src="assets/img/logo-horizontal.svg" alt="Império do EPS" width="240" height="64">
+      <img src="assets/img/marca-clara.svg" alt="Império do EPS" width="240" height="64">
       <h1>Painel administrativo</h1>
       <p class="login__aviso" data-aviso-config hidden>O banco ainda não foi ligado (config.js). Use a demonstração para ver o painel.</p>
       <label class="campo"><span>E-mail</span><input id="login-email" type="email" autocomplete="username" required></label>
@@ -31,7 +28,7 @@
   <!-- ===== PAINEL -->
   <div class="painel" data-tela-painel hidden>
     <aside class="lateral">
-      <img class="lateral__logo" src="assets/img/logo-horizontal.svg" alt="Império do EPS" width="200" height="52">
+      <img class="lateral__logo" src="assets/img/marca-clara.svg" alt="Império do EPS" width="200" height="52">
       <nav class="abas" aria-label="Seções do painel">
         <a href="#visao" data-aba="visao">Visão geral</a>
         <a href="#orcamentos" data-aba="orcamentos">Orçamentos <span class="contador-aba" data-novos></span></a>
@@ -115,7 +112,7 @@
         <form class="cartao editor" data-form-promo novalidate>
           <h2 data-promo-titulo-form>Nova promoção</h2>
           <input type="hidden" name="id">
-          <label class="campo"><span>Título</span><input name="titulo" maxlength="120" required placeholder="ex.: Blokão 15 cm com frete grátis"></label>
+          <label class="campo"><span>Título</span><input name="titulo" maxlength="120" required placeholder="ex.: Blocão 15 cm com frete grátis"></label>
           <label class="campo"><span>Descrição</span><textarea name="descricao" rows="3" maxlength="400"></textarea></label>
           <div class="campos-duplos">
             <label class="campo"><span>Selo (opcional)</span><input name="selo" maxlength="24" placeholder="ex.: Só este mês"></label>

@@ -1,21 +1,22 @@
+@font-face { font-family: "Archivo"; src: url("../fonts/archivo-latin.woff2") format("woff2"); font-weight: 400 900; font-stretch: 62% 125%; font-display: swap; }
 /* =====================================================================
    Império do EPS — painel administrativo (mobile-first, mesmos tokens do site)
    ===================================================================== */
 :root {
-  --carvao: #0b0b0c;
-  --grafite: #141416;
-  --grafite-2: #1c1c1f;
-  --grafite-3: #26262a;
-  --linha: #34343a;
-  --ouro: #d4af5a;
-  --ouro-claro: #f6e3a1;
-  --ouro-escuro: #9c7425;
-  --marfim: #f5f1e6;
-  --texto-suave: #bdb6a6;
+  --carvao: #17191b;
+  --grafite: #1e2023;
+  --grafite-2: #25282b;
+  --grafite-3: #2f3236;
+  --linha: #3a3d42;
+  --ouro: #5b82f0;      /* destaque = azul técnico (nome antigo mantido pra não quebrar seletores) */
+  --ouro-claro: #b9cbff;
+  --ouro-escuro: #1f4bd8;
+  --marfim: #f3f1ec;
+  --texto-suave: #b3afa7;
   --verde: #4cc38a;
   --vermelho: #ff8a7a;
   --azul: #8fb4ff;
-  --gradiente-ouro: linear-gradient(160deg, var(--ouro-claro), var(--ouro) 48%, var(--ouro-escuro));
+  --gradiente-ouro: linear-gradient(180deg, #2a57e6, var(--ouro-escuro));
   --fonte: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
   --raio: 14px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -35,7 +36,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px; border-radius: 999px; border: 1.5px solid transparent; font-weight: 700; text-decoration: none; cursor: pointer; transition: transform 0.2s var(--ease), background-color 0.2s; }
 .botao:hover { transform: translateY(-1px); }
 .botao:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-.botao--ouro { background: var(--gradiente-ouro); color: var(--grafite); }
+.botao--ouro { background: var(--gradiente-ouro); color: #fff; }
 .botao--contorno { border-color: var(--linha); background: var(--grafite-2); }
 .botao--contorno:hover { border-color: var(--ouro); }
 .botao--whats { background: #1fa855; color: #fff; }
@@ -77,16 +78,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .abas::-webkit-scrollbar { display: none; }
 .abas a { flex: none; padding: 10px 12px; text-decoration: none; font-weight: 600; color: var(--texto-suave); border-bottom: 2px solid transparent; white-space: nowrap; }
 .abas a[aria-current="page"] { color: var(--ouro-claro); border-color: var(--ouro); }
-.contador-aba:not(:empty) { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--ouro); color: var(--grafite); font-size: 0.75rem; font-weight: 800; }
+.contador-aba:not(:empty) { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--ouro-escuro); color: #fff; font-size: 0.75rem; font-weight: 800; }
 .lateral__rodape { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.85rem; }
 .lateral__rodape a { color: var(--texto-suave); }
-.selo-demo { padding: 4px 10px; border-radius: 999px; background: var(--gradiente-ouro); color: var(--grafite); font-weight: 800; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; }
+.selo-demo { padding: 4px 10px; border-radius: 999px; background: var(--gradiente-ouro); color: #fff; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; }
 .conteudo { padding: 20px 12px 60px; min-width: 0; width: min(1240px, 100%); margin-inline: auto; }
 .topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.topo h1 { font-family: "Cinzel", serif; font-size: 1.6rem; }
+.topo h1 { font-size: 1.6rem; font-stretch: 125%; font-weight: 850; text-transform: uppercase; }
 .periodo { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--grafite-2); border: 1px solid var(--linha); }
 .periodo button, .chips button { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 0; background: none; font-weight: 600; color: var(--texto-suave); cursor: pointer; }
-.periodo button[aria-pressed="true"], .chips button[aria-pressed="true"] { background: var(--gradiente-ouro); color: var(--grafite); }
+.periodo button[aria-pressed="true"], .chips button[aria-pressed="true"] { background: var(--gradiente-ouro); color: #fff; }
 
 /* ---------- KPIs e cartões ---------- */
 .kpis { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); margin-bottom: 14px; }

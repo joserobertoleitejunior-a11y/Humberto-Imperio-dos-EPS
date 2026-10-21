@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Império do EPS — Sua obra em 1 minuto (Stories)</title>
+<meta name="description" content="Como calcular a obra com o Blocão e pedir orçamento pelo WhatsApp, em menos de um minuto.">
+<link rel="stylesheet" href="motion.css">
+</head>
+<body>
+<!-- Motor de vídeo: engenharia reversa do vídeo "Como pedir" da Pizza em Dobro.
+     O celular mostra o SITE DE VERDADE (iframe) e o vídeo comanda rolagem, digitação e cliques.
+     Gerar o MP4: ver README.md → "Vídeo tutorial". -->
+<div id="palco">
+  <div id="fundo"></div><div id="tinta"></div><div id="escuro"></div>
+  <canvas id="part" width="1080" height="1920"></canvas>
+  <div id="fone"><div id="ilha"></div><div id="tela"><iframe id="site" title="Site do Império do EPS" src="about:blank"></iframe><div id="zap"></div><div id="brilho"></div></div></div>
+  <div id="rail"><i></i></div>
+  <div id="parte"></div>
+  <div id="cap" aria-live="polite"></div>
+  <div id="fim"></div>
+  <div id="credito"><canvas id="cuboMini" width="200" height="200"></canvas><div><b>VIBE CODING PROCESS</b><span>Sites para comércio local</span></div></div>
+  <div id="vinheta"></div><canvas id="grao" width="270" height="480"></canvas>
+</div>
+<div id="capa"><img src="../assets/img/favicon.svg" alt=""><h1>Sua obra em 1 minuto</h1><p>Blocão por dentro, as 4 espessuras, a calculadora e o orçamento chegando no WhatsApp. Formato Stories (1080×1920).</p>
+  <div><button id="btSom" type="button">▶ Assistir com música</button><button class="sec" id="btMudo" type="button">Sem som</button></div></div>
+<div id="ctl"><button id="btRe" type="button">↺ Recomeçar</button></div>
+<audio id="som" src="trilha-como-orcar.mp3" preload="auto"></audio>
+<script src="motion.js"></script>
+<script>
+Video.iniciar({
+  tema:'imperio', tempos:'tempos-como-orcar.json',
+  cenas:[
+    {id:'splash',parte:'Abertura',html:'Sua obra em <b>1 minuto</b>',fala:'Sua obra em um minuto!',min:3.4,splash:true},
+    {id:'hero',parte:'Blocão',html:'Conheça o <b>Blocão</b>',fala:'Conheça o Blocão!',min:2.6},
+    {id:'abre',parte:'Por dentro',html:'Ele abre <b>ao meio</b>',fala:'Olha ele abrindo ao meio.',min:3.8,rolar:{el:'por-dentro',frac:.3}},
+    {id:'camadas',parte:'Por dentro',html:'Concreto por fora, <b>EPS por dentro</b>',fala:'Concreto por fora, EPS por dentro.',min:3.2,rolar:{el:'por-dentro',frac:.42}},
+    {id:'espessuras',parte:'Espessuras',html:'<b>4 espessuras</b> pra sua parede',fala:'Quatro espessuras pra sua parede.',min:4.4,rolar:{el:'por-dentro',frac:.97}},
+    {id:'calc',parte:'Calculadora',html:'Agora, <b>calcule</b> sua obra',fala:'Agora, calcule sua obra.',min:2.8,rolar:{el:'calculadora',off:80}},
+    {id:'medidas',parte:'Calculadora',html:'Digite as <b>medidas</b>',fala:'Digite as medidas.',min:4.2,
+      acoes:[{dt:.2,fn:function(w,el){var f=w.document.querySelector('[data-calculadora]');f.elements.comprimento.value='';f.elements.altura.value='';f.dispatchEvent(new Event('input',{bubbles:true}));}}],
+      digitar:[{id:'calc-comprimento',texto:'52',dt0:.5,dt1:1.4},{id:'calc-altura',texto:'2,80',dt0:1.7,dt1:2.8}],
+      rolagens:[{dt0:2.9,dt1:-.2,el:'calc-resultado',off:420}]},
+    {id:'zap',parte:'WhatsApp',html:'Chegou no <b>WhatsApp</b>!',fala:'Chegou no WhatsApp da fábrica!',zap:true,min:4.2},
+    {id:'fim',fim:true,min:3.8,tag:'Construa com o Império',fala:'Império do EPS. Construa com o Império!'}
+  ]
+});
+</script>
+</body>
+</html>

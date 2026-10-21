@@ -59,7 +59,7 @@
     if (dias !== null) {
       corpo.appendChild(criar("p", "promo__prazo" + (dias <= 3 ? " promo__prazo--urgente" : ""), dias <= 0 ? "Último dia!" : "Termina em " + dias + (dias === 1 ? " dia" : " dias")));
     }
-    var cta = criar("a", "botao botao--ouro", "Quero essa condição");
+    var cta = criar("a", "botao botao--azul", "Quero essa condição");
     cta.setAttribute("data-whatsapp", "Olá! Vi a promoção \"" + p.titulo + "\" no site do Império do EPS e quero saber mais.");
     cta.setAttribute("data-promo", "");
     cta.setAttribute("data-rotulo", p.titulo);

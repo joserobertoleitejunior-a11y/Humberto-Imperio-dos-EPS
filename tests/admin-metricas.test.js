@@ -18,7 +18,7 @@ test("resumo separa período atual do anterior", () => {
     visitas: [{ criado_em: em(1), visitante_id: "a" }, { criado_em: em(2), visitante_id: "a" }, { criado_em: em(3), visitante_id: "b" }, { criado_em: em(10), visitante_id: "c" }],
     cliques: [{ criado_em: em(1), tipo: "whatsapp" }, { criado_em: em(1), tipo: "instagram" }],
     clientes: [{ criado_em: em(1), cidade: "Itapetininga" }],
-    orcamentos: [{ criado_em: em(2), status: "fechado", area_m2: 100.4, bloco: "Blokão 15 cm" }, { criado_em: em(9), status: "novo", area_m2: 50, bloco: "Blokão 10 cm" }],
+    orcamentos: [{ criado_em: em(2), status: "fechado", area_m2: 100.4, bloco: "Blocão 15 cm" }, { criado_em: em(9), status: "novo", area_m2: 50, bloco: "Blocão 10 cm" }],
   };
   const r = M.resumo(dados, 7, agora);
   assert.equal(r.kpis.visitantes.valor, 2);

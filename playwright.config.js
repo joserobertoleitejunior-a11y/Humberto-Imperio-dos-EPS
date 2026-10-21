@@ -5,7 +5,8 @@ module.exports = defineConfig({
   testDir: "tests/e2e",
   use: {
     baseURL: "http://localhost:8765",
-    launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+    // WebGL por software: o teste do Blocão 3D roda em máquina sem GPU (CI)
+    launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"], ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) },
   },
   webServer: { command: "python3 -m http.server 8765", port: 8765, reuseExistingServer: true },
 });

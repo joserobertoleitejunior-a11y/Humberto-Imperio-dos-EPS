@@ -60,6 +60,10 @@
     };
   }
 
+  function decimal(v) {
+    return String(arredondar(v, 2)).replace(".", ",");
+  }
+
   function formatarM2(v) {
     return String(arredondar(v, 2)).replace(".", ",") + " m²";
   }
@@ -68,7 +72,7 @@
   function mensagemWhatsApp(r, e, cliente) {
     var linhas = ["Olá! Fiz a simulação no site do Império do EPS:", ""];
     if (r.bloco) linhas.push("• Bloco: " + r.bloco.nome);
-    if (e && e.modo !== "area") linhas.push("• Paredes: " + numero(e.comprimento) + " m × " + numero(e.altura) + " m");
+    if (e && e.modo !== "area") linhas.push("• Paredes: " + decimal(numero(e.comprimento)) + " m × " + decimal(numero(e.altura)) + " m");
     if (r.areaVaos) linhas.push("• Descontando " + inteiro(e.portas) + " porta(s) e " + inteiro(e.janelas) + " janela(s)");
     linhas.push("• Área de parede: " + formatarM2(r.areaLiquida));
     if (r.blocos) linhas.push("• Estimativa: " + r.blocos + " blocos (com perda)");

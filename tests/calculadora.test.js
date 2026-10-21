@@ -2,7 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const Calc = require("../assets/js/calculadora-nucleo.js");
 
-const blocos = [{ id: "b15", nome: "Blokão 15 cm" }];
+const blocos = [{ id: "b15", nome: "Blocão 15 cm" }];
 
 test("comprimento × altura menos portas e janelas", () => {
   const r = Calc.calcularObra({ modo: "medidas", comprimento: "40", altura: "2,80", portas: 3, janelas: 4, blocoId: "b15" }, { blocos });
@@ -10,7 +10,7 @@ test("comprimento × altura menos portas e janelas", () => {
   assert.equal(r.areaBruta, 112);
   assert.equal(r.areaVaos, Math.round((3 * 0.8 * 2.1 + 4 * 1.2) * 100) / 100);
   assert.equal(r.areaLiquida, Math.round((112 - 3 * 0.8 * 2.1 - 4 * 1.2) * 100) / 100);
-  assert.equal(r.bloco.nome, "Blokão 15 cm");
+  assert.equal(r.bloco.nome, "Blocão 15 cm");
   assert.equal(r.blocos, null, "sem medida do bloco não inventa quantidade");
 });
 
@@ -30,7 +30,8 @@ test("mensagem do WhatsApp traz área, bloco e nome", () => {
   const e = { modo: "medidas", comprimento: "10", altura: "3", portas: 1, janelas: 0, blocoId: "b15" };
   const r = Calc.calcularObra(e, { blocos });
   const msg = Calc.mensagemWhatsApp(r, e, { nome: "Ana", cidade: "Itapetininga" });
-  assert.match(msg, /Blokão 15 cm/);
+  assert.match(msg, /Blocão 15 cm/);
   assert.match(msg, /28,32 m²/);
+  assert.match(msg, /Paredes: 10 m × 3 m/);
   assert.match(msg, /Nome: Ana — Itapetininga/);
 });

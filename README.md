@@ -1,13 +1,13 @@
 # HUMBERTO IMPÉRIO DOS EPS — Página de vendas + painel
 
 Projeto da agência **VIBE CODING PROCESS** para o Império do EPS (Itapetininga-SP),
-fábrica do Blokão Sanduíche (concreto + EPS + concreto).
+fábrica do Blocão (concreto + EPS + concreto).
 Construído por engenharia reversa da San Comércio (base), Remop e Pizza em Dobro.
 
 - **Onde está cada coisa:** `MAPA-DO-SITE.md` ← comece por aqui
 - **Regras da agência:** `PADROES-AGENCIA.md`
 - **Cliente, concorrentes e pendências:** `BRIEFING-HUMBERTO.md`
-- **Marca e reforma do Instagram:** `brand/INSTAGRAM.md` + `brand/logo/` + `brand/instagram/`
+- **Logo (situação e recomendação):** `brand/LOGO.md` · **Reforma do Instagram:** `brand/INSTAGRAM.md`
 
 ## Rodar localmente
 
@@ -16,7 +16,24 @@ npm run dev          # http://localhost:8765  (painel: /admin.html → "Ver demo
 npm test             # testes unitários (calculadora + métricas do painel)
 npm run test:e2e     # Playwright: calculadora → WhatsApp, cadastro, painel, sem rolagem lateral
 npm run lint         # Biome
+npm run vendor       # regera assets/vendor/three-imperio.min.js (Three.js só com o que a cena usa)
 ```
+
+Testar como aparelho fraco: abra com `?qualidade=baixa` ou `?qualidade=estatica` (ver MAPA §2).
+
+## Vídeo tutorial ("Sua obra em 1 minuto")
+
+Engenharia reversa do vídeo "Como pedir" da Pizza em Dobro: o celular mostra o **site de verdade** e o vídeo
+comanda rolagem, digitação e o WhatsApp chegando. Cenas em `video/index.html`.
+
+```bash
+npm run dev                                                    # servidor na porta 8765 (outro terminal)
+node scripts/exportar-roteiro.js index.html /tmp/roteiro.json  # lê as cenas
+python3 scripts/gerar-trilha-video.py /tmp/roteiro.json video/trilha-como-orcar.mp3   # trilha + tempos
+node scripts/renderizar-video.js index.html video/como-orcar.mp4 32.4 video/trilha-como-orcar.mp3   # ~25 min
+```
+Sem locução por enquanto (a voz neural da Pizza depende de baixar um modelo que este ambiente não alcança).
+Melhor ainda: gravar a voz do Vinicius e trocar a trilha (`MUSICA=arquivo.mp3`).
 
 ## Publicação (Netlify)
 

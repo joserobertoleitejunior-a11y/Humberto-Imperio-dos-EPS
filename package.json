@@ -6,10 +6,13 @@
     "dev": "python3 -m http.server 8765",
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
-    "lint": "biome lint assets/js tests"
+    "lint": "biome lint assets/js tests video/motion.js",
+    "vendor": "esbuild scripts/vendor-three.js --bundle --format=esm --minify --legal-comments=eof --outfile=assets/vendor/three-imperio.min.js"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@playwright/test": "1.56.1"
+    "@playwright/test": "1.56.1",
+    "esbuild": "0.24.0",
+    "three": "0.180.0"
   }
 }

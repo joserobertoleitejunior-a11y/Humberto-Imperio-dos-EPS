@@ -9,56 +9,84 @@
 |---|---|---|
 | WhatsApp, Instagram, cidade, endereço, mapa | `assets/js/config.js` | `window.IMPERIO_CONFIG` (único ponto) |
 | Medida do bloco (habilita "nº de blocos" na calculadora) | `assets/js/config.js` | `medidaBloco: { largura, altura }` em metros + `perdaPercentual` |
-| Ficha técnica dos blocos | `config.js` → `blocos` **e** `index.html` → `===== FICHA TÉCNICA` | o corte em escala usa `style="--c:3.5;--e:8"` |
+| Ficha técnica dos blocos | `config.js` → `blocos` **e** `index.html` → `===== FICHA TÉCNICA` e painéis da `===== JORNADA` | o corte em escala usa `style="--c:3.5;--e:8"` |
 | Promoção/foto exibida sem banco | `config.js` | `promocoesPadrao`, `galeriaPadrao` |
 | Promoções e fotos de obra (dia a dia) | **painel** `admin.html` | abas Promoções e Galeria (sem mexer em código) |
 | Ligar o banco | `config.js` → `supabase.url/anonKey` | + rodar `supabase/schema.sql` (ver README) |
 | Ligar Sentry | `config.js` → `sentryDsn` | |
-| Textos da hero | `index.html` | `===== HERO` |
-| Benefícios | `index.html` | `===== O BLOKÃO` |
-| Comparativo Blokão × tijolo | `index.html` | `===== COMPARATIVO` |
-| Conta da calculadora | `assets/js/calculadora-nucleo.js` | `calcularObra()` (testada em `tests/calculadora.test.js`) |
-| Mensagem que vai pro WhatsApp | `calculadora-nucleo.js` | `mensagemWhatsApp()` |
-| Linha de produtos EPS | `index.html` | `===== LINHA EPS` (cada item tem a mensagem em `data-whatsapp`) |
-| FAQ | `index.html` | `===== DÚVIDAS` |
-| Cores, fontes | `assets/css/site.css` / `admin.css` | `:root` |
-| Desenho 3D do bloco | `brand/scripts/gerar_bloco_iso.py` | gera o `<svg class="bloco-iso">` colado na hero |
+| Cores e fonte | `assets/css/site.css` / `admin.css` | `:root` (cal, concreto, grafite, azul técnico). Fonte Archivo hospedada em `assets/fonts/` |
+| Logo | `assets/img/marca.svg` (claro) e `marca-clara.svg` (fundo escuro) | provisório; ver `brand/LOGO.md` |
+| Splash (abertura) | `index.html` `===== SPLASH` + CSS "Splash" em `site.css` | tempo de fechar: `boas-vindas.js` (3,2 s) |
+| Tela de boas-vindas com vídeo | `index.html` `===== BOAS-VINDAS` + `boas-vindas.js` | vídeo em `video/como-orcar.mp4` |
+| Aparência do bloco 3D (concreto, pérolas do EPS, luz) | `assets/js/bloco3d.js` | `texturasConcreto()`, `texturasEPS()`, luzes em `iniciar()` |
+| Onde o bloco fica / quando abre / curva do "L" | `assets/js/cena.js` (`alvoHero`, `alvoJornada`) e `assets/js/motion.js` (`pintarJornada`) | |
+| Letras que se montam na rolagem | qualquer título com `data-letras` (`"h"` = chegam pela direita) | lógica em `motion.js` |
+| Faixas de texto que andam na horizontal | `index.html` `===== FAIXAS` (`data-faixa-rolagem="1"` ou `"-1"`) | |
+| Conta da calculadora / mensagem do WhatsApp | `assets/js/calculadora-nucleo.js` | testada em `tests/calculadora.test.js` |
+| FAQ, benefícios, linha EPS, comparativo | `index.html` | blocos marcados |
 | SEO | `index.html` `<head>` | title, description, OG, JSON-LD; `robots.txt`, `sitemap.xml` |
 | Versão de cache | `index.html` e `admin.html` | `?v=AAAAMMDDx` — trocar a cada deploy |
 
-## 2. Arquivos
+## 2. Níveis de aparelho (desempenho)
+
+`assets/js/dispositivo.js` roda no `<head>` e grava `html[data-qualidade]`:
+
+| Nível | Quem | O que muda |
+|---|---|---|
+| `alta` | PC sem toque, ≥ 8 núcleos, ≥ 8 GB | 3D com sombra real, partículas de EPS, 2× resolução |
+| `media` | celular/PC comum | 3D sem sombra real (mancha suave), menos partículas, 1,5× |
+| `baixa` | ≤ 4 GB ou ≤ 4 núcleos | 3D em 1×, texturas 512, sem partículas, títulos por palavra, sem desfoque de vidro |
+| `estatica` | economia de dados, 2G, ≤ 2 GB, "reduzir movimento" | **sem 3D**: imagens prontas (`bloco-fechado/aberto.webp`), jornada vira seção normal |
+
+Forçar pra testar: `?qualidade=baixa` (ou `alta`, `media`, `estatica`) na URL.
+O que mantém o site leve: Three.js só baixa **depois** do `load` + ociosidade; **um** canvas só (hero + jornada);
+o 3D só desenha quando algo muda (parado = 0 % de GPU) e baixa a resolução sozinho se engasgar; fonte própria (90 KB), sem Google Fonts.
+
+## 3. Arquivos
 
 ```
-index.html                     Página de vendas (hero, faixa, blokão, ficha, comparativo, calculadora,
-                               linha EPS, galeria, promoções, como funciona, FAQ, contato, modal, lightbox)
+index.html                     Página de vendas (splash, hero 3D, faixas, jornada em L, benefícios, ficha,
+                               comparativo, calculadora, linha EPS, galeria, promoções, como funciona, FAQ, contato,
+                               boas-vindas com vídeo, modal de cadastro, lightbox)
 admin.html                     Painel: login | Visão geral · Orçamentos · Clientes · Promoções · Galeria
 
 assets/css/site.css            Visual do site (mobile-first)
 assets/css/admin.css           Visual do painel
+assets/fonts/archivo-latin.woff2  Fonte Archivo variável (peso + largura), hospedada no próprio site
+assets/vendor/three-imperio.min.js  Three.js só com o que a cena usa (gerado: npm run vendor)
+
+assets/js/dispositivo.js       (head) nível de qualidade do aparelho + altura real da tela
 assets/js/config.js            ★ Configuração única
 assets/js/observabilidade.js   Sentry (só com DSN)
+assets/js/boas-vindas.js       Splash (fecha/pula) + tela de boas-vindas com o vídeo (1x por sessão)
 assets/js/supabase-init.js     SDK sob demanda (não bloqueia a abertura)
 assets/js/analytics.js         Páginas vistas e cliques → tabelas paginas_vistas/cliques
 assets/js/main.js              Links de contato, menu, header, revelar ao rolar, toast
+assets/js/motion.js            Letras na rolagem, faixas horizontais, jornada em "L" (sticky)
 assets/js/cliente.js           Cadastro "Entrar com WhatsApp" → tabela clientes
 assets/js/calculadora-nucleo.js  Regra da calculadora (sem DOM, roda no Node)
 assets/js/calculadora.js       Interface da calculadora → WhatsApp + tabela orcamentos
 assets/js/conteudo.js          Promoções e galeria vindas do banco (skeleton + lightbox)
-assets/js/animacoes.js         Hero: camadas do bloco se encaixam (CSS) e abrem ao rolar (GSAP opcional)
-assets/js/admin-dados.js       Dados do painel: Supabase ou demonstração
-assets/js/admin-metricas.js    Contas do dashboard (testadas)
-assets/js/admin-graficos.js    Gráficos em SVG puro (sem biblioteca)
-assets/js/admin.js             Interface do painel
-assets/img/                    Logo, favicon, og-image, foto provisória de obra
+assets/js/cena.js              Liga a rolagem ao bloco 3D (carrega o Three.js sob demanda)
+assets/js/bloco3d.js           (ES module) cena Three.js: texturas procedurais, bloco que abre ao meio
+assets/js/admin-*.js, admin.js Painel (dados, métricas testadas, gráficos SVG, interface)
+assets/img/                    marca, favicon, og-image, bloco-fechado/aberto (render do próprio 3D), foto de obra
+
+video/index.html               Vídeo tutorial "Sua obra em 1 minuto" (Stories 1080×1920) — motor da Pizza em Dobro
+video/motion.js / motion.css   Motor: celular com o site de verdade, legendas animadas, WhatsApp chegando
+video/como-orcar.mp4 (+ capa)  Vídeo pronto (usado na tela de boas-vindas)
+video/trilha-como-orcar.mp3    Trilha sintetizada (sem direitos autorais, sem locução)
+scripts/                       vendor-three.js, exportar-roteiro.js, gerar-trilha-video.py, renderizar-video.js
 
 supabase/schema.sql            Tabelas + RLS + bucket de fotos + papel admin
 tests/*.test.js                Unitários (npm test) — rodam antes de todo deploy
-tests/e2e/fluxo.spec.js        E2E Playwright (npm run test:e2e)
-brand/                         Logotipo, kit do Instagram, scripts geradores
+tests/e2e/fluxo.spec.js        E2E Playwright (splash → boas-vindas, calculadora, cadastro, 3D/L, nível estático, painel, sem rolagem lateral)
+brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md, capas de destaque, scripts geradores
 ```
 
-## 3. Regras de layout
+## 4. Regras de layout
 - Sem rolagem lateral de 320 px a 1920 px (coberto pelo E2E).
 - `[hidden]` sempre esconde (regra global).
-- Ordem dos `<script>` importa: `config` → `observabilidade` → `supabase-init` → `analytics` → `main` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `animacoes`.
-- Tudo respeita `prefers-reduced-motion`.
+- O canvas 3D fica **fixo atrás** do conteúdo: hero e jornada são transparentes; as outras seções têm fundo e cobrem o canvas.
+- Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena`.
+- Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).
