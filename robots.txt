@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /brand/
+Disallow: /supabase/
+Disallow: /tests/
+
+Sitemap: https://humberto-imperio-dos-eps.netlify.app/sitemap.xml

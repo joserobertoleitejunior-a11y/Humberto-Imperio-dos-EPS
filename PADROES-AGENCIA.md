@@ -127,7 +127,7 @@ Aplicar em 100% das telas:
 - Migration de banco é sempre reversível ou testada em ambiente de staging antes de rodar em produção — nunca alterar schema direto na base de produção sem testar antes.
 - Backup de banco configurado e testado (não só "existe backup", mas "já restauramos um backup pra confirmar que funciona") antes do primeiro cliente real usar o sistema.
 
-**Status neste projeto**: pendente — pipeline (lint + teste) entra junto com o primeiro código.
+**Status neste projeto**: `netlify.toml` roda `npm test` antes de publicar. Lint limpo, ainda fora do gate. Backup do banco: pendente (banco ainda não criado).
 
 ---
 
@@ -137,14 +137,15 @@ Antes de escrever a primeira linha de funcionalidade:
 
 - [x] Repositório Git criado
 - [x] Este arquivo copiado pra raiz, seção 0 preenchida
-- [ ] `.env` / variáveis de ambiente (Netlify) — sem segredo no código
-- [ ] Sentry plugado (front) — DSN a criar
-- [ ] Lint (Biome) configurado
-- [ ] RLS ativa em toda tabela do Supabase (schema nasce com as políticas)
-- [ ] Testes iniciais (unitários das regras + E2E Playwright do fluxo "orçamento → WhatsApp")
+- [x] Sem segredo no código — só a anon key pública do Supabase (protegida por RLS) vai no `config.js`
+- [x] Sentry plugado (`assets/js/observabilidade.js`) — **falta criar o projeto e colar o DSN** em `config.js`
+- [x] Lint (Biome) configurado e limpo (`npm run lint`)
+- [x] RLS escrita junto com cada tabela (`supabase/schema.sql`) — **falta criar o projeto Supabase e rodar**
+- [x] Testes: unitários (`npm test`, gate do deploy) + E2E Playwright do fluxo calculadora → WhatsApp (`npm run test:e2e`)
 - [x] Definido: projeto único de cliente (não SaaS)
-- [ ] Painel admin com login próprio (Supabase Auth), separado do cadastro do cliente final
+- [x] Painel com login próprio (Supabase Auth) + papel admin verificado no banco (`is_admin()`), separado do cadastro do cliente final
 - [ ] Definido: quem tem acesso a produção (José / Vinicius)
+- [ ] Issues e branch protection no GitHub (ação do José)
 
 ---
 
@@ -169,7 +170,7 @@ Todo projeto com página voltada ao cliente final (não só ferramenta interna) 
 - [ ] Domínio próprio (não subdomínio de plataforma tipo `.netlify.app`/`.vercel.app`) — pesa pra confiança do cliente final e pra ranqueamento
 - [ ] Palavra-chave principal do negócio definida (com o cliente, não advinhada) — título, descrição e conteúdo da home devem mirar nela
 
-**Status neste projeto**: tudo pendente — entra no primeiro deploy.
+**Status neste projeto**: ✅ robots, sitemap, title/description, Open Graph com `og-image.png` 1200×630, JSON-LD `HomeAndConstructionBusiness`, canonical, lang. ⏳ Search Console, Google Meu Negócio, GA4, domínio próprio (ação do José/Vinicius). Palavra-chave proposta: "bloco de EPS Itapetininga" (validar com o cliente).
 
 ---
 

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Painel · Império do EPS</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#141416">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Cinzel:wght@700&display=swap">
+  <link rel="stylesheet" href="assets/css/admin.css?v=20261021a">
+</head>
+<body>
+  <!-- ===== LOGIN -->
+  <main class="login" data-tela-login>
+    <form class="login__caixa" data-form-login novalidate>
+      <img src="assets/img/logo-horizontal.svg" alt="Império do EPS" width="240" height="64">
+      <h1>Painel administrativo</h1>
+      <p class="login__aviso" data-aviso-config hidden>O banco ainda não foi ligado (config.js). Use a demonstração para ver o painel.</p>
+      <label class="campo"><span>E-mail</span><input id="login-email" type="email" autocomplete="username" required></label>
+      <label class="campo"><span>Senha</span><input id="login-senha" type="password" autocomplete="current-password" required></label>
+      <p class="erro" data-login-erro role="alert"></p>
+      <button class="botao botao--ouro" type="submit">Entrar</button>
+      <button class="botao botao--contorno" type="button" data-entrar-demo>Ver demonstração</button>
+      <a class="voltar" href="./">← Voltar ao site</a>
+    </form>
+  </main>
+
+  <!-- ===== PAINEL -->
+  <div class="painel" data-tela-painel hidden>
+    <aside class="lateral">
+      <img class="lateral__logo" src="assets/img/logo-horizontal.svg" alt="Império do EPS" width="200" height="52">
+      <nav class="abas" aria-label="Seções do painel">
+        <a href="#visao" data-aba="visao">Visão geral</a>
+        <a href="#orcamentos" data-aba="orcamentos">Orçamentos <span class="contador-aba" data-novos></span></a>
+        <a href="#clientes" data-aba="clientes">Clientes</a>
+        <a href="#promocoes" data-aba="promocoes">Promoções</a>
+        <a href="#galeria" data-aba="galeria">Galeria</a>
+      </nav>
+      <div class="lateral__rodape">
+        <span class="selo-demo" data-selo-demo hidden>Demonstração</span>
+        <a href="./" target="_blank" rel="noopener">Abrir site ↗</a>
+        <button class="botao-link" type="button" data-sair>Sair</button>
+      </div>
+    </aside>
+
+    <main class="conteudo">
+      <header class="topo">
+        <h1 data-titulo>Visão geral</h1>
+        <div class="periodo" role="group" aria-label="Período" data-periodo>
+          <button type="button" data-dias="7">7 dias</button>
+          <button type="button" data-dias="30" aria-pressed="true">30 dias</button>
+          <button type="button" data-dias="90">90 dias</button>
+        </div>
+      </header>
+
+      <!-- Visão geral -->
+      <section data-secao="visao">
+        <div class="kpis" data-kpis aria-busy="true">
+          <div class="esqueleto kpi"></div><div class="esqueleto kpi"></div><div class="esqueleto kpi"></div>
+          <div class="esqueleto kpi"></div><div class="esqueleto kpi"></div><div class="esqueleto kpi"></div>
+        </div>
+        <div class="grade">
+          <article class="cartao cartao--largo">
+            <h2>Visitas por dia</h2>
+            <div class="grafico" data-grafico-visitas></div>
+          </article>
+          <article class="cartao">
+            <h2>Funil de vendas</h2>
+            <div data-funil></div>
+          </article>
+          <article class="cartao">
+            <h2>De onde vêm as visitas</h2>
+            <div data-origens></div>
+          </article>
+          <article class="cartao">
+            <h2>Blocos mais simulados</h2>
+            <div data-blocos></div>
+          </article>
+          <article class="cartao">
+            <h2>Cidades</h2>
+            <div data-cidades></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Orçamentos -->
+      <section data-secao="orcamentos" hidden>
+        <div class="filtros">
+          <div class="chips" data-filtro-status>
+            <button type="button" data-status="todos" aria-pressed="true">Todos</button>
+            <button type="button" data-status="novo">Novos</button>
+            <button type="button" data-status="atendendo">Atendendo</button>
+            <button type="button" data-status="fechado">Fechados</button>
+            <button type="button" data-status="perdido">Perdidos</button>
+          </div>
+          <button class="botao botao--contorno botao--pequeno" type="button" data-csv="orcamentos">Baixar planilha (CSV)</button>
+        </div>
+        <div class="lista-cartoes" data-lista-orcamentos></div>
+      </section>
+
+      <!-- Clientes -->
+      <section data-secao="clientes" hidden>
+        <div class="filtros">
+          <label class="busca"><span class="sr-only">Buscar cliente</span><input type="search" placeholder="Buscar por nome, cidade ou número" data-busca-clientes></label>
+          <button class="botao botao--contorno botao--pequeno" type="button" data-csv="clientes">Baixar planilha (CSV)</button>
+        </div>
+        <div class="lista-cartoes" data-lista-clientes></div>
+      </section>
+
+      <!-- Promoções -->
+      <section data-secao="promocoes" hidden>
+        <form class="cartao editor" data-form-promo novalidate>
+          <h2 data-promo-titulo-form>Nova promoção</h2>
+          <input type="hidden" name="id">
+          <label class="campo"><span>Título</span><input name="titulo" maxlength="120" required placeholder="ex.: Blokão 15 cm com frete grátis"></label>
+          <label class="campo"><span>Descrição</span><textarea name="descricao" rows="3" maxlength="400"></textarea></label>
+          <div class="campos-duplos">
+            <label class="campo"><span>Selo (opcional)</span><input name="selo" maxlength="24" placeholder="ex.: Só este mês"></label>
+            <label class="campo"><span>Válida até (opcional)</span><input name="validade" type="date"></label>
+          </div>
+          <label class="campo"><span>Imagem (opcional)</span><input name="imagem" type="file" accept="image/jpeg,image/png,image/webp"></label>
+          <label class="interruptor"><input name="ativo" type="checkbox" checked> <span>Aparece no site</span></label>
+          <p class="erro" data-promo-erro role="alert"></p>
+          <div class="acoes">
+            <button class="botao botao--ouro" type="submit">Salvar promoção</button>
+            <button class="botao-link" type="button" data-promo-cancelar hidden>Cancelar edição</button>
+          </div>
+        </form>
+        <div class="lista-cartoes" data-lista-promocoes></div>
+      </section>
+
+      <!-- Galeria -->
+      <section data-secao="galeria" hidden>
+        <form class="cartao editor" data-form-foto novalidate>
+          <h2>Adicionar foto de obra</h2>
+          <label class="campo"><span>Foto</span><input name="imagem" type="file" accept="image/jpeg,image/png,image/webp" required></label>
+          <label class="campo"><span>Título</span><input name="titulo" maxlength="120" required placeholder="ex.: Casa térrea no Jardim Fogaça"></label>
+          <div class="campos-duplos">
+            <label class="campo"><span>Categoria</span>
+              <select name="categoria">
+                <option value="obra">Obra</option><option value="fachada">Fachada</option><option value="moldura">Molduras e sancas</option><option value="laje">Laje e contrapiso</option><option value="fabrica">Fábrica</option>
+              </select>
+            </label>
+            <label class="campo"><span>Cidade</span><input name="cidade" maxlength="120" placeholder="Itapetininga-SP"></label>
+          </div>
+          <p class="erro" data-foto-erro role="alert"></p>
+          <button class="botao botao--ouro" type="submit">Publicar foto</button>
+        </form>
+        <div class="galeria-admin" data-lista-galeria></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
+
+  <script src="assets/js/config.js?v=20261021a"></script>
+  <script src="assets/js/observabilidade.js?v=20261021a"></script>
+  <script src="assets/js/supabase-init.js?v=20261021a"></script>
+  <script src="assets/js/admin-metricas.js?v=20261021a"></script>
+  <script src="assets/js/admin-dados.js?v=20261021a"></script>
+  <script src="assets/js/admin-graficos.js?v=20261021a"></script>
+  <script src="assets/js/admin.js?v=20261021a"></script>
+</body>
+</html>

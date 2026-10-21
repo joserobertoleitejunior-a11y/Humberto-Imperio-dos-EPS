@@ -1,0 +1,15 @@
+{
+  "name": "humberto-imperio-dos-eps",
+  "private": true,
+  "description": "Império do EPS — página de vendas + painel (Vibe Coding Process)",
+  "scripts": {
+    "dev": "python3 -m http.server 8765",
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "lint": "biome lint assets/js tests"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@playwright/test": "1.56.1"
+  }
+}

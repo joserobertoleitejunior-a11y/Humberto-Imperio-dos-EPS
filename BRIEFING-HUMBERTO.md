@@ -84,7 +84,7 @@
 | **Pizzaria-pizza-em-dobro** | Promoções/cupom gerenciados pelo painel (sem mexer em código), cadastro/ranking de clientes, testes `node --test`, Biome, Sentry | **Promoções e galeria editáveis pelo painel** (Supabase Storage) — item que ficou no backlog da San |
 | Não trazer | Bot de WhatsApp/Evolution, Caixa/PDV, impressora, Firebase | Fora do escopo agora |
 
-## 5. Escopo do site (proposta fase 1)
+## 5. Escopo do site (fase 1 — ENTREGUE em 2026-10-21, ver MAPA-DO-SITE.md)
 
 1. **Home / página de vendas** — hero com o Blokão em corte (camadas concreto/EPS/concreto animadas), promessa principal, CTA WhatsApp.
 2. **Comparativo Blokão × tijolo comum** — tempo, peso, térmica, reboco (números só após validação).
