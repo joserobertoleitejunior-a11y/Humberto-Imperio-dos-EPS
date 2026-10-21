@@ -43,6 +43,21 @@
       a.target = "_blank";
       a.rel = "noopener";
     });
+    document.querySelectorAll("[data-link-google]").forEach(function (a) {
+      a.href = cfg.googleUrl || "https://www.google.com/search?q=" + encodeURIComponent((cfg.nome || "") + " " + (cfg.cidade || ""));
+      a.target = "_blank";
+      a.rel = "noopener";
+    });
+    document.querySelectorAll("[data-link-tel]").forEach(function (a) {
+      a.href = "tel:+" + cfg.whatsappNumero;
+    });
+    document.querySelectorAll("[data-link-facebook]").forEach(function (a) {
+      if (!cfg.facebookUrl) return; // sem página da empresa ainda: o ícone nem aparece
+      a.href = cfg.facebookUrl;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.hidden = false;
+    });
     var textos = {
       whatsapp: cfg.whatsappExibicao,
       instagram: cfg.instagramUsuario,

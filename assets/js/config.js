@@ -20,6 +20,9 @@ window.IMPERIO_CONFIG = {
   cidade: "Itapetininga-SP",
   areaAtendimento: "Itapetininga e região",
   enderecoCompleto: "", // PENDENTE: endereço da fábrica/showroom (Vinicius)
+  // Google: pesquisa pelo nome (mostra Perfil da Empresa, avaliações e rota quando existir).
+  // Trocar pelo link curto do Perfil da Empresa (g.page/...) quando o Vinicius criar.
+  googleUrl: "https://www.google.com/search?q=Imp%C3%A9rio+do+EPS+Itapetininga",
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=Itapetininga+SP",
 
   /**

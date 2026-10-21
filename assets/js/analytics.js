@@ -41,6 +41,9 @@
   function tipoDoClique(alvo) {
     if (alvo.hasAttribute("data-link-instagram")) return "instagram";
     if (alvo.hasAttribute("data-link-maps")) return "mapa";
+    if (alvo.hasAttribute("data-link-google")) return "google";
+    if (alvo.hasAttribute("data-link-tel")) return "ligar";
+    if (alvo.hasAttribute("data-link-facebook")) return "facebook";
     if (alvo.hasAttribute("data-calc-enviar")) return "calculadora";
     if (alvo.hasAttribute("data-promo")) return "promocao";
     return "whatsapp";
@@ -49,7 +52,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     registrar("paginas_vistas", { referencia: document.referrer || "" });
     document.addEventListener("click", function (evento) {
-      var alvo = evento.target.closest("[data-whatsapp], [data-link-instagram], [data-link-maps], [data-calc-enviar], [data-promo]");
+      var alvo = evento.target.closest("[data-whatsapp], [data-link-instagram], [data-link-maps], [data-link-google], [data-link-tel], [data-link-facebook], [data-calc-enviar], [data-promo]");
       if (!alvo) return;
       registrar("cliques", {
         tipo: tipoDoClique(alvo),

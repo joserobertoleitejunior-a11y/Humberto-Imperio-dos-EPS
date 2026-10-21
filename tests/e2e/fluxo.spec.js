@@ -131,6 +131,17 @@ test("fichas andam na horizontal com o gesto lateral (trackpad) e o aviso 'arras
   await expect.poll(x).toBeLessThan(antes - 100);
 });
 
+test("atalhos flutuantes: WhatsApp, Instagram, Local, Google e Ligar com links certos; Facebook some sem página", async ({ page }) => {
+  await abrir(page);
+  const href = (nome) => page.locator(`.atalho[aria-label="${nome}"]`).getAttribute("href");
+  expect(await href("WhatsApp")).toContain("wa.me/5515991212917");
+  expect(await href("Instagram")).toContain("instagram.com/humbertoimperioeps");
+  expect(await href("Local no mapa")).toContain("google.com/maps");
+  expect(await href("Google")).toContain("google.com/search");
+  expect(await href("Ligar")).toBe("tel:+5515991212917");
+  await expect(page.locator('.atalho[aria-label="Facebook"]')).toBeHidden();
+});
+
 test("aparelho fraco / economia de dados: sem 3D, imagens prontas", async ({ page }) => {
   await abrir(page, "/?qualidade=estatica");
   await page.waitForTimeout(1500);

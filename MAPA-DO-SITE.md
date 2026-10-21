@@ -7,7 +7,7 @@
 
 | Quero mudar... | Arquivo | Onde |
 |---|---|---|
-| WhatsApp, Instagram, cidade, endereço, mapa | `assets/js/config.js` | `window.IMPERIO_CONFIG` (único ponto) |
+| WhatsApp, Instagram, cidade, endereço, mapa, link do Google (`googleUrl`), Facebook (`facebookUrl`: vazio = ícone escondido) — alimentam os **atalhos flutuantes** (`index.html` `===== ATALHOS FLUTUANTES`) | `assets/js/config.js` | `window.IMPERIO_CONFIG` (único ponto) |
 | Medida do bloco (habilita "nº de blocos" na calculadora **e** medidas/peso nas fichas da jornada) | `assets/js/config.js` | `medidaBloco: { largura, altura }` em metros + `perdaPercentual` |
 | Peso real de cada bloco | `assets/js/config.js` | `pesos: { b15: 80, ... }` (substitui a estimativa) · estimativa usa `densidades` |
 | Ficha técnica dos blocos | `config.js` → `blocos` **e** `index.html` → `===== FICHA TÉCNICA` e painéis da `===== JORNADA` | o corte em escala usa `style="--c:3.5;--e:8"` |
@@ -64,7 +64,7 @@ assets/js/observabilidade.js   Sentry (só com DSN)
 assets/js/boas-vindas.js       Splash (fecha/pula) + tela de boas-vindas com o vídeo (1x por sessão)
 assets/js/supabase-init.js     SDK sob demanda (não bloqueia a abertura)
 assets/js/analytics.js         Páginas vistas e cliques → tabelas paginas_vistas/cliques
-assets/js/main.js              Links de contato, menu, header, revelar ao rolar, toast
+assets/js/main.js              Links de contato, atalhos flutuantes (Google, Ligar, Facebook), menu, header, revelar ao rolar, toast
 assets/js/especificacoes.js    Medidas e peso de cada peça (concreto externo, EPS, concreto interno, montado) + espessura escolhida
 assets/js/motion.js            Letras na rolagem, faixas horizontais, jornada em "L" (sticky)
 assets/js/cliente.js           Cadastro "Entrar com WhatsApp" → tabela clientes

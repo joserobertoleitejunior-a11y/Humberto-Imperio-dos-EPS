@@ -433,6 +433,30 @@ main { position: relative; z-index: 2; }
 .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); z-index: 90; transform: translate(-50%, 20px); width: max-content; max-width: calc(100% - 32px); padding: 14px 20px; border-radius: 10px; background: var(--grafite); color: #fff; font-weight: 650; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6); opacity: 0; transition: opacity 0.3s, transform 0.3s var(--ease); }
 .toast.visivel { opacity: 1; transform: translate(-50%, 0); }
 
+
+/* ---------- Atalhos flutuantes e transparentes (WhatsApp · Instagram · Local · Google · Ligar) ---------- */
+.atalhos { position: absolute; z-index: 45; top: calc(var(--cabecalho) + 6px); left: 0; right: 0; display: flex; justify-content: center; gap: 4px; padding: 0 8px; overflow-x: auto; scrollbar-width: none; touch-action: pan-x pan-y; }
+.atalhos::-webkit-scrollbar { display: none; }
+.atalho { flex: none; display: grid; justify-items: center; gap: 1px; min-width: 62px; padding: 4px 6px; color: var(--grafite); text-decoration: none; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.02em; transition: transform 0.2s var(--ease), color 0.2s; }
+.atalho svg { width: 24px; height: 24px; filter: drop-shadow(0 1px 2px rgba(251, 250, 247, 0.9)); }
+.atalho__txt { display: grid; justify-items: center; }
+.atalho__txt small { display: none; }
+.atalho:hover, .atalho:focus-visible { transform: translateY(-2px); color: var(--azul); }
+.hero { padding-top: calc(var(--cabecalho) + 64px); }
+/* PC largo: coluna fixa no canto, só os ícones; ao passar o mouse abre a informação ao lado */
+@media (min-width: 1360px) {
+  .atalhos { position: fixed; top: 50%; left: 14px; right: auto; transform: translateY(-50%); flex-direction: column; justify-content: flex-start; gap: 8px; padding: 0; overflow: visible; }
+  .atalho { position: relative; width: 46px; height: 46px; min-width: 0; padding: 0; place-items: center; border-radius: 50%; background: rgba(251, 250, 247, 0.55); border: 1px solid rgba(30, 32, 35, 0.14); }
+  .atalho svg { filter: none; }
+  .atalho__txt { position: absolute; left: calc(100% + 10px); top: 50%; transform: translate(-6px, -50%); justify-items: start; white-space: nowrap; padding: 7px 12px; border-radius: 8px; background: var(--grafite); color: #fff; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s var(--ease); }
+  .atalho__txt b { font-size: 0.8rem; }
+  .atalho__txt small { display: block; font-size: 0.72rem; font-weight: 600; color: #c9c5bd; }
+  .atalho:hover, .atalho:focus-visible { transform: none; background: rgba(251, 250, 247, 0.9); }
+  .atalho:hover .atalho__txt, .atalho:focus-visible .atalho__txt { opacity: 1; transform: translate(0, -50%); }
+}
+@media (min-width: 1360px) { .hero { padding-top: calc(var(--cabecalho) + 28px); } }
+@media (min-width: 1080px) and (max-width: 1359px) { .hero { padding-top: calc(var(--cabecalho) + 70px); } }
+
 /* ---------- Tablet / desktop ---------- */
 @media (min-width: 760px) {
   /* tablet / tela quadrada: a coluna de texto da jornada nunca passa de 42% da largura (o bloco fica à direita) */
@@ -448,12 +472,15 @@ main { position: relative; z-index: 2; }
   .rodape__inner { grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; }
   .cabecalho__logo img { height: 32px; }
 }
-@media (min-width: 1080px) {
+@media (min-width: 1180px) {
   .menu-botao { display: none; }
   .nav { position: static; inset: auto; opacity: 1; visibility: visible; transform: none; flex-direction: row; background: none; padding: 0; gap: 0; overflow: visible; margin-left: 22px; }
   .nav a { padding: 8px 10px; font-size: 0.82rem; font-weight: 700; font-stretch: 110%; letter-spacing: 0.04em; border: 0; color: var(--texto-suave); }
   .nav a:hover { color: var(--grafite); }
   .nav__admin { display: none; }
+}
+@media (min-width: 1080px) {
+
   .hero { min-height: min(880px, 100vh); display: grid; align-items: center; padding-top: calc(var(--cabecalho) + 40px); }
   .hero__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
   .hero__palco { max-width: none; }

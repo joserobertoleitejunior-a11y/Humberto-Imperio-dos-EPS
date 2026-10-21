@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261021c"></script>
+  <script src="assets/js/dispositivo.js?v=20261021e"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261021c">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261021e">
 
   <script type="application/ld+json">
   {
@@ -83,6 +83,35 @@
       </div>
     </div>
   </header>
+
+
+  <!-- ===== ATALHOS FLUTUANTES (transparentes): WhatsApp · Instagram · Local · Google · Ligar · Facebook (só se existir) -->
+  <nav class="atalhos" aria-label="Contatos e redes sociais">
+    <a class="atalho" data-whatsapp="" data-rotulo="Atalho WhatsApp" href="#contato" aria-label="WhatsApp">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+      <span class="atalho__txt"><b>WhatsApp</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
+    </a>
+    <a class="atalho" data-link-instagram href="#" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+      <span class="atalho__txt"><b>Instagram</b><small data-texto="instagram">@humbertoimperioeps</small></span>
+    </a>
+    <a class="atalho" data-link-maps href="#" aria-label="Local no mapa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      <span class="atalho__txt"><b>Local</b><small data-texto="area">Itapetininga e região</small></span>
+    </a>
+    <a class="atalho" data-link-google href="#" aria-label="Google">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
+      <span class="atalho__txt"><b>Google</b><small>Ver no Google</small></span>
+    </a>
+    <a class="atalho" data-link-tel href="#" aria-label="Ligar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2z"/></svg>
+      <span class="atalho__txt"><b>Ligar</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
+    </a>
+    <a class="atalho" data-link-facebook href="#" aria-label="Facebook" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1z"/></svg>
+      <span class="atalho__txt"><b>Facebook</b><small>Nossa página</small></span>
+    </a>
+  </nav>
 
   <main id="conteudo">
     <!-- ===== HERO -->
@@ -517,19 +546,19 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261021c"></script>
-  <script src="assets/js/observabilidade.js?v=20261021c"></script>
-  <script src="assets/js/boas-vindas.js?v=20261021c"></script>
-  <script src="assets/js/supabase-init.js?v=20261021c"></script>
-  <script src="assets/js/analytics.js?v=20261021c"></script>
-  <script src="assets/js/main.js?v=20261021c"></script>
-  <script src="assets/js/especificacoes.js?v=20261021c"></script>
-  <script src="assets/js/motion.js?v=20261021c"></script>
-  <script src="assets/js/cliente.js?v=20261021c"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261021c"></script>
-  <script src="assets/js/calculadora.js?v=20261021c"></script>
-  <script src="assets/js/conteudo.js?v=20261021c"></script>
-  <script src="assets/js/cena.js?v=20261021d"></script>
-  <script src="assets/js/toque.js?v=20261021d"></script>
+  <script src="assets/js/config.js?v=20261021e"></script>
+  <script src="assets/js/observabilidade.js?v=20261021e"></script>
+  <script src="assets/js/boas-vindas.js?v=20261021e"></script>
+  <script src="assets/js/supabase-init.js?v=20261021e"></script>
+  <script src="assets/js/analytics.js?v=20261021e"></script>
+  <script src="assets/js/main.js?v=20261021e"></script>
+  <script src="assets/js/especificacoes.js?v=20261021e"></script>
+  <script src="assets/js/motion.js?v=20261021e"></script>
+  <script src="assets/js/cliente.js?v=20261021e"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261021e"></script>
+  <script src="assets/js/calculadora.js?v=20261021e"></script>
+  <script src="assets/js/conteudo.js?v=20261021e"></script>
+  <script src="assets/js/cena.js?v=20261021e"></script>
+  <script src="assets/js/toque.js?v=20261021e"></script>
 </body>
 </html>
