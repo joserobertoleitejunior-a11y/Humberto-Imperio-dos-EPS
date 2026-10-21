@@ -20,7 +20,7 @@ Tom: animado, frases de 2 a 4 palavras (uma ideia por cena), nenhuma promessa t�
 | 9 | Digita 52 m × 2,80 m e desce pro resultado | Digite as **medidas** | "Agora, digite as medidas!" | 3,0 |
 | 10 | WhatsApp recebendo a simulação | Orçamento no **WhatsApp**! | "Orçamento direto no Uótsap!" | 3,0 |
 | 11 | Rola até o rodapé | Site por **Vibe Coding Process** | "Site feito pela Váib Côudim Prócess!" | 3,3 |
-| 12 | Cartão final (marca + contato) | A fábrica do Blocão | "Império do é, pê, ésse: a fábrica do Blocão!" | 4,9 |
+| 12 | Cartão final (marca + contato) | Construa com o Império | "Império do é, pê, ésse: a fábrica do Blocão!" | 4,9 |
 
 ## Pronúncia — testada com reconhecimento de voz (Whisper), com a música por baixo
 A voz neural lê "como está escrito". Cada fala foi gerada e transcrita de volta; só ficou o que voltou certo.
