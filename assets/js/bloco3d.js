@@ -498,12 +498,15 @@ function iniciar(canvas) {
   redimensionar();
   window.addEventListener("resize", redimensionar, { passive: true });
   document.addEventListener("visibilitychange", () => {
+    if (window.__gravandoVideo) return;
     const antes = ativo;
     ativo = !document.hidden;
     if (ativo && !antes) requestAnimationFrame(laco);
   });
   desenhar();
-  requestAnimationFrame(laco);
+  // No gravador do vídeo quem manda desenhar é o vídeo (renderAgora a cada quadro): sem laço próprio
+  if (window.__gravandoVideo) ativo = false;
+  else requestAnimationFrame(laco);
 }
 
 window.ImperioBloco3D = {
@@ -525,6 +528,7 @@ window.ImperioBloco3D = {
     respirar = !!sim;
   },
   pausar: (sim) => {
+    if (window.__gravandoVideo) return;
     const antes = ativo;
     ativo = !sim && !document.hidden;
     if (ativo && !antes) requestAnimationFrame(laco);

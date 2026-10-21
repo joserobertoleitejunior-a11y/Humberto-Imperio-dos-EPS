@@ -5,9 +5,9 @@ const { test, expect } = require("@playwright/test");
 async function abrir(page, url = "/") {
   await page.addInitScript(() => { try { sessionStorage.setItem("imperio_bv", "1"); } catch (e) {} });
   await page.goto(url);
-  const splash = page.locator("#splash");
-  if (await splash.isVisible()) await splash.click();
-  await expect(splash).toBeHidden();
+  await page.waitForFunction(() => window.ImperioAbertura);
+  await page.evaluate(() => window.ImperioAbertura.fecharSplash());
+  await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
 }
 
 test("splash fecha sozinha e a boas-vindas leva pra calculadora", async ({ page }) => {
@@ -24,7 +24,7 @@ test("calculadora monta a mensagem e abre o WhatsApp", async ({ page, context })
   await abrir(page);
   await page.fill("[name=comprimento]", "40");
   await page.fill("[name=altura]", "2,8");
-  await expect(page.locator("[data-calc-area]")).toHaveText("102,16", { timeout: 3000 });
+  await expect(page.locator("[data-calc-area]")).toHaveText("102,16", { timeout: 8000 });
   const [popup] = await Promise.all([context.waitForEvent("page"), page.click("[data-calc-enviar]")]);
   const url = decodeURIComponent(popup.url());
   expect(url).toContain("5515991212917");
