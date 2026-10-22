@@ -20,7 +20,7 @@ se monta, se afasta e abre na própria rolagem. Diferente do tutorial (`index.ht
 | 5 | Abre ao meio | EPS de **ponta a ponta** | "O é, pê, ésse vai de ponta a ponta!" |
 | 5a | Seção "A casa": paredes sobem fiada por fiada | Levante a **casa inteira** | "E com o Blocão, você levanta a casa inteira!" |
 | 5b | Cobertura, vidros, pintura | Pronta pro acabamento: **é só pintar** | "Pronta pro acabamento: é só pintar!" |
-| 5c | Casa pronta com deck, piscina e jardim | Grande, linda e **confortável** | "Uma casa grande, linda e confortável!" |
+| 5c | Maquete pronta: sobrado com varandas e jardim | Sobrado com **varanda** | "Olha que sobrado lindo, com varanda!" |
 | 6 | Seção "Por que Blocão" | E por que **comprar?** | "E por que comprar o Blocão?" |
 | 7 | Benefício 01 | 1. Casa **mais fresca** | "Primeiro: casa mais fresca no verão!" |
 | 8 | Benefício 02 | 2. Muito **menos barulho** | "Segundo: muito menos barulho!" |
