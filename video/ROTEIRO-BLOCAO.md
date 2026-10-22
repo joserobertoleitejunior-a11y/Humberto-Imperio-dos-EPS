@@ -1,8 +1,8 @@
 # Roteiro do vídeo — "Por que comprar o Blocão" (vídeo de PRODUTO / venda)
 
-Formato Stories 1080×1920 · **~46 s, animado, tom de venda** · o celular mostra o **site de verdade rolando** e o Blocão 3D
+Formato Stories 1080×1920 · **~55 s, animado, tom de venda** · o celular mostra o **site de verdade rolando** e o Blocão 3D
 se monta, se afasta e abre na própria rolagem. Diferente do tutorial (`index.html`, "Como orçar"): aqui o assunto
-é o **produto e os motivos pra comprar**: o 3D mostra o que é, depois a pergunta "E por que comprar?" e os motivos numerados (os mesmos benefícios já publicados no site), espessuras e WhatsApp.
+é o **produto e os motivos pra comprar**: o 3D mostra o que é, a casa inteira sobe bloco por bloco na rolagem, depois a pergunta "E por que comprar?" e os motivos numerados (os mesmos benefícios já publicados no site), espessuras e WhatsApp.
 É o vídeo da tela de boas-vindas do site (`video/blocao.mp4`).
 
 **Voz:** a mesma da Pizza em Dobro (Kokoro pt-BR "pm_santa", conferida na gravação da Pizza) no modo **animado**
@@ -18,6 +18,9 @@ se monta, se afasta e abre na própria rolagem. Diferente do tutorial (`index.ht
 | 3 | Rola pro "Por dentro": as peças se afastam | Três camadas, **um bloco só** | "Três camadas, um bloco só!" |
 | 4 | Etiquetas com as medidas | É só demonstração: na obra é **peça única** | "É só demonstração! Na obra, é peça única!" |
 | 5 | Abre ao meio | EPS de **ponta a ponta** | "O é, pê, ésse vai de ponta a ponta!" |
+| 5a | Seção "A casa": paredes sobem fiada por fiada | Levante a **casa inteira** | "E com o Blocão, você levanta a casa inteira!" |
+| 5b | Cobertura, vidros, pintura | Pronta pro acabamento: **é só pintar** | "Pronta pro acabamento: é só pintar!" |
+| 5c | Casa pronta com deck, piscina e jardim | Grande, linda e **confortável** | "Uma casa grande, linda e confortável!" |
 | 6 | Seção "Por que Blocão" | E por que **comprar?** | "E por que comprar o Blocão?" |
 | 7 | Benefício 01 | 1. Casa **mais fresca** | "Primeiro: casa mais fresca no verão!" |
 | 8 | Benefício 02 | 2. Muito **menos barulho** | "Segundo: muito menos barulho!" |
