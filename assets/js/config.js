@@ -80,7 +80,7 @@ window.IMPERIO_CONFIG = {
   ],
 
   /**
-   * Tela de boas-vindas com o vídeo "O Blocão em 30 segundos" (video/como-orcar.mp4, pronto).
+   * Tela de boas-vindas com o vídeo "Por que comprar o Blocão" (video/blocao.mp4, pronto).
    * Pra desligar, mude para false. Mesmo ligada, só aparece se o vídeo carregar;
    * se falhar ou demorar mais de 2,5 s, o site abre direto.
    */

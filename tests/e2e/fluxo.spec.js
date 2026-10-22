@@ -11,7 +11,7 @@ async function abrir(page, url = "/") {
 }
 
 test("vídeo não carrega: a boas-vindas não aparece e o site abre direto", async ({ page }) => {
-  await page.route("**/video/como-orcar.mp4", (rota) => rota.abort());
+  await page.route("**/video/blocao.mp4", (rota) => rota.abort());
   await page.goto("/");
   await page.waitForFunction(() => window.ImperioAbertura);
   await page.evaluate(() => window.ImperioAbertura.fecharSplash());
