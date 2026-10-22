@@ -45,6 +45,15 @@ Forçar pra testar: `?qualidade=baixa` (ou `alta`, `media`, `estatica`) na URL.
 O que mantém o site leve: Three.js só baixa **depois** do `load` + ociosidade; **um** canvas só (hero + jornada);
 o 3D só desenha quando algo muda (parado = 0 % de GPU) e baixa a resolução sozinho se engasgar; fonte própria (90 KB), sem Google Fonts.
 
+### Casa inteira de Blocão (`#casa`, `assets/js/casa.js` + `assets/js/casa3d.js`)
+Seção fixa (sticky) de 520vh logo depois do "Por dentro": a **rolagem vertical monta uma casa grande** (térreo 16 × 10 m,
+2º andar 14 × 8 m em balanço) com **451 Blocões** caindo no lugar fiada por fiada → laje → 2º andar → cobertura →
+vidros/madeira/pedra → pintura, deck, piscina e árvores. Contador de blocos assentados, etapa atual e botão de WhatsApp no fim.
+- Tudo é função do progresso da rolagem (rolar pra cima desmonta); só desenha quando a rolagem muda.
+- Blocos numa malha instanciada (1 objeto pra 451 peças); topo do bloco mostra o sanduíche concreto | EPS | concreto.
+- O 3D só baixa quando a seção chega perto (1,5 tela antes). "estatica"/sem WebGL: imagem `assets/img/casa-blocao.webp` + etapas em lista.
+- Bloco ilustrativo 1,00 × 0,50 m (face real a confirmar) — a seção diz "projeto meramente ilustrativo".
+
 ## 3. Arquivos
 
 ```

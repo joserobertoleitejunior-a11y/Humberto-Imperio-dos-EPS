@@ -175,3 +175,23 @@ test("sem rolagem lateral no celular", async ({ page }) => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   }
 });
+
+test("casa de Blocão: a rolagem assenta os blocos e no fim aparece o botão", async ({ page }) => {
+  await abrir(page);
+  await page.evaluate(() => { const c = document.querySelector("#casa"); scrollTo({ top: c.offsetTop - innerHeight, behavior: "instant" }); });
+  await expect(page.locator("#casa")).toHaveClass(/casa--3d/, { timeout: 60000 });
+  const rolar = (f) => page.evaluate((f) => { const c = document.querySelector("#casa"); scrollTo({ top: c.offsetTop + f * (c.offsetHeight - innerHeight), behavior: "instant" }); }, f);
+  await rolar(0.25);
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.blocos().assentados), { timeout: 15000 }).toBeGreaterThan(0);
+  await rolar(1);
+  await expect.poll(() => page.evaluate(() => { const b = window.ImperioCasa3D.blocos(); return b.assentados === b.total; }), { timeout: 15000 }).toBe(true);
+  await expect(page.locator(".casa__cta")).toBeVisible();
+  await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");
+});
+
+test("casa de Blocão sem 3D (estatica): imagem pronta e etapas em lista", async ({ page }) => {
+  await abrir(page, "/?qualidade=estatica");
+  await expect(page.locator("#casa")).toHaveClass(/casa--sem3d/);
+  await expect(page.locator(".casa__estatica")).toBeVisible();
+  await expect(page.locator("#casa [data-etapa]")).toHaveCount(6);
+});

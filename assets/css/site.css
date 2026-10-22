@@ -297,6 +297,51 @@ main { position: relative; z-index: 2; }
 .espessuras button[aria-pressed="true"] { background: var(--azul); color: #fff; }
 .painel--cta { display: grid; align-content: center; gap: 14px; background: var(--grafite); color: var(--cal); border-color: var(--grafite); }
 
+/* ---------- Casa inteira de Blocão (monta com a rolagem vertical) ---------- */
+.casa { position: relative; height: 520vh; background: var(--cal); --ouro: 0; }
+.casa__fixo { position: sticky; top: 0; height: 100vh; height: calc(var(--vh, 1vh) * 100); overflow: hidden; }
+.casa__ceu { position: absolute; inset: 0; background: linear-gradient(180deg, #dfe6ea 0%, #eef0ec 46%, var(--cal) 78%); }
+.casa__ceu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #f6d9b4 0%, #f7e6cf 45%, var(--cal) 80%); opacity: var(--ouro); }
+.casa__palco { position: absolute; inset: 0; }
+.casa__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.casa__estatica { display: none; }
+.casa__txt { position: absolute; z-index: 2; left: max(16px, calc((100vw - 1200px) / 2)); top: calc(var(--cabecalho) + 6vh); width: min(26rem, 100% - 32px); }
+.casa__txt h2 { font-size: clamp(1.6rem, 3.2vw, 3rem); margin-bottom: 0.6em; }
+.casa__etapas { position: relative; list-style: none; margin: 0; padding: 0; height: 3.4em; }
+.casa__etapas li { position: absolute; inset: 0 auto auto 0; display: flex; gap: 0.6em; align-items: baseline; font-size: 1.1rem; font-weight: 750; color: var(--grafite);
+  opacity: 0; transform: translateY(12px); transition: opacity 0.35s, transform 0.35s var(--ease); }
+.casa__etapas li b { font-stretch: 120%; color: var(--azul); }
+.casa__etapas li.ativa { opacity: 1; transform: none; }
+.casa__cta { opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 0.35s, transform 0.35s var(--ease); }
+.casa--pronta .casa__cta { opacity: 1; transform: none; pointer-events: auto; }
+.casa__contador { position: absolute; z-index: 2; left: max(16px, calc((100vw - 1200px) / 2)); bottom: 5vh; margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--texto-suave);
+  padding: 8px 14px; border-radius: 999px; background: rgba(251, 250, 247, 0.85); border: 1px solid var(--linha); }
+.casa__contador b { font-size: 1.25rem; font-stretch: 120%; color: var(--azul); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.casa__nota { position: absolute; z-index: 2; right: max(16px, calc((100vw - 1200px) / 2)); bottom: 5vh; margin: 0; font-size: 0.74rem; color: var(--texto-suave); }
+@media (max-width: 759px) {
+  .casa { height: 440vh; }
+  /* celular: texto em cima, casa no meio, contador embaixo (sem nada por cima da casa) */
+  .casa__txt { top: calc(var(--cabecalho) + 10px); }
+  .casa__txt .sobretitulo { margin-bottom: 4px; }
+  .casa__txt h2 { font-size: clamp(1.35rem, 6.4vw, 1.9rem); margin-bottom: 0.4em; }
+  .casa__etapas { height: 2.8em; }
+  .casa__etapas li { font-size: 1rem; }
+  .casa__palco { top: calc(var(--cabecalho) + 128px); bottom: 64px; }
+  .casa__cta { position: absolute; left: 0; top: calc(100% + 4px); }
+  .casa__contador { bottom: 14px; font-size: 0.85rem; padding: 6px 12px; }
+  .casa__nota { left: 16px; right: auto; bottom: 58px; font-size: 0.66rem; }
+}
+/* sem 3D (aparelho muito fraco / sem WebGL): imagem pronta da casa e a lista de etapas */
+.casa--sem3d { height: auto; }
+.casa--sem3d .casa__fixo { position: static; height: auto; overflow: visible; padding: 56px 0 64px; }
+.casa--sem3d .casa__ceu, .casa--sem3d .casa__palco, .casa--sem3d .casa__contador { display: none; }
+.casa--sem3d .casa__txt { position: static; width: min(1200px, 100% - 32px); margin: 0 auto; }
+.casa--sem3d .casa__etapas { height: auto; display: grid; gap: 6px; margin-bottom: 16px; }
+.casa--sem3d .casa__etapas li { position: static; opacity: 1; transform: none; }
+.casa--sem3d .casa__cta { opacity: 1; transform: none; pointer-events: auto; position: static; }
+.casa--sem3d .casa__estatica { display: block; width: min(1000px, 100% - 32px); height: auto; margin: 0 auto 20px; border-radius: var(--raio-g); }
+.casa--sem3d .casa__nota { position: static; text-align: center; margin-top: 8px; }
+
 /* ---------- Seções ---------- */
 .secao { position: relative; padding: clamp(64px, 10vw, 120px) 0; }
 .secao--cal { background: var(--cal); }

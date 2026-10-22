@@ -203,7 +203,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261021i")
+    import("./bloco3d.js?v=20261022a")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);
@@ -255,7 +255,9 @@
     atualizarAgora: function () {
       if (window.ImperioMotion) window.ImperioMotion.atualizarAgora();
       if (B) B.renderAgora();
+      if (window.ImperioCasa) window.ImperioCasa.atualizarAgora();
     },
-    pronto: function () { return !!B; },
+    // pronto = bloco 3D carregado (+ a casa 3D, só na gravação do vídeo: no site ela carrega quando a seção chega perto)
+    pronto: function () { return !!B && (!window.__gravandoVideo || !window.ImperioCasa || window.ImperioCasa.pronto()); },
   };
 })();
