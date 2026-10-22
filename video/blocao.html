@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Império do EPS — Conheça o Blocão (Stories)</title>
+<meta name="description" content="O que é o Blocão, como ele é por dentro e por que ele deixa a obra mais rápida, limpa e confortável.">
+<link rel="stylesheet" href="motion.css">
+</head>
+<body>
+<!-- Motor de vídeo: engenharia reversa do vídeo "Como pedir" da Pizza em Dobro.
+     O celular mostra o SITE DE VERDADE (iframe) e o vídeo comanda rolagem, digitação e cliques.
+     Vídeo de PRODUTO (explica o Blocão). Gerar o MP4: ver video/ROTEIRO-BLOCAO.md. -->
+<div id="palco">
+  <div id="fundo"></div><div id="tinta"></div><div id="escuro"></div>
+  <canvas id="part" width="1080" height="1920"></canvas>
+  <div id="fone"><div id="ilha"></div><div id="tela"><iframe id="site" title="Site do Império do EPS" src="about:blank"></iframe><div id="zap"></div><div id="brilho"></div></div></div>
+  <div id="rail"><i></i></div>
+  <div id="parte"></div>
+  <div id="cap" aria-live="polite"></div>
+  <div id="fim"></div>
+  <div id="credito"><canvas id="cuboMini" width="200" height="200"></canvas><div><b>VIBE CODING PROCESS</b><span>Sites para comércio local</span></div></div>
+  <div id="vinheta"></div><canvas id="grao" width="270" height="480"></canvas>
+</div>
+<div id="capa"><img src="../assets/img/favicon.svg" alt=""><h1>Conheça o Blocão</h1><p>Concreto por fora, miolo de EPS: o Blocão 3D por dentro (vista demonstrativa), os benefícios e as 4 espessuras. Formato Stories (1080×1920).</p>
+  <div><button id="btSom" type="button">▶ Assistir com música</button><button class="sec" id="btMudo" type="button">Sem som</button></div></div>
+<div id="ctl"><button id="btRe" type="button">↺ Recomeçar</button></div>
+<audio id="som" src="trilha-blocao.mp3" preload="auto"></audio>
+<script src="motion.js"></script>
+<script>
+Video.iniciar({
+  tema:'imperio', tempos:'tempos-blocao.json',
+  cenas:[
+    {id:'splash',parte:'Abertura',html:'Já conhece o <b>Blocão?</b>',fala:'Você já conhece o Blocão? Vem ver!',min:3.2,splash:true},
+    {id:'hero',parte:'Blocão',html:'Concreto por fora, <b>miolo de EPS</b>',fala:'Concreto por fora, com miolo de é, pê, ésse!',rolagens:[{dt0:.2,dt1:-.2,y:140}]},
+    {id:'camadas',parte:'Por dentro',html:'Três camadas, <b>um bloco só</b>',fala:'Olha só: três camadas num bloco só!',rolar:{el:'por-dentro',frac:.2}},
+    {id:'demo',parte:'Por dentro',html:'É só demonstração: na obra é <b>peça única</b>',fala:'É só demonstração! Na obra, é peça única!',rolagens:[{dt0:.1,dt1:-.2,el:'por-dentro',frac:.26}]},
+    {id:'miolo',parte:'Por dentro',html:'EPS de <b>ponta a ponta</b>',fala:'O é, pê, ésse vai de ponta a ponta!',rolar:{el:'por-dentro',frac:.36}},
+    {id:'medidas',parte:'Peça por peça',html:'Cada camada, <b>sua medida</b>',fala:'Cada camada com a sua medida!',rolar:{el:'por-dentro',frac:.7}},
+    {id:'fresca',parte:'Benefícios',html:'Casa <b>mais fresca</b>',fala:'Casa mais fresca no verão!',rolar:{el:'blocao',off:70}},
+    {id:'silencio',parte:'Benefícios',html:'Muito <b>menos barulho</b>',fala:'E muito menos barulho!',min:2.2,rolar:{el:'@#blocao .beneficio:nth-child(2)',off:240}},
+    {id:'rapida',parte:'Benefícios',html:'A parede sobe <b>rapidinho</b>',fala:'A parede sobe rapidinho!',min:2.2,rolar:{el:'@#blocao .beneficio:nth-child(3)',off:240}},
+    {id:'limpa',parte:'Benefícios',html:'Menos massa, <b>menos sujeira</b>',fala:'Menos massa e menos sujeira!',min:2.2,rolar:{el:'@#blocao .beneficio:nth-child(4)',off:240}},
+    {id:'leve',parte:'Benefícios',html:'Leve e <b>resistente</b>',fala:'Ele é leve e resistente!',min:2.2,rolar:{el:'@#blocao .beneficio:nth-child(6)',off:240}},
+    {id:'espessuras',parte:'Espessuras',html:'<b>4 espessuras</b>: 10, 13, 15 e 20 cm',fala:'Tem em quatro espessuras: dez, treze, quinze e vinte centímetros!',
+      rolagens:[{dt0:.1,dt1:1.1,el:'ficha',off:70},{dt0:1.4,dt1:-.2,el:'@#ficha .ficha:nth-child(4)',off:330}]},
+    {id:'zap',parte:'WhatsApp',html:'Orçamento no <b>WhatsApp</b>!',fala:'Peça seu orçamento no Uótsap!',zap:true,min:2.8,
+      zapTexto:'Olá! Vim pelo site do Império do EPS e quero um orçamento do *Blocão*.'},
+    {id:'fim',fim:true,min:3.4,tag:'Construa com o Império',fala:'Império do é, pê, ésse: a fábrica do Blocão!'}
+  ]
+});
+</script>
+</body>
+</html>

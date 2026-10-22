@@ -3,7 +3,8 @@ Uso: KOKORO_DIR=/tmp/tts/kokoro-multi-lang-v1_0 python3 scripts/gerar-audio-vide
   roteiro.json = {"tempos": "tempos-X.json", "cenas": [{"id":..., "fala":..., "min": s, "fim": bool}, ...]}   (gerado por scripts/exportar-roteiro.js)
   Cada cena dura o tempo da fala + folga (nenhuma frase é cortada). Grava também video/tempos-X.json, que o vídeo usa pra montar a linha do tempo.
 Precisa de: numpy, scipy, imageio-ffmpeg, sherpa-onnx (pip) e o modelo Kokoro multilíngue (KOKORO_DIR = pasta de
-https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2). Voz pt-BR masculina "pm_alex" (VOZ_SID=43).
+https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2). Voz pt-BR masculina "pm_santa" (VOZ_SID=44), a mesma da Pizza em Dobro (conferida na gravação).
+ESTILO=animado → locução mais rápida/aguda/brilhante e música a 100 bpm com bumbo (vídeo de produto).
 A música é sintetizada (Karplus-Strong), sem direitos autorais; a voz é neural (Kokoro) tratada com EQ leve, compressão e sala curta."""
 import sys, os, json, wave, subprocess, tempfile, numpy as np
 from scipy.signal import lfilter, fftconvolve
@@ -13,7 +14,10 @@ SR = 44100
 rot = json.load(open(sys.argv[1])); saida = sys.argv[2]
 KOKORO = os.environ.get('KOKORO_DIR', '/tmp/tts/kokoro-multi-lang-v1_0')
 VOZ_SID = int(os.environ.get('VOZ_SID', '44'))             # 42 = pf_dora (feminina), 43 = pm_alex, 44 = pm_santa (masculinas)
-VOZ_VEL = float(os.environ.get('VOZ_VEL', '1.15'))        # >1 = fala mais rápida (locutor animado)
+# ESTILO=animado: mesma voz, mais rápida, um tico mais aguda, com mais brilho/punch, e música mais agitada (vídeo de produto)
+ANIMADO = os.environ.get('ESTILO', '') == 'animado'
+VOZ_VEL = float(os.environ.get('VOZ_VEL', '1.24' if ANIMADO else '1.15'))   # >1 = fala mais rápida (locutor animado)
+VOZ_TOM = float(os.environ.get('VOZ_TOM', '1.04' if ANIMADO else '1.0'))    # >1 = voz um pouco mais aguda (mesma duração)
 import sherpa_onnx
 _tts = sherpa_onnx.OfflineTts(sherpa_onnx.OfflineTtsConfig(model=sherpa_onnx.OfflineTtsModelConfig(kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
     model=f'{KOKORO}/model.onnx', voices=f'{KOKORO}/voices.bin', tokens=f'{KOKORO}/tokens.txt', data_dir=f'{KOKORO}/espeak-ng-data',
@@ -24,6 +28,11 @@ def ler(p):
 cache = tempfile.mkdtemp()
 FILTRO = ('aresample=44100,highpass=f=60,equalizer=f=120:t=q:w=1:g=2.5,equalizer=f=3000:t=q:w=1.5:g=-2.5,equalizer=f=5500:t=q:w=1:g=-3,lowpass=f=9500,'
           'acompressor=threshold=0.14:ratio=2:attack=12:release=200:makeup=2,aecho=0.8:0.35:60:0.10,alimiter=limit=0.9')
+if ANIMADO:  # presença na frente (2–4 kHz), compressão mais firme: soa "pra cima" sem gritar
+    FILTRO = ('aresample=44100,highpass=f=80,equalizer=f=150:t=q:w=1:g=1.5,equalizer=f=2800:t=q:w=1.2:g=3,equalizer=f=6000:t=q:w=1:g=1,lowpass=f=12000,'
+              'acompressor=threshold=0.1:ratio=3.2:attack=6:release=120:makeup=2.6,aecho=0.8:0.3:45:0.07,alimiter=limit=0.93')
+if VOZ_TOM != 1.0:
+    FILTRO = f'asetrate={int(24000 * VOZ_TOM)},atempo={1 / VOZ_TOM:.5f},' + FILTRO
 clipes = []
 for i, c in enumerate(rot['cenas']):
     bruto, tratado = f'{cache}/{i}.wav', f'{cache}/{i}t.wav'
@@ -78,7 +87,7 @@ violao = np.zeros(N); viola = np.zeros(N); baixo = np.zeros(N); perc = np.zeros(
 AC = {'G': (43, [55, 59, 62, 67]), 'C': (48, [55, 60, 64, 67]), 'D': (50, [57, 62, 66, 69]), 'Em': (40, [55, 59, 64, 67])}
 TERCAS = {'G': [(71, 74), (69, 72), (67, 71)], 'C': [(72, 76), (71, 74), (69, 72)], 'D': [(74, 78), (73, 76), (71, 74)], 'Em': [(71, 74), (69, 72), (67, 71)]}
 PROG = ['G', 'G', 'C', 'G', 'Em', 'C', 'D', 'G'] * 8
-BPM = 72; BEAT = 60 / BPM; BAR = BEAT * 4
+BPM = 100 if ANIMADO else 72; BEAT = 60 / BPM; BAR = BEAT * 4
 nbar = int((DUR + 2) / BAR) + 1
 def cl(n): return corda(hz(n), .22, brilho=.35, decaimento=.93)          # acorde "abafado" (skank)
 for b in range(nbar):
@@ -90,6 +99,10 @@ for b in range(nbar):
     nota(baixo, t0 + 2 * BEAT, raiz, .9, 1.0, brilho=.1, decaimento=.9985)
     nota(baixo, t0 + 3 * BEAT, raiz + 7, .6, .7, brilho=.1, decaimento=.9985)
     nota(baixo, t0 + 3.5 * BEAT, raiz + 12, .45, .5, brilho=.1, decaimento=.9985)
+    if ANIMADO:  # bumbo no 1 e no 3: dá o pulso de vídeo de produto
+        for k in (0, 2):
+            i = int((t0 + k * BEAT) * SR); tt = np.arange(int(.25 * SR)) / SR
+            if i + len(tt) < N: perc[i:i + len(tt)] += np.sin(2 * np.pi * (55 + 90 * np.exp(-tt * 30)) * tt) * np.exp(-tt * 14) * 1.1
     # percussão bem suave: rim click no 3 e shaker nos contratempos
     perc_i = int((t0 + 2 * BEAT) * SR)
     if perc_i + 2000 < N:
@@ -123,9 +136,9 @@ if MUSICA and os.path.exists(MUSICA):
 e = lfilter([1 - .998], [1, -.998], np.abs(voz)); mask = (e > .02).astype(float)
 jan = np.ones(int(.55 * SR)); mask = np.clip(np.convolve(mask, jan, 'full')[int(.2 * SR): int(.2 * SR) + N], 0, 1)   # começa a abaixar antes da voz, solta devagar
 mask = lfilter([1 - .9992], [1, -.9992], mask)
-duck = 1 - .5 * mask
+duck = 1 - (.42 if ANIMADO else .5) * mask
 fade = np.clip(np.arange(N) / SR / 1.2, 0, 1) * np.clip((DUR - np.arange(N) / SR) / 2.2, 0, 1)
-mix = musica * .17 * duck * fade + voz * .95
+mix = musica * (.22 if ANIMADO else .17) * duck * fade + voz * .95
 mix = np.tanh(mix * 1.1) / np.tanh(1.1); mix = mix / np.abs(mix).max() * .93
 pcm = (mix[: int(DUR * SR)] * 32767).astype('<i2')
 tmp = tempfile.mktemp(suffix='.wav')

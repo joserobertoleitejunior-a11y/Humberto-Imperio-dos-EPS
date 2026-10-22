@@ -75,7 +75,7 @@ function efeitoLegenda(c,u){
 }
 var C=null, caps=[], flags={}, segs=[], ifrOk=false, partes=[], parteEl=null;
 var W=function(){return ifr.contentWindow}, D=function(){return ifr.contentDocument};
-function el(id){return D().getElementById(id);}
+function el(id){return id.charAt(0)==='@'?D().querySelector(id.slice(1)):D().getElementById(id);} /* '@seletor' = qualquer seletor CSS */
 function resolverY(s){
   if(typeof s.y==='number')return s.y;
   if(s.y==='fim')return D().documentElement.scrollHeight;
@@ -97,7 +97,7 @@ function montarZap(){
   var f=D().querySelector('[data-calculadora]'),g=function(k){return f.elements[k].value;};
   var e={modo:'medidas',comprimento:g('comprimento'),altura:g('altura'),portas:g('portas'),janelas:g('janelas'),blocoId:g('bloco')};
   var r=w.ImperioCalculo.calcularObra(e,w.IMPERIO_CONFIG);
-  var l=[w.ImperioCalculo.mensagemWhatsApp(r,e,{nome:'Marcos',cidade:'Itapetininga'})];
+  var l=[C.zap&&C.zap.texto?C.zap.texto:w.ImperioCalculo.mensagemWhatsApp(r,e,{nome:'Marcos',cidade:'Itapetininga'})]; // zapTexto na cena = mensagem própria
   zapEl.innerHTML='<div class="z-top"><div class="z-av">IE</div><div><div class="z-nome">Império do EPS</div><div class="z-sub">orçamentos do site</div></div></div>'+
    '<div class="z-chat"><div class="z-aviso">Hoje</div><div class="z-msg" id="z-m">'+negrito(l.join('\n'))+'<span class="z-hora">'+hora+'</span></div></div><div class="z-input"><i></i></div>';
 }
@@ -281,7 +281,7 @@ function montarLinhaDoTempo(cfg,tp){
     (s.rolagens||[]).forEach(function(r){R.push(Object.assign({},r,{t0:t0+cl(r.dt0),t1:t0+cl(r.dt1)}));});
     (s.acoes||[]).forEach(function(a){E.push({t:t0+cl(a.dt),fn:a.fn});});
     (s.digitar||[]).forEach(function(g){Dg.push({id:g.id,texto:g.texto,t0:t0+cl(g.dt0),t1:t0+cl(g.dt1)});});
-    if(s.zap){zap=zap||{t0:t0,t1:t1};zap.t1=t1;}
+    if(s.zap){zap=zap||{t0:t0,t1:t1,texto:s.zapTexto};zap.t1=t1;}
     var p=partes[partes.length-1];if(p&&p.nome===s.parte)p.t1=t1;else partes.push({nome:s.parte,t0:t0,t1:t1});
   });
   return {tema:cfg.tema,dur:tp.dur,legendas:L,rolagens:R,eventos:E,digitar:Dg,zap:zap,fim:fim,splash:splash,partes:partes};

@@ -1,4 +1,4 @@
-# Roteiro do vídeo — "O Blocão em 30 segundos" (Império do EPS)
+# Roteiro do vídeo — "Como orçar em 30 segundos" (Império do EPS)
 
 Formato Stories 1080×1920 · **~38 s, rápido e explicativo** · celular mostrando o **site de verdade rolando sem parar**
 (igual ao "Como pedir" da Pizza em Dobro): a rolagem é o que monta, afasta e abre o Blocão 3D na tela.

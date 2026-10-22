@@ -21,7 +21,12 @@ npm run vendor       # regera assets/vendor/three-imperio.min.js (Three.js só c
 
 Testar como aparelho fraco: abra com `?qualidade=baixa` ou `?qualidade=estatica` (ver MAPA §2).
 
-## Vídeo tutorial ("O Blocão em 30 segundos")
+## Vídeos (Stories 1080×1920)
+
+- **"Conheça o Blocão"** (`video/blocao.html` → `video/blocao.mp4`): vídeo de **produto**, voz animada. É o da tela de boas-vindas. Roteiro e comandos: `video/ROTEIRO-BLOCAO.md`.
+- **"Como orçar em 30 segundos"** (`video/index.html` → `video/como-orcar.mp4`): tutorial de uso do site. Roteiro: `video/ROTEIRO.md`.
+
+### Como os vídeos são feitos
 
 Engenharia reversa do vídeo "Como pedir" da Pizza em Dobro: o celular mostra o **site de verdade** e o vídeo
 comanda rolagem (o Blocão 3D abre na rolagem), digitação e o WhatsApp chegando. Cenas em `video/index.html`, roteiro em `video/ROTEIRO.md`.
