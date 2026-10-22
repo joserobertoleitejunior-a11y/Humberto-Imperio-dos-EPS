@@ -23,7 +23,7 @@
   var ultimoP = -1;
 
   // limites de cada etapa (iguais ao roteiro do casa3d.js)
-  var LIMITES = [0, 0.06, 0.4, 0.47, 0.74, 0.86];
+  var LIMITES = [0, 0.12, 0.4, 0.47, 0.74, 0.86];
 
   function limitar(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
@@ -80,7 +80,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261023b")
+    import("./casa3d.js?v=20261023c")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;

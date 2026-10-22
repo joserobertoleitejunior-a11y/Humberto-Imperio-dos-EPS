@@ -18,7 +18,7 @@ se monta, se afasta e abre na própria rolagem. Diferente do tutorial (`index.ht
 | 3 | Rola pro "Por dentro": as peças se afastam | Três camadas, **um bloco só** | "Três camadas, um bloco só!" |
 | 4 | Etiquetas com as medidas | É só demonstração: na obra é **peça única** | "É só demonstração! Na obra, é peça única!" |
 | 5 | Abre ao meio | EPS de **ponta a ponta** | "O é, pê, ésse vai de ponta a ponta!" |
-| 5a | Seção "A casa": paredes sobem fiada por fiada | Levante a **casa inteira** | "E com o Blocão, você levanta a casa inteira!" |
+| 5a | Seção "A casa": o MESMO Blocão do site voa pro canto da obra e vira o 1º bloco; as paredes sobem fiada por fiada | Levante a **casa inteira** | "E com o Blocão, você levanta a casa inteira!" |
 | 5b | Cobertura, vidros, pintura | Pronta pro acabamento: **é só pintar** | "Pronta pro acabamento: é só pintar!" |
 | 5c | Maquete pronta: sobrado com varandas e jardim | Sobrado com **varanda** | "Olha que sobrado lindo, com varanda!" |
 | 6 | Seção "Por que Blocão" | E por que **comprar?** | "E por que comprar o Blocão?" |

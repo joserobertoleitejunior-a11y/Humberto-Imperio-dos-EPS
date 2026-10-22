@@ -8,8 +8,9 @@
  * Tudo é função do progresso p (0..1) da seção: rolar pra baixo assenta os blocos, rolar pra cima desmonta.
  * Nada anima sozinho, então só desenha quando p muda (0 % de GPU parado).
  *
- *   0,00–0,06  alicerce
- *   0,06–0,40  paredes do térreo: fiada por fiada, cada bloco cai no lugar (dando a volta na casa, como o pedreiro)
+ *   0,00–0,12  O MESMO Blocão do site (grande, no meio da tela, no mesmo ângulo) encolhe e voa até o canto da obra:
+ *              ele é o 1º bloco da casa. O alicerce aparece embaixo enquanto ele desce.
+ *   0,12–0,40  paredes do térreo: fiada por fiada, cada bloco cai no lugar (dando a volta na casa, como o pedreiro)
  *   0,40–0,47  laje + piso da varanda de cima (com pilares da varanda de baixo)
  *   0,47–0,74  paredes do andar de cima
  *   0,74–0,80  cobertura com platibanda
@@ -213,7 +214,12 @@ let p = 0;
 let pDesenhado = -1;
 let assentados = 0;
 let ouvinte = null;
+let guia;                 // o Blocão do site que vira o 1º bloco da casa
+let primeiro = 0;         // índice do 1º bloco (fiada 0, começo da volta)
 const _o = new Object3D();
+const _ini = new Object3D();
+const _fim = new Object3D();
+const _dir = new Vector3();
 const centro = new Vector3(0, 2.6, 0.6);
 const RAIO = 10.4;         // esfera que envolve a maquete inteira (base + casa + árvores)
 
@@ -275,6 +281,14 @@ function montar() {
   blocosMesh.castShadow = blocosMesh.receiveShadow = nivel.sombra;
   blocosMesh.frustumCulled = false; // as instâncias se espalham pela casa toda (a esfera da geometria não as cobre)
   cena.add(blocosMesh);
+
+  // o Blocão "do site": mesmo bloco, com textura mais fina (ele aparece grande na tela antes de ir pro lugar)
+  primeiro = lista.reduce((m, bl, i) => (bl.fiada === 0 && bl.ordem < lista[m].ordem ? i : m), 0);
+  const tGuia = texConcreto(Math.min(512, nivel.tex * 2));
+  const matGuia = new MeshStandardMaterial({ map: tGuia, roughness: 0.9, color: "#d6d1c8" });
+  guia = new Mesh(geo, [matGuia, matGuia, matTopo, matTopo, matGuia, matGuia]);
+  guia.castShadow = nivel.sombra;
+  cena.add(guia);
 
   // pintura (acabamento): mesma posição dos blocos, um tico maior pra fechar as juntas
   matPintura = new MeshStandardMaterial({ color: "#f2efe8", roughness: 0.85, transparent: true, opacity: 0 });
@@ -382,10 +396,41 @@ function posicionarCamera() {
   else camera.clearViewOffset();
 }
 
+/**
+ * O Blocão do site vira o 1º bloco da casa: começa grande, no meio da tela e no mesmo ângulo do bloco do
+ * "Por dentro" (giro −0,55 / inclinação 0,3), e voa encolhendo até o canto da obra.
+ */
+function moverGuia() {
+  const e = suave(faixa(p, 0, 0.12));
+  guia.visible = e < 1;
+  if (!guia.visible) return;
+  const el = renderer.domElement;
+  const asp = el.clientWidth / Math.max(1, el.clientHeight);
+  const D = 9;
+  const altVis = 2 * D * Math.tan(MathUtils.degToRad(camera.fov) / 2);
+  const largura = Math.min((asp < 1.15 ? 0.72 : 0.36) * altVis * asp, 0.9 * altVis);
+  camera.getWorldDirection(_dir);
+  _ini.position.copy(camera.position).addScaledVector(_dir, D);
+  _ini.quaternion.copy(camera.quaternion);
+  _o.rotation.set(0.3, -0.55, 0);
+  _o.updateMatrix();
+  _ini.quaternion.multiply(_o.quaternion);
+  const bl = lista[primeiro];
+  _fim.position.set(bl.x, bl.y, bl.z);
+  _fim.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
+  const v = e * e; // fica grande na tela um pouco mais e depois "mergulha" até a obra
+  guia.position.lerpVectors(_ini.position, _fim.position, v);
+  guia.position.y += Math.sin(Math.PI * v) * 1.2; // um arco suave, como quem levanta e assenta o bloco
+  guia.quaternion.slerpQuaternions(_ini.quaternion, _fim.quaternion, e);
+  const s0 = largura / BL;
+  const k = s0 + (1 - s0) * v;
+  guia.scale.set(bl.comp * k, k, k);
+}
+
 function aplicar() {
   // blocos: cada um cai no lugar no seu tempo (fiada → volta da casa)
-  const t0 = [0.06, 0.47];
-  const vao = [0.34, 0.27];
+  const t0 = [0.12, 0.47];
+  const vao = [0.28, 0.27];
   assentados = 0;
   for (let i = 0; i < lista.length; i++) {
     const bl = lista[i];
@@ -393,7 +438,8 @@ function aplicar() {
     const f = bl.fiada - andar * FIADAS;
     const passo = vao[andar] / FIADAS;
     const ini = t0[andar] + f * passo + bl.ordem * passo * 0.9;
-    const e = limitar((p - ini) / 0.03);
+    let e = limitar((p - ini) / 0.03);
+    if (i === primeiro) e = p >= 0.12 ? 1 : 0; // o 1º é o próprio Blocão do site (o "guia" chega no lugar dele)
     if (e >= 1) assentados++;
     _o.position.set(bl.x, bl.y + (1 - pulo(e)) * 1.8, bl.z);
     _o.rotation.set((1 - e) * 0.5, (bl.girado ? Math.PI / 2 : 0) + (1 - e) * 0.4, 0);
@@ -403,6 +449,7 @@ function aplicar() {
     blocosMesh.setMatrixAt(i, _o.matrix);
   }
   blocosMesh.instanceMatrix.needsUpdate = true;
+  moverGuia();
 
   // demais peças
   for (const m of pecas) {
@@ -432,8 +479,8 @@ function aplicar() {
 }
 
 function desenhar() {
+  posicionarCamera(); // antes: o Blocão-guia é posicionado em relação à câmera
   aplicar();
-  posicionarCamera();
   renderer.render(cena, camera);
   pDesenhado = p;
   if (ouvinte) ouvinte({ assentados, total: lista.length });
@@ -509,7 +556,7 @@ async function iniciar(canvas) {
   pinturaMesh.visible = true;
   matPintura.opacity = 0.5;
   posicionarCamera();
-  if (renderer.compileAsync && !window.__gravandoVideo) await renderer.compileAsync(cena, camera);
+  if (renderer.compileAsync && renderer.extensions.has("KHR_parallel_shader_compile") && !window.__gravandoVideo) await renderer.compileAsync(cena, camera);
   else renderer.compile(cena, camera);
   await respirar();
   renderer.render(cena, camera);

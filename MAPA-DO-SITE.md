@@ -47,7 +47,8 @@ o 3D só desenha quando algo muda (parado = 0 % de GPU) e baixa a resolução so
 
 ### Casa inteira de Blocão (`#casa`, `assets/js/casa.js` + `assets/js/casa3d.js`)
 Seção fixa (sticky) de 520vh logo depois do "Por dentro": a **rolagem vertical monta a maquete de um sobrado em tamanho real**
-(9 × 7 m, ≈ 125 m² nos 2 andares) com **350 Blocões** caindo no lugar fiada por fiada → laje com varanda → andar de cima →
+(9 × 7 m, ≈ 125 m² nos 2 andares). Começa com **o mesmo Blocão do "Por dentro"** (grande, mesmo ângulo) que voa até o canto
+da obra e vira o 1º bloco; depois **350 Blocões** caem no lugar fiada por fiada → laje com varanda → andar de cima →
 platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim, árvores e bonequinhos de escala. Tudo sobre uma base de
 maquete; a câmera calcula a distância pra maquete caber INTEIRA em qualquer tela (celular pequeno incluído).
 Contador de blocos assentados, etapa atual e botão de WhatsApp no fim.
