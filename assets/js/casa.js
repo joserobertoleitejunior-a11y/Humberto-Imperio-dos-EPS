@@ -1,7 +1,8 @@
 /**
  * Seção "Uma casa inteira de Blocão": liga a rolagem vertical à casa 3D (casa3d.js).
  * - O canvas mora DENTRO da parte fixa (sticky) da seção: o navegador move tudo junto com a página.
- * - Só baixa o 3D quando a seção chega perto (1,5 tela antes); no vídeo, já na abertura.
+ * - Prepara o 3D ~3 s depois de abrir (página parada) ou quando a seção chega perto, o que vier antes; no vídeo, já na abertura.
+ * - O 3D é preparado num momento ocioso do navegador (sem engasgar a rolagem em celular antigo).
  * - "estatica" ou sem WebGL: fica a imagem pronta da casa (assets/img/casa-blocao.webp) e as etapas em lista.
  * Publica window.ImperioCasa = { pronto(), atualizarAgora() } (usado pela gravação do vídeo).
  */
@@ -79,7 +80,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261022a")
+    import("./casa3d.js?v=20261023b")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -105,10 +106,18 @@
     pintar(0);
     if (window.__gravandoVideo) iniciar3D();
     else if ("IntersectionObserver" in window) {
+      // prepara a casa num momento ocioso (não no meio da rolagem): celular antigo não engasga
+      var quandoOcioso = function () {
+        if (window.requestIdleCallback) window.requestIdleCallback(iniciar3D, { timeout: 1200 });
+        else setTimeout(iniciar3D, 60);
+      };
       var obs = new IntersectionObserver(function (en) {
-        if (en[0].isIntersecting) { obs.disconnect(); iniciar3D(); }
+        if (en[0].isIntersecting) { obs.disconnect(); quandoOcioso(); }
       }, { rootMargin: "150% 0px 150% 0px" });
       obs.observe(secao);
+      // o mais pesado (criar o contexto gráfico) vai pro começo, com a pessoa ainda no topo e a página parada:
+      // ~3 s depois de abrir, num momento ocioso — assim não acontece no meio da rolagem do "Por dentro"
+      window.addEventListener("load", function () { setTimeout(quandoOcioso, 3000); }, { once: true });
     } else iniciar3D();
     if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);
     else window.addEventListener("scroll", atualizar, { passive: true });

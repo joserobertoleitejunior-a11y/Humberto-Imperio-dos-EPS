@@ -582,7 +582,7 @@ main { position: relative; z-index: 2; }
 @media (min-width: 1180px) {
   .menu-botao { display: none; }
   .nav { position: static; inset: auto; opacity: 1; visibility: visible; transform: none; flex-direction: row; background: none; padding: 0; gap: 0; overflow: visible; margin-left: 22px; }
-  .nav a { padding: 8px 10px; font-size: 0.82rem; font-weight: 700; font-stretch: 110%; letter-spacing: 0.04em; border: 0; color: var(--texto-suave); }
+  .nav a { white-space: nowrap; padding: 8px clamp(5px, 0.6vw, 10px); font-size: clamp(0.74rem, 0.62rem + 0.18vw, 0.82rem); font-weight: 700; font-stretch: 110%; letter-spacing: 0.04em; border: 0; color: var(--texto-suave); }
   .nav a:hover { color: var(--grafite); }
   .nav__admin { display: none; }
 }

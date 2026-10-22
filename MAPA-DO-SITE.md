@@ -46,13 +46,16 @@ O que mantém o site leve: Three.js só baixa **depois** do `load` + ociosidade;
 o 3D só desenha quando algo muda (parado = 0 % de GPU) e baixa a resolução sozinho se engasgar; fonte própria (90 KB), sem Google Fonts.
 
 ### Casa inteira de Blocão (`#casa`, `assets/js/casa.js` + `assets/js/casa3d.js`)
-Seção fixa (sticky) de 520vh logo depois do "Por dentro": a **rolagem vertical monta uma casa grande** (térreo 16 × 10 m,
-2º andar 14 × 8 m em balanço) com **451 Blocões** caindo no lugar fiada por fiada → laje → 2º andar → cobertura →
-vidros/madeira/pedra → pintura, deck, piscina e árvores. Contador de blocos assentados, etapa atual e botão de WhatsApp no fim.
+Seção fixa (sticky) de 520vh logo depois do "Por dentro": a **rolagem vertical monta a maquete de um sobrado em tamanho real**
+(9 × 7 m, ≈ 125 m² nos 2 andares) com **350 Blocões** caindo no lugar fiada por fiada → laje com varanda → andar de cima →
+platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim, árvores e bonequinhos de escala. Tudo sobre uma base de
+maquete; a câmera calcula a distância pra maquete caber INTEIRA em qualquer tela (celular pequeno incluído).
+Contador de blocos assentados, etapa atual e botão de WhatsApp no fim.
 - Tudo é função do progresso da rolagem (rolar pra cima desmonta); só desenha quando a rolagem muda.
 - Blocos numa malha instanciada (1 objeto pra 451 peças); topo do bloco mostra o sanduíche concreto | EPS | concreto.
 - O 3D só baixa quando a seção chega perto (1,5 tela antes). "estatica"/sem WebGL: imagem `assets/img/casa-blocao.webp` + etapas em lista.
-- Bloco ilustrativo 1,00 × 0,50 m (face real a confirmar) — a seção diz "projeto meramente ilustrativo".
+- Bloco ilustrativo 1,00 × 0,50 m (face real a confirmar) — a seção diz "maquete ilustrativa".
+- Celular antigo ("baixa"): sem antialias, sem reflexo de ambiente, texturas 128 px, resolução 1×; o 3D é preparado num momento ocioso.
 
 ## 3. Arquivos
 
