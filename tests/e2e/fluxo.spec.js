@@ -236,7 +236,7 @@ test("sem rolagem lateral no celular", async ({ page }) => {
 });
 
 test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no fim aparece o botão", async ({ page }) => {
-  test.setTimeout(90000); // monta 3 casas, entra e sai de uma (WebGL por software nos testes)
+  test.setTimeout(150000); // monta 3 casas, entra e sai de uma (WebGL por software nos testes)
   await abrir(page);
   await page.evaluate(() => { const j = document.querySelector("#por-dentro"); scrollTo({ top: j.offsetTop, behavior: "instant" }); });
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--3d/, { timeout: 60000 });
@@ -291,6 +291,10 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect(page.locator("[data-casa-passeio]")).toBeVisible();
   expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("none");
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.passeioInfo()), { timeout: 10000 }).not.toBeNull();
+  // modo drone: tocar voa até o ponto (com inércia) e ele para sozinho no ar
+  await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth * 0.5, innerHeight * 0.7));
+  expect(await page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando), { timeout: 45000 }).toBe(false);
   // um tremidinho da rolagem (dedo/barra do navegador) não fecha a casa
   await page.evaluate(() => scrollBy(0, 4));
   await page.waitForTimeout(500);

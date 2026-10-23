@@ -8,8 +8,9 @@
  * - "estatica": imagem pronta da casa + etapas em lista, depois do "L". Sem WebGL: a fase da casa sai (seção volta ao "L").
  * Casa pronta: tocar numa parede tira ela e a câmera entra pela abertura (corte mostra o EPS dentro do Blocão).
  * Sempre (depois do voo do Blocão): arrastar o dedo pro lado gira a casa e a pinça aproxima — zoom SÓ no 3D
- * (a página continua sem zoom). Por dentro é um passeio: arrastar olha em volta, tocar no chão anda até lá,
- * pinça/roda anda pra frente e pra trás, botão troca de andar; setas/WASD no computador; "Sair da casa" volta.
+ * (a página continua sem zoom). Por dentro é um DRONE: entra num arco pela parede aberta; arrastar vira (com inércia),
+ * tocar voa até o ponto, pinça acelera pra frente/trás, 2 dedos subindo/descendo = altura, botão troca de andar;
+ * no computador setas/WASD voam, Q/E viram, R/F sobem/descem, roda acelera; "Sair da casa" (ou Esc) volta.
  * Publica window.ImperioCasa = { pronto(), atualizarAgora() } (usado pela gravação do vídeo).
  */
 (function () {
@@ -124,7 +125,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025k")
+    import("./casa3d.js?v=20261025n")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -160,8 +161,8 @@
         document.addEventListener("keydown", function (ev) {
           if (!camada.classList.contains("casa--dentro") || /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName)) return;
           var k = ev.key.toLowerCase();
-          var mapa = { arrowup: [1, 0], w: [1, 0], arrowdown: [-1, 0], s: [-1, 0], a: [0, -1], d: [0, 1] };
-          if (mapa[k]) { ev.preventDefault(); C3.passo(mapa[k][0], mapa[k][1]); if (corte) corte.hidden = true; }
+          var mapa = { arrowup: [1, 0, 0], w: [1, 0, 0], arrowdown: [-1, 0, 0], s: [-1, 0, 0], a: [0, -1, 0], d: [0, 1, 0], r: [0, 0, 1], pageup: [0, 0, 1], f: [0, 0, -1], pagedown: [0, 0, -1] };
+          if (mapa[k]) { ev.preventDefault(); C3.passo(mapa[k][0], mapa[k][1], mapa[k][2]); if (corte) corte.hidden = true; }
           else if (k === "arrowleft" || k === "q") { ev.preventDefault(); C3.girar(-40); }
           else if (k === "arrowright" || k === "e") { ev.preventDefault(); C3.girar(40); }
           else if (k === "escape") C3.recolocar();
@@ -199,9 +200,13 @@
    */
   function ligarToque() {
     var pts = {};          // dedos/mouse na tela: id → { x, y }
-    var x0 = 0, y0 = 0, xa = 0, ya = 0, girando = false, vertical = false, pinca = false, distA = 0, tipoPt = "";
+    var x0 = 0, y0 = 0, xa = 0, ya = 0, ta = 0, girando = false, vertical = false, pinca = false, distA = 0, cyA = 0, tipoPt = "";
     var dentro = function () { return camada.classList.contains("casa--dentro"); };
     var nPts = function () { return Object.keys(pts).length; };
+    function centroY() {
+      var l = Object.keys(pts).map(function (k) { return pts[k].y; });
+      return l.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, l.length);
+    }
     function distancia() {
       var l = Object.keys(pts).map(function (k) { return pts[k]; });
       return l.length < 2 ? 0 : Math.hypot(l[0].x - l[1].x, l[0].y - l[1].y);
@@ -210,16 +215,18 @@
       pts[e.pointerId] = { x: e.clientX, y: e.clientY };
       tipoPt = e.pointerType;
       if (e.pointerType === "mouse" || dentro()) { try { palco.setPointerCapture(e.pointerId); } catch (er) { /* sem captura */ } }
-      if (nPts() === 1) { girando = false; vertical = false; pinca = false; x0 = xa = e.clientX; y0 = ya = e.clientY; }
-      else if (nPts() === 2) { pinca = true; girando = false; distA = distancia(); } // 2 dedos: zoom só no 3D
+      if (nPts() === 1) { girando = false; vertical = false; pinca = false; x0 = xa = e.clientX; y0 = ya = e.clientY; ta = e.timeStamp; }
+      else if (nPts() === 2) { pinca = true; girando = false; distA = distancia(); cyA = centroY(); C3.soltar(); } // 2 dedos: zoom só no 3D
     });
     palco.addEventListener("pointermove", function (e) {
       if (!pts[e.pointerId]) return;
       pts[e.pointerId] = { x: e.clientX, y: e.clientY };
       if (pinca) {
         var d = distancia();
-        if (distA > 0 && d > 0) C3.pinca(d / distA);
+        var cy = centroY();
+        if (distA > 0 && d > 0) C3.pinca(d / distA, cyA - cy); // abrir/fechar = frente/trás; 2 dedos subindo = o drone sobe
         distA = d;
+        cyA = cy;
         if (corte) corte.hidden = true;
         return;
       }
@@ -230,16 +237,17 @@
         if (girando) camada.classList.add("casa--girando");
       }
       if (girando) {
-        C3.girar(e.clientX - xa, dentro() || tipoPt === "mouse" ? e.clientY - ya : 0);
+        C3.girar(e.clientX - xa, dentro() || tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
         if (dentro()) requestAnimationFrame(posicionarCorte); // a etiqueta acompanha (ou some se sair da tela)
       }
-      xa = e.clientX; ya = e.clientY;
+      xa = e.clientX; ya = e.clientY; ta = e.timeStamp;
     });
     function soltar(e, cancelado) {
       if (!pts[e.pointerId]) return;
       delete pts[e.pointerId];
       if (nPts() > 0) return; // ainda tem dedo na tela (fim de pinça)
       camada.classList.remove("casa--girando");
+      if (girando) C3.soltar(); // inércia: continua girando e vai parando
       var parado = !cancelado && !girando && !vertical && !pinca && Math.abs(e.clientX - x0) < 10 && Math.abs(e.clientY - y0) < 10;
       pinca = false;
       if (!parado) return;

@@ -386,12 +386,17 @@ let giroUser = 0;          // giro da maquete pelo dedo/mouse (rad, em volta da 
 let elevUser = 0;          // inclinação pelo mouse (rad)
 let pRemocao = -1;         // ponto da rolagem quando a parede saiu (rolar de verdade recoloca)
 let zoomUser = 1;          // pinça por fora: aproxima/afasta a maquete (só o 3D — a página não tem zoom)
-let passeio = null;        // por dentro: { pos, yaw, pitch, fov, andar, anim } — andar, olhar em volta, trocar de andar
-const OLHO = 1.55;         // altura dos olhos (m)
-const DUR_PASSO = 650;
+let passeio = null;        // por dentro, o DRONE: { pos, vel, yaw, pitch, roll, embique, vYaw, vPitch, alvo, andar, arrastando, t }
+const OLHO = 1.55;         // altura em que o drone entra (m acima do piso)
+const DRONE = { atrito: 0.45, giroAtrito: 0.22, maxV: 2.4, alturaMin: 0.6, alturaMax: 2.55, folga: 0.55 };
+let giroVel = 0;           // inércia do giro por fora (rad/s)
+let loopDrone = false;
+let tDrone = 0;
+const _ctrl = new Vector3();
+const _vel = new Vector3();
 const PRONTA = 0.88;       // a partir daqui dá pra tirar parede (a casa já está toda de pé)
 const limitarEntre = (x, a, b) => (x < a ? a : x > b ? b : x);
-const DUR_CAMERA = 1300;
+const DUR_CAMERA = 1800;   // o mergulho do drone pela parede aberta
 const _raycast = new Raycaster();
 const _ndcV = new Vector2();
 const _alvoCam = new Vector3();
@@ -653,26 +658,43 @@ function posicionarCamera() {
   let alvo = centro;
   let off = 1;
   let fov = 26;
+  let emDrone = false;
+  let rolagemCam = 0;
   if (interior) {
     // câmera entrando pela parede aberta (ou voltando pra vista da rolagem)
     const k = suave((agora() - interior.t0) / DUR_CAMERA);
     const de = interior.de;
     const para = interior.volta ? { pos: camera.position.clone(), alvo: centro, fov: 26, off: 1 } : interior.para;
-    camera.position.lerpVectors(de.pos, para.pos, k);
-    alvo = _alvoCam.lerpVectors(de.alvo, para.alvo, k);
+    // voo de drone: arco (sobe, faz a curva e mergulha pela abertura), não uma reta
+    const dist = de.pos.distanceTo(para.pos);
+    _ctrl.lerpVectors(de.pos, para.pos, 0.5);
+    _ctrl.y = Math.max(de.pos.y, para.pos.y) + Math.min(3, 0.6 + dist * 0.18);
+    const a = (1 - k) * (1 - k);
+    const b = 2 * (1 - k) * k;
+    const c = k * k;
+    camera.position.set(de.pos.x * a + _ctrl.x * b + para.pos.x * c, de.pos.y * a + _ctrl.y * b + para.pos.y * c, de.pos.z * a + _ctrl.z * b + para.pos.z * c);
+    alvo = _alvoCam.lerpVectors(de.alvo, para.alvo, suave(k * 1.15));
     fov = de.fov + (para.fov - de.fov) * k;
     off = de.off + (para.off - de.off) * k;
-    // chegou: começa o passeio (a câmera passa a ser da pessoa)
+    rolagemCam = Math.sin(k * Math.PI) * 0.14 * (interior.volta ? -1 : 1); // inclina na curva, como drone
+    // chegou: o drone é da pessoa
     if (!interior.volta && k >= 1) {
       if (!passeio) iniciarPasseio();
-      posPasseio(camera.position);
+      camera.position.copy(passeio.pos);
+      camera.position.y += Math.sin(passeio.t * 2.3) * 0.018 * Math.min(1, passeio.vel.length()); // flutua no ar
       alvo = _alvoCam.set(Math.sin(passeio.yaw) * Math.cos(passeio.pitch), Math.sin(passeio.pitch), Math.cos(passeio.yaw) * Math.cos(passeio.pitch)).add(camera.position);
       fov = passeio.fov;
+      emDrone = true;
     }
   }
   camera.fov = fov;
   camera.near = interior ? 0.1 : 1;
   camera.lookAt(alvo);
+  if (emDrone) {
+    // drone: rumo + inclinação pra cima/baixo + tombo lateral na curva + embique ao acelerar
+    camera.rotation.order = "YXZ";
+    camera.rotation.set(passeio.pitch + passeio.embique, passeio.yaw + Math.PI, passeio.roll);
+  } else if (rolagemCam) camera.rotateZ(rolagemCam);
   ultimoAlvo.copy(alvo);
   ultimoOff = off;
   camera.setViewOffset(w, h, offX * off, offY * off, w, h);
@@ -735,56 +757,130 @@ function estadoParede(id) {
 function animando() {
   const t = agora();
   for (const a of fora.values()) if (t - a.t0 < DUR_PAREDE) return true;
-  if (passeio && passeio.anim) return true;
   return !!interior && t - interior.t0 < DUR_CAMERA;
 }
 
-/* ---------- passeio por dentro: olhar em volta, andar (toque no chão / pinça / teclas), trocar de andar ---------- */
+/* ---------- DRONE por dentro: voo com inércia, curva inclinada, sobe e desce, não atravessa parede ---------- */
 function iniciarPasseio() {
   const pr = interior.para;
   const d = _dir.copy(pr.alvo).sub(pr.pos);
-  passeio = { pos: pr.pos.clone(), yaw: Math.atan2(d.x, d.z), pitch: Math.atan2(d.y, Math.hypot(d.x, d.z)), fov: pr.fov, andar: interior.muro.andar, anim: null };
-}
-
-/** posição atual do passeio (no meio de um passo animado, a posição do momento) */
-function posPasseio(alvo) {
-  const a = passeio.anim;
-  if (!a) return alvo.copy(passeio.pos);
-  const k = suave((agora() - a.t0) / a.dur);
-  alvo.lerpVectors(a.de, a.para, k);
-  if (k >= 1) { passeio.pos.copy(a.para); passeio.anim = null; }
-  return alvo;
+  passeio = {
+    pos: pr.pos.clone(), vel: new Vector3(), yaw: Math.atan2(d.x, d.z), pitch: Math.atan2(d.y, Math.hypot(d.x, d.z)),
+    roll: 0, embique: 0, vYaw: 0, vPitch: 0, alvo: null, andar: interior.muro.andar, fov: pr.fov, arrastando: false, t: 0,
+  };
 }
 
 const pisoDe = (andar) => (andar ? CHAO + PE + LAJE : CHAO);
 const _passo = new Vector3();
-const _de = new Vector3();
+const anguloEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a)); // -π..π
 
-/** anda até (x, z) sem atravessar parede (para 90 cm antes, pra ver o cômodo) e sem sair pra longe da casa */
-function irPara(x, z, animado) {
-  posPasseio(_de);
-  _passo.set(x - _de.x, 0, z - _de.z);
-  let L = _passo.length();
-  if (L < 0.05) return;
-  _passo.normalize();
-  _raycast.set(_de, _passo);
-  _raycast.far = L + 0.5;
+/** a 1ª coisa sólida na frente (parede, porta, janela), até "longe" metros */
+function obstaculo(origem, dir, longe) {
+  _raycast.set(origem, dir);
+  _raycast.far = longe;
   const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
-  blocosMesh.computeBoundingSphere();
   const hit = _raycast.intersectObjects(alvos, false)[0];
   _raycast.far = Infinity;
-  if (hit) L = Math.max(0, Math.min(L, hit.distance - 0.9));
-  const R = passeio.andar && projeto.B ? projeto.B : projeto.A;
-  const fx = limitarEntre(_de.x + _passo.x * L, R.x0 - 2.5, R.x1 + 2.5);
-  const fz = limitarEntre(_de.z + _passo.z * L, R.z0 - 2.5, R.z1 + 2.5);
-  const para = new Vector3(fx, pisoDe(passeio.andar) + OLHO, fz);
-  if (animado) passeio.anim = { de: _de.clone(), para, t0: agora(), dur: DUR_PASSO };
-  else { passeio.pos.copy(para); passeio.anim = null; }
+  return hit ? hit.distance : Infinity;
+}
+
+/** um passo da física do drone (dt em s, pequeno) */
+function fisicaDrone(d, dt) {
+  // voando pra um ponto (toque): acelera, vira o nariz pro rumo e freia chegando
+  if (d.alvo) {
+    _passo.copy(d.alvo).sub(d.pos);
+    const dist = _passo.length();
+    // chegou — ou parou de chegar mais perto (ponto fora do alcance): desiste e fica pairando
+    if (dist < d.melhor - 0.02) { d.melhor = dist; d.tMelhor = d.t; }
+    if (dist < 0.1 || d.t - d.tMelhor > 1.2) d.alvo = null;
+    else {
+      const vDes = Math.min(DRONE.maxV, dist * 1.5);
+      _vel.copy(_passo).multiplyScalar(vDes / dist);
+      d.vel.lerp(_vel, Math.min(1, dt * 4.5)); // responde rápido: chega e freia em cima do ponto
+      if (Math.hypot(_passo.x, _passo.z) > 0.35 && !d.arrastando) {
+        const dYaw = anguloEntre(Math.atan2(_passo.x, _passo.z) - d.yaw);
+        d.vYaw += (dYaw * 2 - d.vYaw) * Math.min(1, dt * 3.5);
+      }
+    }
+  } else d.vel.multiplyScalar(Math.exp(-dt / DRONE.atrito)); // solto: vai parando no ar
+  // giro com inércia (o dedo solta e ele ainda vira um pouco)
+  d.yaw += d.vYaw * dt;
+  d.pitch = limitarEntre(d.pitch + d.vPitch * dt, -0.85, 0.75);
+  if (!d.arrastando) {
+    d.vYaw *= Math.exp(-dt / DRONE.giroAtrito);
+    d.vPitch *= Math.exp(-dt / DRONE.giroAtrito);
+  }
+  // altura: entre o piso e o teto do andar (trocar de andar = o drone sobe/desce até a faixa nova)
+  const piso = pisoDe(d.andar);
+  const yMin = piso + DRONE.alturaMin;
+  const yMax = piso + DRONE.alturaMax;
+  if (d.pos.y < yMin) d.vel.y += (yMin - d.pos.y) * dt * 6;
+  else if (d.pos.y > yMax) d.vel.y += (yMax - d.pos.y) * dt * 6;
+  d.vel.clampLength(0, DRONE.maxV * 1.2);
+  // não atravessa parede: freia antes
+  const v = d.vel.length();
+  if (v > 0.001) {
+    _passo.copy(d.vel).divideScalar(v);
+    if (obstaculo(d.pos, _passo, v * dt + DRONE.folga) < v * dt + DRONE.folga) { d.vel.set(0, 0, 0); d.alvo = null; }
+    else d.pos.addScaledVector(d.vel, dt);
+  }
+  const R = d.andar && projeto.B ? projeto.B : projeto.A;
+  d.pos.x = limitarEntre(d.pos.x, R.x0 - 2.5, R.x1 + 2.5);
+  d.pos.z = limitarEntre(d.pos.z, R.z0 - 2.5, R.z1 + 2.5);
+  // atitude de drone: tomba pro lado da curva e embica pra frente quando acelera
+  const frente = d.vel.x * Math.sin(d.yaw) + d.vel.z * Math.cos(d.yaw);
+  const lado = d.vel.x * Math.cos(d.yaw) - d.vel.z * Math.sin(d.yaw);
+  d.roll += (limitarEntre(-d.vYaw * 0.1 + lado * 0.06, -0.3, 0.3) - d.roll) * Math.min(1, dt * 5);
+  d.embique += (limitarEntre(-frente * 0.035, -0.12, 0.12) - d.embique) * Math.min(1, dt * 4);
+  d.t += dt;
+  return Math.abs(d.pos.y - limitarEntre(d.pos.y, yMin, yMax)) > 0.02;
+}
+
+/** um quadro do drone: a física anda no TEMPO REAL (em passinhos), então num celular lento o voo dura o mesmo */
+function quadroDrone(t) {
+  const d = passeio;
+  if (!d || !interior || interior.volta) { loopDrone = false; return; }
+  const total = Math.min(0.25, tDrone ? (t - tDrone) / 1000 : 0.016);
+  tDrone = t;
+  const n = Math.max(1, Math.ceil(total / 0.03));
+  let foraDaFaixa = false;
+  for (let k = 0; k < n; k++) foraDaFaixa = fisicaDrone(d, total / n);
+  const ativo = d.arrastando || d.alvo || d.vel.length() > 0.03 || foraDaFaixa || Math.abs(d.vYaw) > 0.01 || Math.abs(d.vPitch) > 0.01 || Math.abs(d.roll) > 0.003 || Math.abs(d.embique) > 0.003;
+  pDesenhado = -1;
+  desenhar(!ativo); // nítido (HD) quando o drone para no ar
+  if (ativo) requestAnimationFrame(quadroDrone);
+  else { loopDrone = false; tDrone = 0; }
+}
+
+function novoAlvo() {
+  passeio.melhor = Infinity;
+  passeio.tMelhor = passeio.t;
+}
+
+function acordarDrone() {
+  if (loopDrone || !passeio) return;
+  loopDrone = true;
+  tDrone = 0;
+  requestAnimationFrame(quadroDrone);
+}
+
+/** giro de fora com inércia (o dedo solta e a maquete ainda gira um pouco, desacelerando) */
+let tGiro = 0;
+function quadroGiro(t) {
+  const dt = Math.min(0.05, tGiro ? (t - tGiro) / 1000 : 0.016);
+  tGiro = t;
+  giroUser += giroVel * dt;
+  giroVel *= Math.exp(-dt / 0.35);
+  pDesenhado = -1;
+  const ativo = Math.abs(giroVel) > 0.02 && !interior;
+  desenhar(!ativo);
+  if (ativo) requestAnimationFrame(quadroGiro);
+  else { giroVel = 0; tGiro = 0; }
 }
 
 function redesenharPasseio() {
   pDesenhado = -1;
-  if (passeio && passeio.anim) requestAnimationFrame(animar);
+  if (passeio) acordarDrone();
   else pedir();
 }
 
@@ -1121,16 +1217,18 @@ window.ImperioCasa3D = {
     const r = renderer.domElement.getBoundingClientRect();
     _ndcV.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
     if (interior) {
-      // por dentro: anda até onde tocou no chão (ou na direção, se tocou numa parede/no alto)
+      // por dentro: o drone voa até onde tocou (no chão: pro ponto, na altura em que está; no alto: naquela direção)
       if (!passeio) return false;
       camera.updateMatrixWorld();
       _raycast.setFromCamera(_ndcV, camera);
       const o = _raycast.ray.origin;
       const d = _raycast.ray.direction;
       const piso = pisoDe(passeio.andar);
-      const t = d.y < -0.02 ? (piso - o.y) / d.y : 3 / Math.max(0.2, Math.hypot(d.x, d.z));
-      irPara(o.x + d.x * t, o.z + d.z * t, true);
-      redesenharPasseio();
+      const longe = Math.min(obstaculo(o, d, 30), d.y < -0.02 ? (piso - o.y) / d.y : 6);
+      const ir = Math.max(0, longe - DRONE.folga - 0.25);
+      passeio.alvo = new Vector3(o.x + d.x * ir, limitarEntre(o.y + d.y * ir, piso + 1.1, piso + 2), o.z + d.z * ir);
+      novoAlvo();
+      acordarDrone();
       return true;
     }
     camera.updateMatrixWorld();
@@ -1154,49 +1252,86 @@ window.ImperioCasa3D = {
   internas() { return muros.filter((m) => m.interna).length; },
   giro() { return giroUser; },
   /** arrasto do dedo/mouse (px): gira a casa em volta; dentro dela, vira o olhar */
-girar(dx, dy = 0) {
+girar(dx, dy = 0, dtMs = 16) {
     if (!renderer || p < 0.12) return;
+    const dts = Math.max(8, dtMs) / 1000;
     if (interior && !interior.volta) {
-      // dentro: o dedo vira o olhar (pros lados e pra cima/baixo)
+      // dentro: o dedo vira o drone (rumo e inclinação), com inércia ao soltar
       if (!passeio) return;
+      passeio.arrastando = true;
+      passeio.vYaw = passeio.vPitch = 0; // enquanto o dedo está na tela, quem gira é o dedo
       passeio.yaw -= dx * 0.005;
-      passeio.pitch = limitarEntre(passeio.pitch + dy * 0.004, -0.8, 0.7);
-    } else {
-      giroUser -= dx * 0.008;
-      elevUser = limitarEntre(elevUser + dy * 0.004, -0.3, 0.6);
+      passeio.pitch = limitarEntre(passeio.pitch + dy * 0.004, -0.85, 0.75);
+      // a velocidade do dedo fica guardada pra inércia ao soltar
+      passeio.ultimoVYaw = (-dx * 0.005) / dts;
+      passeio.ultimoVPitch = (dy * 0.004) / dts;
+      acordarDrone();
+      return;
     }
-    redesenharPasseio();
+    giroUser -= dx * 0.008;
+    giroVel = (-dx * 0.008) / dts;
+    elevUser = limitarEntre(elevUser + dy * 0.004, -0.3, 0.6);
+    pDesenhado = -1;
+    pedir();
   },
-  /** pinça (fator > 1 = abrindo os dedos): por fora aproxima a maquete; por dentro anda pra frente/trás */
-  pinca(f) {
+  /** dedo saiu da tela: o drone (ou a maquete) continua o giro e vai parando — inércia */
+  soltar() {
+    if (passeio && passeio.arrastando) {
+      passeio.arrastando = false;
+      passeio.vYaw = limitarEntre(passeio.ultimoVYaw || 0, -3, 3);
+      passeio.vPitch = limitarEntre(passeio.ultimoVPitch || 0, -2, 2);
+      passeio.ultimoVYaw = passeio.ultimoVPitch = 0;
+      acordarDrone();
+    } else if (!interior && Math.abs(giroVel) > 0.05) {
+      giroVel = limitarEntre(giroVel, -4, 4);
+      tGiro = 0;
+      requestAnimationFrame(quadroGiro);
+    }
+  },
+  /** pinça (fator > 1 = abrindo os dedos; sobe = dedos subindo, px): por fora aproxima a maquete; por dentro acelera o drone pra frente/trás e sobe/desce */
+  pinca(f, sobe = 0) {
     if (!renderer || p < 0.12 || !(f > 0)) return;
     if (passeio) {
-      const m = (f - 1) * 3.2;
-      irPara(passeio.pos.x + Math.sin(passeio.yaw) * m, passeio.pos.z + Math.cos(passeio.yaw) * m, false);
-    } else if (!interior) zoomUser = limitarEntre(zoomUser / f, 0.4, 1.5);
-    redesenharPasseio();
+      const imp = (f - 1) * 9;
+      passeio.alvo = null;
+      passeio.vel.x += Math.sin(passeio.yaw) * imp;
+      passeio.vel.z += Math.cos(passeio.yaw) * imp;
+      passeio.vel.y += sobe * 0.02;
+      passeio.vel.clampLength(0, DRONE.maxV);
+      acordarDrone();
+      return;
+    }
+    if (!interior) zoomUser = limitarEntre(zoomUser / f, 0.4, 1.5);
+    pDesenhado = -1;
+    pedir();
   },
-  /** teclado/botões: frente (+1/-1) e lado (+1/-1), 60 cm por passo */
-  passo(frente, lado = 0) {
+  /** teclado: frente (+1/-1), lado (+1/-1) e altura (+1/-1) — empurrão no drone */
+  passo(frente, lado = 0, alto = 0) {
     if (!passeio) return;
     const yaw = passeio.yaw;
-    const x = passeio.pos.x + (Math.sin(yaw) * frente + Math.cos(yaw) * -lado) * 0.6;
-    const z = passeio.pos.z + (Math.cos(yaw) * frente - Math.sin(yaw) * -lado) * 0.6;
-    irPara(x, z, true);
-    redesenharPasseio();
+    passeio.alvo = null;
+    passeio.vel.x += (Math.sin(yaw) * frente - Math.cos(yaw) * lado) * 0.9;
+    passeio.vel.z += (Math.cos(yaw) * frente + Math.sin(yaw) * lado) * 0.9;
+    passeio.vel.y += alto * 0.7;
+    passeio.vel.clampLength(0, DRONE.maxV);
+    acordarDrone();
   },
-  /** sobe/desce de andar (sobrado e casarão), no mesmo ponto da planta */
+  /** sobe/desce de andar (sobrado e casarão): o drone sobe/desce até o outro andar, no mesmo ponto da planta */
   trocarAndar() {
     if (!passeio || !projeto.B) return;
     passeio.andar = passeio.andar ? 0 : 1;
     const R = passeio.andar ? projeto.B : projeto.A;
-    posPasseio(_de);
-    const para = new Vector3(limitarEntre(_de.x, R.x0 + 0.8, R.x1 - 0.8), pisoDe(passeio.andar) + OLHO, limitarEntre(_de.z, R.z0 + 0.8, R.z1 - 0.8));
-    passeio.anim = { de: _de.clone(), para, t0: agora(), dur: 900 };
-    redesenharPasseio();
+    passeio.alvo = new Vector3(limitarEntre(passeio.pos.x, R.x0 + 0.8, R.x1 - 0.8), pisoDe(passeio.andar) + OLHO, limitarEntre(passeio.pos.z, R.z0 + 0.8, R.z1 - 0.8));
+    novoAlvo();
+    acordarDrone();
   },
   /** estado do passeio (pra os botões): null fora; { andar, andares } dentro */
-  passeioInfo() { return passeio ? { andar: passeio.andar, andares: projeto.B ? 2 : 1 } : null; },
+  passeioInfo() {
+    if (!passeio) return null;
+    const d = passeio;
+    const r = (x) => Math.round(x * 1000) / 1000;
+    return { andar: d.andar, andares: projeto.B ? 2 : 1, voando: loopDrone, v: r(d.vel.length()), alvo: d.alvo ? r(d.alvo.distanceTo(d.pos)) : null, y: r(d.pos.y - pisoDe(d.andar)), roll: r(d.roll), embique: r(d.embique), vYaw: r(d.vYaw) };
+  },
   /**
    * Onde está o corte (a ponta da parede vizinha, com o EPS à mostra) NA TELA, quando a câmera já entrou:
    * { x, y } em px do navegador, ou null (câmera andando / casa fechada).

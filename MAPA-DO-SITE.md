@@ -64,12 +64,16 @@ escritório, sala integrada e cozinha, em cima suítes nos cantos e sala íntima
 **Girar com o dedo** (sempre, depois do voo do Blocão): arrastar pro lado gira a casa; na vertical a página rola
 normal. No mouse, arrastar também inclina. Dentro da casa, arrastar desliza a câmera ao longo da abertura (cômodo a cômodo).
 
-**Passeio por dentro** (depois de tirar uma parede): a tela fica toda pro 3D (`touch-action: none` no palco — a página
-não rola nem dá zoom). Arrastar = olhar em volta; tocar no chão = andar até lá (para 90 cm antes da parede, não atravessa);
-pinça / roda do mouse = andar pra frente e pra trás; botão "↑ Andar de cima / ↓ Ir pro térreo" (sobrado e casarão);
-setas/WASD andam e Q/E viram no computador; "↺ Sair da casa" (ou Esc) volta pra vista de fora.
+**Modo drone por dentro** (depois de tirar uma parede): a câmera entra num ARCO pela abertura (sobe, faz a curva
+inclinada e mergulha) e vira um drone, com física de verdade (`quadroDrone` em `casa3d.js`, em tempo real com
+subpassos — num celular lento o voo dura o mesmo): inércia ao acelerar, frear e girar; tomba pro lado na curva e
+embica pra frente ao acelerar; flutua de leve enquanto voa; não atravessa parede (freia 55 cm antes).
+Gestos (a tela toda vai pro 3D: `touch-action: none` — a página não rola nem dá zoom): arrastar = virar (solta e ainda
+gira um pouco); tocar = voar até o ponto, virando o nariz pro rumo; pinça = acelerar pra frente/trás; 2 dedos subindo
+/descendo = altura; botão "↑ Andar de cima / ↓ Ir pro térreo" = sobe/desce voando. Computador: setas/WASD voam, Q/E
+viram, R/F sobem/descem, roda acelera, Esc sai. "↺ Sair da casa" volta em arco pra vista de fora.
 Por dentro: piso de madeira em cada andar e paredes internas com tinta areia (as externas ficam brancas).
-**Zoom só no 3D**: por fora, a pinça (ou Ctrl + roda / pinça do touchpad) aproxima e afasta a maquete.
+**Zoom só no 3D**: por fora, a pinça (ou Ctrl + roda / pinça do touchpad) aproxima e afasta a maquete; o giro por fora também tem inércia.
 
 **Paredes móveis**: com a casa de pé (a partir de 88% da obra), tocar numa parede externa tira ela (desliza pra fora e
 some) e a câmera entra pela abertura de frente pra uma parede interna cortada — a ponta dela mostra o miolo do Blocão
