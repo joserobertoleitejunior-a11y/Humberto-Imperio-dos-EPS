@@ -127,7 +127,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025y")
+    import("./casa3d.js?v=20261025z")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -363,7 +363,8 @@
       window.addEventListener("scroll", function () { ultimaRolagem = Date.now(); }, { passive: true });
       var tentar = function () {
         if (carregando) return;
-        if (Date.now() - ultimaRolagem < 700) { setTimeout(tentar, 500); return; }
+        var ab = window.ImperioAbertura;
+        if (Date.now() - ultimaRolagem < 700 || (ab && ab.bvAberta && ab.bvAberta())) { setTimeout(tentar, 1000); return; }
         quandoOcioso();
       };
       window.addEventListener("load", function () { setTimeout(tentar, 5000); }, { once: true });

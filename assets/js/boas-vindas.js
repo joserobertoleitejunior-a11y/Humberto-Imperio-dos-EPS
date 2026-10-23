@@ -112,7 +112,10 @@
     if (video) video.pause();
     bv.classList.remove("on");
     document.body.classList.remove("travado");
-    setTimeout(function () { bv.hidden = true; }, 320);
+    setTimeout(function () {
+      bv.hidden = true;
+      window.dispatchEvent(new Event("imperio:bv-fechou")); // o 3D do site só começa a carregar agora (o vídeo não engasga)
+    }, 320);
     if (destino) {
       var alvo = document.querySelector(destino);
       if (alvo) alvo.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -182,5 +185,10 @@
     }
   });
 
-  window.ImperioAbertura = { fecharSplash: fecharSplash, abrirBoasVindas: abrirBoasVindas, fecharBoasVindas: fecharBoasVindas };
+  /** a tela do vídeo está aberta? (enquanto estiver, o site não prepara o 3D: o vídeo roda liso) */
+  function bvAberta() {
+    var bv = document.getElementById("boas-vindas");
+    return html.classList.contains("abre-video") || !!(bv && !bv.hidden);
+  }
+  window.ImperioAbertura = { fecharSplash: fecharSplash, abrirBoasVindas: abrirBoasVindas, fecharBoasVindas: fecharBoasVindas, bvAberta: bvAberta };
 })();

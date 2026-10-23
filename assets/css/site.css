@@ -181,6 +181,11 @@ button, input, select { font: inherit; color: inherit; }
 .bv .btn-redondo--claro { --fundo: rgba(30, 32, 35, 0.55); --texto: #fff; --borda: rgba(255, 255, 255, 0.3); --giro: #fff; --ico-fundo: rgba(255, 255, 255, 0.18); --ico-cor: #fff; }
 .bv .btn-redondo--claro .btn-redondo__seta { background: rgba(255, 255, 255, 0.18); }
 .bv .btn-redondo--claro .onda { background: rgba(255, 255, 255, 0.4); }
+/* por cima do vídeo: nada de desfoque de fundo nem efeito contínuo (borda girando, brilho, pulso) — o celular
+   refazia tudo isso a cada quadro do vídeo e ele engasgava; fica só a entrada dos botões */
+.bv .btn-redondo, .bv__som { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.bv .btn-redondo::before, .bv .btn-redondo::after { display: none; }
+.bv.on .btn-redondo--azul { animation: btnEntra 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.1) 0.42s forwards; box-shadow: 0 10px 26px -14px rgba(31, 75, 216, 0.9); }
 /* boas-vindas no celular: botões compactos e finos na faixa de baixo — não cobrem o celular nem as legendas do vídeo */
 .bv .btn-redondo { min-height: 52px; gap: 10px; padding: 6px 10px 6px 6px; font-size: 0.98rem; font-weight: 750; letter-spacing: 0.1px;
   backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); }

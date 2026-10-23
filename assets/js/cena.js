@@ -240,7 +240,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261025y")
+    import("./bloco3d.js?v=20261025z")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);
@@ -281,6 +281,12 @@
 
   function quandoOcioso() {
     if (window.__gravandoVideo) return iniciar();
+    // com a tela do vídeo de boas-vindas aberta, o 3D espera ela fechar (preparar o WebGL junto travava o vídeo)
+    var ab = window.ImperioAbertura;
+    if (ab && ab.bvAberta && ab.bvAberta()) {
+      window.addEventListener("imperio:bv-fechou", quandoOcioso, { once: true });
+      return;
+    }
     if (window.requestIdleCallback) window.requestIdleCallback(iniciar, { timeout: 1500 });
     else setTimeout(iniciar, 400);
   }
