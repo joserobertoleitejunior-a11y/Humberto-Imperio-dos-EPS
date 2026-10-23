@@ -11,7 +11,7 @@
  * (a página continua sem zoom). Com a casa completa na tela, o dedo na maquete só gira/inclina ela (a página rola pelo texto).
  * Por dentro: a câmera entra num arco (sobrevoo) pela parede aberta e anda por TOQUE — tocou no chão/num móvel, ela voa
  * (rasante) até lá e para mostrando o lugar; tocou numa parede, a parede sai e mostra o Blocão por dentro; botão troca
- * de andar; "Sair da casa" (ou Esc) volta. "▶ Tour pela casa": sobrevoo automático com legendas (o cliente só assiste).
+ * de andar; "Sair da casa" (ou Esc) volta. "Tour pela casa": sobrevoo automático com legendas (o cliente só assiste).
  * Publica window.ImperioCasa = { pronto(), atualizarAgora() } (usado pela gravação do vídeo).
  */
 (function () {
@@ -127,7 +127,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025u")
+    import("./casa3d.js?v=20261025v")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -155,7 +155,11 @@
           var info = C3.passeioInfo();
           if (!botaoAndar) return;
           botaoAndar.hidden = !info || info.andares < 2;
-          if (info) botaoAndar.textContent = info.andar ? "↓ Ir pro térreo" : "↑ Andar de cima";
+          if (info) {
+            // seta desenhada (svg do botão) vira pra baixo no andar de cima
+            botaoAndar.classList.toggle("casa__botao--desce", !!info.andar);
+            botaoAndar.querySelector("span").textContent = info.andar ? "Ir pro térreo" : "Andar de cima";
+          }
         }
         ligarToque();
         ligarTour();
@@ -282,7 +286,7 @@
     timerAviso = setTimeout(function () { a.hidden = true; }, 3200);
   }
 
-  /** Tour: botão "▶ Tour pela casa" (casa pronta), legendas do sobrevoo e "■ Parar" */
+  /** Tour: botão "Tour pela casa" (casa pronta), legendas do sobrevoo e "Parar o tour" */
   function ligarTour() {
     var legenda = camada.querySelector("[data-casa-legenda]");
     var barra = camada.querySelector("[data-casa-tourbarra]");

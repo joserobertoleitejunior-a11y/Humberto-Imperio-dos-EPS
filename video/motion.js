@@ -188,6 +188,17 @@ function quadro(t){
   });
   /* ações no site (uma vez cada) */
   (C.eventos||[]).forEach(function(e,i){ if(t>=e.t&&!flags['e'+i]){flags['e'+i]=1;try{e.fn(W(),el);}catch(x){console.error('VIDEO-ERRO',x.message);}} });
+  /* tour pela casa: cada cena manda num trecho do sobrevoo (pontos i0→i1), no ritmo da fala */
+  (C.tours||[]).forEach(function(r){
+    if(t<r.t0||t>r.t1+.5||r.feito)return;
+    var c=W().ImperioCasa3D; if(!c)return;
+    if(!flags.tourOn){flags.tourOn=1;try{c.tour();flags.marcos=c.__tourMarcos();}catch(e){console.error('VIDEO-ERRO',e.message);}}
+    var m=flags.marcos; if(!m)return;
+    var a=m[Math.min(r.i0,m.length-1)], b=m[Math.min(r.i1,m.length-1)];
+    var f=a+(b-a)*clamp((t-r.t0)/(r.t1-r.t0));
+    try{c.__irTour(f);}catch(e){}
+    if(t>=r.t1)r.feito=true;
+  });
   /* rolagem, letras e bloco 3D do site desenhados AGORA (gravação quadro a quadro) */
   try{W().ImperioCena.atualizarAgora();}catch(e){}
   /* WhatsApp dentro do celular */
@@ -273,7 +284,7 @@ function tocar(comSom){
 /* cada vídeo é uma lista de CENAS (parte do site + frase falada). Os tempos vêm de video/tempos-X.json, gerado junto com a locução:
    a cena dura o tempo da fala + folga, então nenhuma frase é cortada */
 function montarLinhaDoTempo(cfg,tp){
-  var L=[],R=[],E=[],Dg=[],zap=null,fim=null,splash=null,partes=[];
+  var L=[],R=[],E=[],Dg=[],TR=[],zap=null,fim=null,splash=null,partes=[];
   cfg.cenas.forEach(function(s){
     var T=tp.cenas[s.id],t0=T.t0,t1=T.t1,d=t1-t0;
     var cl=function(x){return x<0?d+x:Math.min(x,d-.3);};
@@ -285,9 +296,10 @@ function montarLinhaDoTempo(cfg,tp){
     (s.acoes||[]).forEach(function(a){E.push({t:t0+cl(a.dt),fn:a.fn});});
     (s.digitar||[]).forEach(function(g){Dg.push({id:g.id,texto:g.texto,t0:t0+cl(g.dt0),t1:t0+cl(g.dt1)});});
     if(s.zap){zap=zap||{t0:t0,t1:t1,texto:s.zapTexto};zap.t1=t1;}
+    if(s.tour)TR.push({t0:t0,t1:t1,i0:s.tour[0],i1:s.tour[1]});
     var p=partes[partes.length-1];if(p&&p.nome===s.parte)p.t1=t1;else partes.push({nome:s.parte,t0:t0,t1:t1});
   });
-  return {tema:cfg.tema,dur:tp.dur,legendas:L,rolagens:R,eventos:E,digitar:Dg,zap:zap,fim:fim,splash:splash,partes:partes};
+  return {tema:cfg.tema,dur:tp.dur,legendas:L,rolagens:R,eventos:E,digitar:Dg,tours:TR,zap:zap,fim:fim,splash:splash,partes:partes};
 }
 /* "toque" no banner: só o cartaz afunda um pouco (sem dedo aparecendo) */
 window.VT={toque:function(w,sel,on){var s=w.document.querySelector(sel);if(s)s.classList.toggle('toque',!!on);}};

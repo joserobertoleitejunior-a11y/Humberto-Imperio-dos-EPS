@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261025u";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261025v";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -195,22 +195,27 @@ const PROJETOS = {
     quadros: [[0, 1.6, -0.205, 0, 0.8, 1.0, 0], [-3.08, 1.6, -3.0, R90, 0.6, 0.8, 1], [2.5, 1.75, -3.83, 0, 0.7, 0.5, 2]],
     luzes: [[-1.5, 1.4], [1.5, 1.4], [-1.4, -2.2], [2.4, -1.4], [1.2, -2.9]],
     garagem: { x: 4.95, z: 1.4 },
-    // tour (sobrevoo automático): [x, y, z, olharX, olharY, olharZ, m/s, legenda]
+    // tour (sobrevoo automático): [x, y, z, olharX, olharY, olharZ, m/s, legenda] — entra, passa por todos os
+    // cômodos, mostra o Blocão por dentro, sai pela varanda e termina dando a volta na casa, do alto
     tour: [
-      [0, 2.2, 9.5, 0, 1.0, 0, 3.5, "Casa térrea de Blocão · 6,5 × 7,5 m"],
-      [-0.8, 1.45, 4.4, -1.5, 1.0, 0, 2.0, "Entrando pela parede aberta"],
-      [-1.6, 1.55, 2.6, -2.9, 1.0, 1.4, 1.3, "Sala de TV"],
-      [1.7, 1.65, 2.75, 2.8, 1.0, 0.6, 1.3, "Cozinha integrada"],
+      [0, 2.2, 9.5, 0, 1, 0, 3.5, "Casa térrea de Blocão · 6,5 × 7,5 m"],
+      [-0.8, 1.45, 4.4, -1.5, 1, 0, 2.0, "Entrando pela parede aberta"],
+      [-1.6, 1.55, 2.6, -2.9, 1, 1.4, 1.3, "Sala de TV"],
+      [1.7, 1.65, 2.75, 2.8, 1, 0.6, 1.3, "Cozinha integrada"],
+      [0.2, 1.6, 2.4, 0.9, 0.8, 1.0, 1.2, "Mesa de jantar"],
       [-2.0, 1.65, 3.05, -3.15, 1.35, 3.36, 0.9, "Dentro do Blocão: concreto + EPS + concreto"],
-      [-1.7, 1.6, 0.5, -1.8, 1.0, -3, 1.3],
+      [-1.7, 1.6, 0.5, -1.8, 1, -3, 1.3],
       [-1.8, 1.45, -1.3, -1.75, 0.8, -2.8, 1.0, "Quarto do casal"],
       [-0.6, 1.6, -1.6, -3.0, 1.6, -3.0, 1.0],
       [-1.8, 1.45, 0.6, 1.7, 1.2, -0.7, 1.3],
       [1.7, 1.45, -0.9, 2.5, 0.8, -2.8, 1.0, "Quarto de solteiro"],
+      [1.25, 1.5, -1.4, 1.2, 0.9, -3.3, 0.9, "Banheiro"],
       [1.2, 1.5, 1.6, 0, 1.3, 9, 1.4],
       [0.2, 1.6, 4.6, 0, 1.2, 15, 1.3, "Varanda com vista"],
-      [3.2, 1.7, 4.7, 4.95, 0.8, 1.4, 1.0, "Garagem coberta"],
-      [3.0, 7.0, 11, 0, 1.5, 0, 3.0, "Feita com o Blocão do Império do EPS"],
+      [3.2, 2.2, 5.2, 4.95, 0.8, 1.4, 1.2, "Garagem coberta"],
+      [-8, 8, 8, 0, 1.5, 0, 3, "Vista do alto"],
+      [0, 11, 10, 0, 1.5, 0, 3],
+      [8, 9, 4, 0, 1.5, 0, 3, "Feita com o Blocão do Império do EPS"],
     ],
     base: { x: 14, z: 13, cz: 0.8 },
     centro: [0, 1.5, 0.8],
@@ -271,6 +276,7 @@ const PROJETOS = {
       [-0.6, 1.5, 4.3, -1.6, 1.0, 0, 2.2, "Entrando pela parede aberta"],
       [-2.9, 1.6, 0.4, -3.4, 0.7, -0.6, 1.4, "Sala de estar"],
       [-0.6, 1.55, -1.2, 1.3, 1.1, -0.6, 1.4, "Sala de TV"],
+      [-1.4, 1.6, 1.0, -1.8, 0.8, 1.85, 1.2, "Mesa de jantar"],
       [-3.3, 1.5, 2.2, -4.36, 1.35, 2.95, 0.9, "Dentro do Blocão: concreto + EPS + concreto"],
       [-2.8, 1.55, -1.4, -2.8, 1.2, -4, 1.4, "Cozinha e lavanderia"],
       [-2.8, 1.55, -3.0, 2.5, 1.2, -3.2, 1.3],
@@ -278,10 +284,17 @@ const PROJETOS = {
       [3.85, 1.6, -3.0, 3.85, 3.0, 0.5, 1.0],
       [3.85, 3.3, -0.1, 3.85, 4.6, 2.6, 0.9, "Subindo pro 2º andar"],
       [3.85, 4.75, 2.3, 0, 4.5, 2.2, 0.9],
-      [1.0, 4.75, 2.0, -1.2, 4.3, 5, 1.2, "Corredor com saída pra varanda"],
+      [0.4, 4.75, 1.9, 0.4, 4.4, -1, 1.1, "Corredor"],
+      [0.4, 4.8, 0.4, 0.8, 3.8, -2.75, 1.0, "Suíte do casal"],
+      [0.4, 4.75, 1.9, -2.8, 4.5, 1.9, 1.0],
+      [-2.8, 4.75, 1.9, -2.8, 4.3, -1, 1.0],
+      [-2.8, 4.8, 0.3, -2.64, 3.8, -0.6, 1.0, "Quarto com banheiro"],
+      [-2.8, 4.75, 1.9, -1.2, 4.4, 5, 1.0],
       [-1.2, 4.8, 4.0, -1.2, 4.0, 14, 1.2, "Varanda com vista"],
-      [-2.5, 5.0, 4.7, 6.3, 1.0, 2.4, 1.0, "Garagem coberta"],
-      [3.0, 8.5, 13, 0, 2.0, 0, 3.5, "Feito com o Blocão do Império do EPS"],
+      [-1.8, 5.6, 6.5, 6.3, 1.0, 2.4, 1.6, "Garagem coberta"],
+      [-9, 10, 9, 0, 2, 0, 3.5, "Vista do alto"],
+      [0, 13, 12, 0, 2, 0, 3.5],
+      [9, 11, 6, 0, 2, 0, 3.5, "Feito com o Blocão do Império do EPS"],
     ],
     vaosB: {
       frente: [{ a: -3.6, b: 1.2, f0: 0, f1: 5 }, { a: 2.5, b: 3.7, f0: 2, f1: 5 }],
@@ -349,23 +362,27 @@ const PROJETOS = {
     luzes: [[-6, -1.5], [-6, 3.7], [-2.5, -0.8], [2, 1.6], [6, -1.5], [-6.5, -4.0], [-5.7, -0.5, 1], [5.7, -0.8, 1], [0, -1.5, 1], [-5.7, -3.8, 1], [5.7, -4.0, 1], [0, 2.7, 1]],
     garagem: { x: -10.0, z: 1.0 },
     tour: [
-      [0, 3.0, 15, 0, 1.5, 0, 4, "Casarão de Blocão · 15 × 10 m, 2 andares e piscina"],
+      [0, 3, 15, 0, 1.5, 0, 4, "Casarão de Blocão · 15 × 10 m, 2 andares e piscina"],
       [-1.0, 1.6, 6.3, -1.5, 1.2, 0, 2.2, "Entrando pela parede aberta"],
       [-3.0, 1.6, 2.4, -4.2, 1.1, -0.8, 1.4, "Sala de estar"],
       [0.4, 1.7, 3.7, 2.0, 0.85, 1.6, 1.4, "Sala de jantar"],
       [4.0, 1.5, 2.2, 6.0, 1.0, -1.6, 1.4, "Cozinha com ilha"],
       [6.4, 1.5, 4.0, 7.36, 1.35, 4.86, 0.9, "Dentro do Blocão: concreto + EPS + concreto"],
-      [2.0, 1.45, -1.8, -2.0, 1.4, -4.35, 1.4],
+      [-3.4, 1.6, 1.9, -6, 1.1, -1, 1.4, "Escritório"],
+      [2.0, 1.6, -1.8, -2.0, 1.4, -4.35, 1.4],
       [-2.6, 1.6, -4.35, 2.3, 3.0, -4.35, 1.0, "Escada"],
       [0.2, 3.3, -4.35, 2.8, 4.7, -4.35, 0.9, "Subindo pro 2º andar"],
       [2.9, 4.75, -4.3, 0.5, 4.4, -1.0, 0.9],
       [0.6, 4.75, -0.6, 1.0, 4.1, 1.31, 1.1, "Sala íntima"],
       [-0.6, 4.75, 0.9, -0.6, 4.6, 3.0, 1.0],
-      [-0.6, 4.75, 2.6, 2.4, 4.6, 3.2, 1.0, "Corredor das suítes"],
+      [-0.6, 4.75, 2.6, 5, 4.5, 2.6, 1.0, "Corredor das suítes"],
+      [5.2, 4.8, 2.4, 5.15, 3.9, -0.8, 1.0, "Suíte com vista"],
       [2.4, 4.8, 3.2, 2.4, 4.2, 12, 1.0],
       [2.4, 4.9, 5.6, 11.2, 0.5, 0.4, 1.1, "Varanda com vista pra piscina"],
-      [-2.0, 5.2, 6.6, -10, 1.0, 1.0, 1.1, "Garagem coberta"],
-      [6, 11, 20, 0, 2, 0, 4, "Feito com o Blocão do Império do EPS"],
+      [-2.0, 5.6, 7.6, -10, 1.0, 1.0, 1.3, "Garagem coberta"],
+      [-14, 12, 12, 0, 2, 0, 4, "Vista do alto"],
+      [0, 17, 16, 0, 2, 0, 4],
+      [14, 13, 6, 0, 2, 0, 4, "Feito com o Blocão do Império do EPS"],
     ],
     vaosB: {
       frente: [{ a: -6.6, b: -0.8, f0: 0, f1: 5 }, { a: 0.8, b: 4, f0: 0, f1: 5 }],
@@ -1019,7 +1036,7 @@ function quadroVoo() {
 function iniciarVoo(v) {
   const andando = !!voo;
   voo = v;
-  if (!andando) requestAnimationFrame(quadroVoo);
+  if (!andando && !window.__gravandoVideo) requestAnimationFrame(quadroVoo); // no vídeo quem anda o tempo é o gravador
 }
 
 /** voa (rasante) até o ponto tocado: para 1,2 m antes, na altura dos olhos, virando pra ele; não atravessa nada */
@@ -1598,13 +1615,24 @@ girar(dx, dy = 0, dtMs = 16) {
   tour() { return iniciarTour(); },
   pararTour() { pararTour(); },
   emTour: () => !!tour,
+  /** vídeo: em que fração (0..1) do tempo do tour a câmera passa por cada ponto (0 = vista de fora inicial) */
+  __tourMarcos() {
+    if (!voo || !tour) return null;
+    const { T, R, D } = voo;
+    return voo.ts.map((sT) => {
+      const e = sT < R / 2 ? Math.sqrt(2 * R * sT) : sT < T - R / 2 ? sT + R / 2 : D - Math.sqrt(Math.max(0, 2 * R * (T - sT)));
+      return e / D;
+    });
+  },
   /** testes / vídeo: pula o tour pra fração f (0..1) do sobrevoo e devolve a legenda daquele ponto */
   __irTour(f) {
     if (!voo || !tour) return null;
     voo.t0 = agora() - limitar(f) * voo.D * 1000;
     pDesenhado = -1;
     desenhar(true);
-    return tour.legenda;
+    const leg = tour.legenda;
+    if (f >= 1 && window.__gravandoVideo) { voo = null; fimTour(); desenhar(true); } // vídeo: acabou o tour
+    return leg;
   },
   /** fn({ ativo, legenda }) durante o tour */
   aoTour(fn) { ouvinteTour = fn; },

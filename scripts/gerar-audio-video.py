@@ -5,6 +5,7 @@ Uso: KOKORO_DIR=/tmp/tts/kokoro-multi-lang-v1_0 python3 scripts/gerar-audio-vide
 Precisa de: numpy, scipy, imageio-ffmpeg, sherpa-onnx (pip) e o modelo Kokoro multilíngue (KOKORO_DIR = pasta de
 https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2). Voz pt-BR masculina "pm_santa" (VOZ_SID=44), a mesma da Pizza em Dobro (conferida na gravação).
 ESTILO=animado → locução mais rápida/aguda/brilhante e música a 100 bpm com bumbo (vídeo de produto).
+FALA_CONTINUA=1 → a locução inteira numa tomada só (sem pausas de respiro entre as cenas); as cenas seguem a fala.
 A música é sintetizada (Karplus-Strong), sem direitos autorais; a voz é neural (Kokoro) tratada com EQ leve, compressão e sala curta."""
 import sys, os, json, wave, subprocess, tempfile, numpy as np
 from scipy.signal import lfilter, fftconvolve
@@ -41,11 +42,85 @@ for i, c in enumerate(rot['cenas']):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(g.sample_rate); w.writeframes((np.clip(np.array(g.samples), -1, 1) * 32767).astype('<i2').tobytes())
     subprocess.run([FF, '-y', '-loglevel', 'error', '-i', bruto, '-af', FILTRO, '-ar', str(SR), tratado], check=True)
     d, _ = ler(tratado); clipes.append(d / (np.abs(d).max() + 1e-9) * .92)
+def tratar(texto, nome):
+    bruto, tratado = f'{cache}/{nome}.wav', f'{cache}/{nome}t.wav'
+    g = _tts.generate(texto, sid=VOZ_SID, speed=VOZ_VEL)
+    with wave.open(bruto, 'wb') as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(g.sample_rate); w.writeframes((np.clip(np.array(g.samples), -1, 1) * 32767).astype('<i2').tobytes())
+    subprocess.run([FF, '-y', '-loglevel', 'error', '-i', bruto, '-af', FILTRO, '-ar', str(SR), tratado], check=True)
+    d, _ = ler(tratado); return d / (np.abs(d).max() + 1e-9) * .92
+# FALA_CONTINUA=1: a locução inteira numa tomada só (como gente falando seguido, sem parar pra respirar entre as cenas).
+# As cenas se cortam no ponto mais silencioso perto de onde cada frase começa (estimado pela duração de cada frase sozinha).
+CONTINUA = os.environ.get('FALA_CONTINUA') == '1'
+if CONTINUA:
+    corpo = [c for c in rot['cenas'] if not c.get('fim')]
+    finais = [c for c in rot['cenas'] if c.get('fim')]
+    jan = int(.02 * SR)
+    def envelope(x): return np.sqrt(np.convolve(x ** 2, np.ones(jan) / jan, 'same'))
+    def fala_util(x):  # só a parte falada (sem o silêncio das pontas)
+        e = envelope(x); v = np.where(e > .02)[0]
+        return (v[-1] - v[0]) / SR if len(v) else len(x) / SR
+    durs = [fala_util(d) for c, d in zip(rot['cenas'], clipes) if not c.get('fim')]
+    junto = ' '.join(c['fala'].strip() for c in corpo)
+    take = tratar(junto, 'tudo')
+    L = len(take) / SR
+    env = envelope(take)
+    voz_v = np.where(env > .02)[0]; ini_f, fim_f = voz_v[0] / SR, voz_v[-1] / SR
+    # pausas naturais da fala contínua (vírgulas): trechos de >= 60 ms quase em silêncio → o meio vira candidato a corte
+    baixo = env < .035; pausas = []; k = 0
+    while k < len(baixo):
+        if baixo[k]:
+            k2 = k
+            while k2 < len(baixo) and baixo[k2]: k2 += 1
+            if (k2 - k) / SR >= .06: pausas.append((k + k2) / 2 / SR)
+            k = k2
+        else: k += 1
+    # onde cada frase começa: gera o COMEÇO da locução até a frase k (mesma voz, mesmo ritmo) — onde esse pedaço
+    # termina de falar é onde a frase k+1 começa na tomada inteira; depois encosta na pausa natural mais perto
+    def fim_da_fala(texto):
+        g = _tts.generate(texto, sid=VOZ_SID, speed=VOZ_VEL)
+        x = np.array(g.samples); e = np.sqrt(np.convolve(x ** 2, np.ones(480) / 480, 'same'))
+        v = np.where(e > .02)[0]
+        return (v[-1] / g.sample_rate) if len(v) else len(x) / g.sample_rate
+    cortes = [0.0]
+    for k in range(1, len(corpo)):
+        est = fim_da_fala(' '.join(c['fala'].strip() for c in corpo[:k])) + .06
+        cands = [q for q in pausas if q > cortes[-1] + .35 and abs(q - est) < .4]
+        cortes.append(min(cands, key=lambda q: abs(q - est)) if cands else max(est, cortes[-1] + .35))
+        print(f"    corte {k:2d}: previsto {est:6.2f}s → {cortes[-1]:6.2f}s")
+    cortes.append(L)
+    tempos = {}; inicios = []
+    # a 1ª cena (abertura) precisa de "min" segundos: a fala começa mais tarde em vez de abrir buraco no meio
+    primeiro = corpo[0]; lead = max(.4, (primeiro.get('min') or 0) - (cortes[1] - cortes[0]))
+    for i, c in enumerate(corpo):
+        t0 = 0.0 if i == 0 else lead + cortes[i] - .12
+        t1 = lead + cortes[i + 1] - .12 if i < len(corpo) - 1 else lead + L + .25
+        tempos[c['id']] = {'t0': round(t0, 2), 't1': round(t1, 2)}
+        print(f"  {c['id']:10s} {t0:6.2f} → {t1:6.2f}s  {c['fala'][:60]}")
+    falas = [(lead, take)]
+    t = lead + L + .25
+    # cena "min" no meio (ex.: WhatsApp): estica a cena sem cortar a fala — a pausa fica só antes do final
+    for c in corpo:
+        if c.get('min') and c is not primeiro:
+            T = tempos[c['id']]
+            falta = c['min'] - (T['t1'] - T['t0'])
+            if falta > 0 and c is corpo[-1]: T['t1'] = round(T['t1'] + falta, 2); t += falta
+    for c in finais:
+        d = tratar(c['fala'], 'fim'); atraso = .5
+        fim_cena = t + max(c.get('min') or 0, atraso + len(d) / SR + 1.3)
+        tempos[c['id']] = {'t0': round(t, 2), 't1': round(fim_cena, 2)}; falas.append((t + atraso, d))
+        print(f"  {c['id']:10s} {t:6.2f} → {fim_cena:6.2f}s  {c['fala'][:60]}")
+        t = fim_cena
+    DUR = round(t, 2)
+    json.dump({'dur': DUR, 'cenas': tempos}, open(os.path.join(os.path.dirname(os.path.abspath(saida)), rot['tempos']), 'w'), indent=1)
+    N = int(SR * (DUR + 3)); voz = np.zeros(N)
+    for ini, d in falas:
+        i0 = int(ini * SR); voz[i0:i0 + len(d)] += d[: N - i0]
 # linha do tempo: cada cena = fala + folga; a fala começa 0,3 s depois da legenda
-t = 0.0; tempos = {}; inicios = []
+t = 0.0; tempos = {} if not CONTINUA else tempos; inicios = []
 # TEMPOS_FIXOS=arquivo.json: mantém a linha do tempo de um vídeo já renderizado (troca só o áudio, sem renderizar de novo)
 FIXOS = json.load(open(os.environ['TEMPOS_FIXOS']))['cenas'] if os.environ.get('TEMPOS_FIXOS') else None
-for c, d in zip(rot['cenas'], clipes):
+for c, d in ([] if CONTINUA else zip(rot['cenas'], clipes)):
     if FIXOS:
         f = FIXOS[c['id']]; atraso = .8 if c.get('fim') else .2
         tempos[c['id']] = f; inicios.append(f['t0'] + atraso)
@@ -57,13 +132,14 @@ for c, d in zip(rot['cenas'], clipes):
     tempos[c['id']] = {'t0': round(t, 2), 't1': round(fim_cena, 2)}; inicios.append(t + atraso)
     print(f"  {c['id']:9s} {t:6.2f} → {fim_cena:6.2f}s  fala {dv:.2f}s  {c['fala'][:55]}")
     t = fim_cena
-DUR = round(t, 2)
-os.makedirs('video', exist_ok=True)
-json.dump({'dur': DUR, 'cenas': tempos}, open(os.path.join(os.path.dirname(os.path.abspath(saida)), rot['tempos']), 'w'), indent=1)
-N = int(SR * (DUR + 3))
-voz = np.zeros(N)
-for ini, d in zip(inicios, clipes):
-    i0 = int(ini * SR); voz[i0:i0 + len(d)] += d[: N - i0]
+if not CONTINUA:
+    DUR = round(t, 2)
+    os.makedirs('video', exist_ok=True)
+    json.dump({'dur': DUR, 'cenas': tempos}, open(os.path.join(os.path.dirname(os.path.abspath(saida)), rot['tempos']), 'w'), indent=1)
+    N = int(SR * (DUR + 3))
+    voz = np.zeros(N)
+    for ini, d in zip(inicios, clipes):
+        i0 = int(ini * SR); voz[i0:i0 + len(d)] += d[: N - i0]
 rng = np.random.default_rng(5)
 def hz(m): return 440.0 * 2 ** ((m - 69) / 12)
 

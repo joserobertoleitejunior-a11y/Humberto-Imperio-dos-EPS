@@ -23,34 +23,44 @@
   <div id="vinheta"></div><canvas id="grao" width="270" height="480"></canvas>
 </div>
 <div id="capa"><img src="../assets/img/favicon.svg" alt=""><h1>Por que comprar o Blocão</h1><p>O Blocão 3D por dentro (vista demonstrativa) e os motivos pra comprar: casa fresca, silêncio, obra rápida e limpa, sem mofo, leve e resistente. Formato Stories (1080×1920).</p>
-  <div><button id="btSom" type="button">▶ Assistir com música</button><button class="sec" id="btMudo" type="button">Sem som</button></div></div>
-<div id="ctl"><button id="btRe" type="button">↺ Recomeçar</button></div>
+  <div><button id="btSom" type="button">Assistir com música</button><button class="sec" id="btMudo" type="button">Sem som</button></div></div>
+<div id="ctl"><button id="btRe" type="button">Recomeçar</button></div>
 <audio id="som" src="trilha-blocao.mp3" preload="auto"></audio>
 <script src="motion.js"></script>
 <script>
 Video.iniciar({
   tema:'imperio', tempos:'tempos-blocao.json',
   cenas:[
-    {id:'splash',parte:'Abertura',html:'Por que comprar o <b>Blocão?</b>',fala:'Por que comprar o Blocão? Vem ver!',min:3.2,splash:true},
-    {id:'hero',parte:'Blocão',html:'Concreto por fora, <b>miolo de EPS</b>',fala:'Concreto por fora, com miolo de é, pê, ésse!',rolagens:[{dt0:.2,dt1:-.2,y:140}]},
-    {id:'camadas',parte:'Por dentro',html:'Três camadas, <b>um bloco só</b>',fala:'Três camadas, um bloco só!',rolar:{el:'por-dentro',pj:.2}},
-    {id:'demo',parte:'Por dentro',html:'É só demonstração: na obra é <b>peça única</b>',fala:'É só demonstração! Na obra, é peça única!',rolagens:[{dt0:.1,dt1:-.2,el:'por-dentro',pj:.26}]},
-    {id:'miolo',parte:'Por dentro',html:'EPS de <b>ponta a ponta</b>',fala:'O é, pê, ésse vai de ponta a ponta!',rolar:{el:'por-dentro',pj:.36}},
-    {id:'casa1',parte:'A casa',html:'Levante a <b>casa inteira</b>',fala:'E com o Blocão, você levanta a casa inteira!',rolagens:[{dt0:.1,dt1:.8,el:'por-dentro',pc:.035},{dt0:1.0,dt1:-.15,el:'por-dentro',pc:.566}]},
-    {id:'casa2',parte:'A casa',html:'Pronta pro acabamento: <b>é só pintar</b>',fala:'Pronta pro acabamento: é só pintar!',rolar:{el:'por-dentro',pc:.952}},
-    {id:'casa3',parte:'A casa',html:'Sobrado com <b>varanda</b>',fala:'Olha que sobrado lindo, com varanda!',rolagens:[{dt0:.1,dt1:-.2,el:'por-dentro',pc:1}]},
-    {id:'porque',parte:'Por que comprar',html:'E por que <b>comprar?</b>',fala:'E por que comprar o Blocão?',rolar:{el:'blocao',off:70}},
-    {id:'fresca',parte:'Por que comprar',html:'1. Casa <b>mais fresca</b>',fala:'Primeiro: casa mais fresca no verão!',rolar:{el:'@#blocao .beneficio:nth-child(1)',off:240}},
-    {id:'silencio',parte:'Por que comprar',html:'2. Muito <b>menos barulho</b>',fala:'Segundo: muito menos barulho!',rolar:{el:'@#blocao .beneficio:nth-child(2)',off:240}},
-    {id:'rapida',parte:'Por que comprar',html:'3. A parede sobe <b>rapidinho</b>',fala:'Terceiro: a parede sobe rapidinho!',rolar:{el:'@#blocao .beneficio:nth-child(3)',off:240}},
-    {id:'economia',parte:'Por que comprar',html:'4. Menos massa, sujeira e <b>mão de obra</b>',fala:'Quarto: menos massa, menos sujeira e menos mão de obra!',rolar:{el:'@#blocao .beneficio:nth-child(4)',off:240}},
-    {id:'mofo',parte:'Por que comprar',html:'5. Nada de <b>mofo</b> na parede',fala:'Quinto: parede sem mofo!',rolar:{el:'@#blocao .beneficio:nth-child(5)',off:240}},
-    {id:'leve',parte:'Por que comprar',html:'E ainda: leve e <b>resistente</b>',fala:'E ainda por cima: leve e resistente!',rolar:{el:'@#blocao .beneficio:nth-child(6)',off:240}},
-    {id:'espessuras',parte:'Espessuras',html:'<b>4 espessuras</b>: 10, 13, 15 e 20 cm',fala:'Tem em quatro espessuras: dez, treze, quinze e vinte centímetros!',
+    {id:'splash',parte:'Abertura',html:'Por que comprar o <b>Blocão?</b>',fala:'Por que comprar o Blocão? Vem ver comigo,',min:3.2,splash:true},
+    {id:'hero',parte:'Blocão',html:'Concreto por fora, <b>miolo de EPS</b>',fala:'concreto por fora, com miolo de é pê ésse,',rolagens:[{dt0:.2,dt1:-.2,y:140}]},
+    {id:'camadas',parte:'Por dentro',html:'Três camadas, <b>um bloco só</b>',fala:'são três camadas num bloco só,',rolar:{el:'por-dentro',pj:.2}},
+    {id:'demo',parte:'Por dentro',html:'É só demonstração: na obra é <b>peça única</b>',fala:'aqui é só demonstração, na obra ele é peça única,',rolagens:[{dt0:.1,dt1:-.2,el:'por-dentro',pj:.26}]},
+    {id:'miolo',parte:'Por dentro',html:'EPS de <b>ponta a ponta</b>',fala:'e o é pê ésse vai de ponta a ponta,',rolar:{el:'por-dentro',pj:.36}},
+    // o Blocão do site voa até a obra (dá tempo de ver a transformação) e a casa sobe fiada por fiada
+    {id:'casa1',parte:'A casa',html:'Levante a <b>casa inteira</b>',fala:'e com o Blocão você levanta a casa inteira,',rolagens:[{dt0:.05,dt1:.45,el:'por-dentro',pc:.035},{dt0:.5,dt1:-.05,el:'por-dentro',pc:.17}]},
+    {id:'casa2',parte:'A casa',html:'Bloco por bloco, <b>fiada por fiada</b>',fala:'bloco por bloco, fiada por fiada, até o segundo andar,',rolagens:[{dt0:.05,dt1:-.05,el:'por-dentro',pc:.8}]},
+    {id:'casa3',parte:'A casa',html:'Pronta pro acabamento: <b>é só pintar</b>',fala:'e ela fica pronta pro acabamento, é só pintar,',rolagens:[{dt0:.05,dt1:-.1,el:'por-dentro',pc:1}]},
+    // tour pela casa (o mesmo do botão "Tour pela casa" do site): cada frase anda um trecho do sobrevoo
+    {id:'tour1',parte:'Tour',html:'Um voo <b>por dentro da casa</b>',fala:'agora vem comigo num voo por dentro da casa, entrando direto pela parede aberta,',tour:[0,2]},
+    {id:'tour2',parte:'Tour',html:'Sala de estar, TV e <b>jantar</b>',fala:'passando pela sala de estar, pela sala de TV e pela mesa de jantar, tudo bem espaçoso,',tour:[2,5]},
+    {id:'tour3',parte:'Tour',html:'Dentro da parede: <b>concreto + EPS + concreto</b>',fala:'e olha só aqui dentro da parede, o miolo de é pê ésse entre duas camadas de concreto, é isso que deixa a casa fresca e silenciosa,',tour:[5,6]},
+    {id:'tour4',parte:'Tour',html:'Cozinha com <b>lavanderia</b>',fala:'aqui a cozinha junto com a lavanderia, prática pro dia a dia,',tour:[6,8]},
+    {id:'tour5',parte:'Tour',html:'Subindo a <b>escada</b>',fala:'agora subindo a escada pro segundo andar, sentindo como a casa é firme,',tour:[8,12]},
+    {id:'tour6',parte:'Tour',html:'Suíte e <b>quarto com banheiro</b>',fala:'o corredor, a suíte do casal e o quarto com banheiro, tudo com acabamento pronto,',tour:[12,18]},
+    {id:'tour7',parte:'Tour',html:'Varanda com <b>vista</b>',fala:'saindo pela varanda com essa vista linda e a garagem coberta lá embaixo,',tour:[18,20]},
+    {id:'tour8',parte:'Tour',html:'A casa inteira <b>de Blocão</b>',fala:'e voando por fora, olha de cima a casa inteira feita de Blocão,',tour:[20,24]},
+    {id:'porque',parte:'Por que comprar',html:'E por que <b>comprar?</b>',fala:'e por que comprar o Blocão?',rolar:{el:'blocao',off:70}},
+    {id:'fresca',parte:'Por que comprar',html:'1. Casa <b>mais fresca</b>',fala:'primeiro, casa mais fresca no verão,',rolar:{el:'@#blocao .beneficio:nth-child(1)',off:240}},
+    {id:'silencio',parte:'Por que comprar',html:'2. Muito <b>menos barulho</b>',fala:'segundo, muito menos barulho,',rolar:{el:'@#blocao .beneficio:nth-child(2)',off:240}},
+    {id:'rapida',parte:'Por que comprar',html:'3. A parede sobe <b>muito mais rápido</b>',fala:'terceiro, a parede sobe muito mais rápido,',rolar:{el:'@#blocao .beneficio:nth-child(3)',off:240}},
+    {id:'economia',parte:'Por que comprar',html:'4. Menos massa, sujeira e <b>mão de obra</b>',fala:'quarto, menos massa, menos sujeira e menos mão de obra,',rolar:{el:'@#blocao .beneficio:nth-child(4)',off:240}},
+    {id:'mofo',parte:'Por que comprar',html:'5. Nada de <b>mofo</b> na parede',fala:'quinto, parede sem mofo,',rolar:{el:'@#blocao .beneficio:nth-child(5)',off:240}},
+    {id:'leve',parte:'Por que comprar',html:'E ainda: leve e <b>resistente</b>',fala:'e ainda por cima ele é leve e resistente,',rolar:{el:'@#blocao .beneficio:nth-child(6)',off:240}},
+    {id:'espessuras',parte:'Espessuras',html:'<b>4 espessuras</b>: 10, 13, 15 e 20 cm',fala:'tem em quatro espessuras, dez, treze, quinze e vinte centímetros,',
       rolagens:[{dt0:.1,dt1:1.1,el:'ficha',off:70},{dt0:1.4,dt1:-.2,el:'@#ficha .ficha:nth-child(4)',off:330}]},
-    {id:'zap',parte:'WhatsApp',html:'Orçamento no <b>WhatsApp</b>!',fala:'Orçamento direto no Uótsap!',zap:true,min:2.8,
+    {id:'zap',parte:'WhatsApp',html:'Orçamento no <b>WhatsApp</b>!',fala:'peça seu orçamento direto no Uótsap.',zap:true,min:2.8,
       zapTexto:'Olá! Vim pelo site do Império do EPS e quero um orçamento do *Blocão*.'},
-    {id:'fim',fim:true,min:3.4,tag:'Construa com o Império',fala:'Império do é, pê, ésse: a fábrica do Blocão!'}
+    {id:'fim',fim:true,min:3.4,tag:'Construa com o Império',fala:'Império do é pê ésse, a fábrica do Blocão!'}
   ]
 });
 </script>

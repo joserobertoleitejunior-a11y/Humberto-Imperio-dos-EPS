@@ -358,6 +358,11 @@ main { position: relative; z-index: 2; }
   font: inherit; font-size: 0.92rem; font-weight: 750; color: var(--grafite); cursor: pointer; box-shadow: 0 8px 20px -12px rgba(30, 32, 35, 0.5); }
 .casa__botao:hover { border-color: var(--azul); color: var(--azul); }
 .casa__recolocar { background: var(--azul); border-color: var(--azul); color: #fff; }
+/* ícones desenhados (svg no html, sem emoji): play, parar, sair, subir/descer */
+.casa__botao, .casa__tour { display: inline-flex; align-items: center; gap: 8px; }
+.casa__ico { width: 18px; height: 18px; flex: none; fill: currentColor; }
+.casa__ico--traco { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.casa__botao--desce .casa__ico { transform: rotate(180deg); }
 /* casa completa na tela: o dedo mexe só na maquete (gira/inclina); a página rola pelo texto */
 .casa--maquete:not(.casa--dentro) .casa__palco { touch-action: none; }
 /* tour: legenda de cinema (embaixo da escolha de casa) + parar; aviso do corte ao tirar parede por dentro */

@@ -172,3 +172,10 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
   Quem move o bloco é o navegador, junto com a página (canvas fixo + JS fica 1–2 quadros atrás da rolagem do celular e o bloco "escorrega").
 - Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena` → `toque`.
 - Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).
+
+## Pendências (próxima sessão)
+- Tour: deixar MAIS RÁPIDO e com foco em mostrar o Blocão (cortes da parede, concreto + EPS + concreto).
+- Tour: deixar o cliente ARRASTAR a câmera durante o tour (olhar em volta sem parar o sobrevoo).
+- Vídeo: locução contínua (`FALA_CONTINUA=1`) gerada; o corte das cenas ainda escorrega até 1 palavra em algumas
+  cenas (conferido com reconhecimento de voz) — ajustar e então regravar o vídeo com a transformação do Blocão
+  em casa (mais lenta) + o tour (cenas tour1–tour8 em `video/blocao.html`).
