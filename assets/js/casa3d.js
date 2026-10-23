@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261027e";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261028a";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -526,8 +526,10 @@ let ouvinteTour = null;
 let foco = null;           // ponto estratégico em foco: { id, pos, alvo, fov } (câmera perto da casa)
 let saidaFoco = null;          // saindo do zoom de um ponto: mistura a pose do zoom com a da maquete (que o dedo já gira)
 const DUR_SAIDA = 550;
+let semTinta = { de: 0, para: 0, t0: 0 }; // "Blocão aparente": tira a pintura das paredes (1 = sem tinta)
+const DUR_TINTA = 600;
 let destaque = null;       // o Blocão do ponto em foco: sai da parede, cru, mostrando concreto + EPS + concreto
-const DUR_DESTAQUE = 650;
+const DUR_DESTAQUE = 500;
 const _eixo = new Vector3();
 const _c = new Vector3();
 let pontos = [];           // pontos estratégicos da casa atual (vantagens do Blocão)
@@ -974,6 +976,7 @@ function animando() {
   const t = agora();
   for (const a of fora.values()) if (t - a.t0 < DUR_PAREDE) return true;
   if (destaque && t - destaque.t0 < DUR_DESTAQUE) return true;
+  if (t - semTinta.t0 < DUR_TINTA) return true;
   return !!interior && t - interior.t0 < DUR_CAMERA;
 }
 
@@ -1359,7 +1362,7 @@ function irPonto(id) {
     }
   }
   if (destaque && destaque.i !== iBloco) destaque = null;
-  if (iBloco >= 0) destaque = { i: iBloco, de: estadoDestaque(), para: 1, t0: agora() + 350 };
+  if (iBloco >= 0) destaque = { i: iBloco, de: estadoDestaque(), para: 1, t0: agora() + 120 };
   const alvo = pose ? pose.alvo : q.p.clone();
   const pos = pose ? pose.pos : q.p.clone().addScaledVector(q.n, 9).setY(q.p.y + 5);
   const meio = de.pos.clone().lerp(pos, 0.5);
@@ -1369,7 +1372,7 @@ function irPonto(id) {
   saidaFoco = null;
   pRemocao = pAlvo;
   iniciarVoo(criarVoo([de.pos, meio, pos], [de.alvo, meioA, alvo], [0, 1, 1], {
-    fov: [de.fov, 30], off: [de.off, de.off], duracao: 1.0, ponto: true,
+    fov: [de.fov, 30], off: [de.off, de.off], duracao: 0.8, ponto: true,
     aoFim: () => {
       foco = { id, pos, alvo, fov: 30 };
       avisarPonto();
@@ -1427,11 +1430,10 @@ function quadroOrbita(t) {
     giroVel *= Math.exp(-dt / 0.5);
   }
   const k = 1 - Math.exp(-dt / 0.14);
-  const antes = giroUser;
   giroUser += (giroAlvo - giroUser) * k;
   elevUser += (elevAlvo - elevUser) * k;
-  const w = (giroUser - antes) / Math.max(dt, 0.001); // velocidade angular real da câmera
-  rollFora += (limitarEntre(-w * 0.06, -0.13, 0.13) - rollFora) * (1 - Math.exp(-dt / 0.18));
+  // inclinação pela distância até o alvo do dedo (suave; a velocidade por quadro tremia no celular)
+  rollFora += (limitarEntre(-(giroAlvo - giroUser) * 0.35, -0.1, 0.1) - rollFora) * (1 - Math.exp(-dt / 0.25));
   const parado = !saidaFoco && !arrastando && Math.abs(giroVel) < 0.02 && Math.abs(giroAlvo - giroUser) < 0.0005 && Math.abs(elevAlvo - elevUser) < 0.0005 && Math.abs(rollFora) < 0.002;
   pDesenhado = -1;
   if (parado) {
@@ -1654,7 +1656,8 @@ function aplicar() {
   }
 
   // acabamento: pintura cobre os blocos; luz quente acende
-  const tinta = suave(faixa(p, 0.86, 0.94));
+  const kSem = semTinta.de + (semTinta.para - semTinta.de) * suave(Math.min(1, (agora() - semTinta.t0) / DUR_TINTA));
+  const tinta = suave(faixa(p, 0.86, 0.94)) * (1 - kSem);
   if (tinta > 0.001) {
     for (let i = 0; i < lista.length; i++) {
       const tirar = revelados.has(i) || (fora.size && estadoParede(lista[i].parede) > 0) || (destaque && destaque.i === i && estadoDestaque() > 0.02);
@@ -1938,6 +1941,13 @@ girar(dx, dy = 0, dtMs = 16) {
   /** pontos estratégicos: posição na tela, ir até um, voltar, ouvir */
   pontosNaTela: () => pontosNaTela(),
   irPonto: (id) => irPonto(id),
+  /** "Blocão aparente": true tira a pintura das paredes (mostra o Blocão cru), false pinta de novo */
+  semTinta(on) {
+    const de = semTinta.de + (semTinta.para - semTinta.de) * suave(Math.min(1, (agora() - semTinta.t0) / DUR_TINTA));
+    semTinta = { de, para: on ? 1 : 0, t0: agora() };
+    requestAnimationFrame(animar);
+    return !!on;
+  },
   voltarPonto: () => voltarPonto(),
   emFoco: () => (foco ? foco.id : null),
   aoPonto(fn) { ouvintePonto = fn; },

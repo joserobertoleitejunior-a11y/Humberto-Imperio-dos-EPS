@@ -337,12 +337,12 @@ main { position: relative; z-index: 2; }
 .casa__linhas path { fill: none; stroke: #14161a; stroke-width: 1.5; stroke-linejoin: round; }
 /* etiqueta: só texto preto sobre o cenário (halo claro pra ler em cima de árvore/grama), sublinhado pela linha */
 .casa__ponto { position: absolute; left: 0; top: 0; max-width: 120px; padding: 0 2px 4px; border: 0; background: none; color: #14161a; font: inherit; font-size: 0.8rem;
-  font-weight: 800; line-height: 1.15; letter-spacing: 0.01em; text-align: left; cursor: pointer; opacity: 0; will-change: transform;
+  font-weight: 800; line-height: 1.15; letter-spacing: 0.01em; text-align: left; cursor: pointer; opacity: 0; will-change: transform; transition: transform 0.18s ease-out;
   text-shadow: 0 0 3px rgba(251, 250, 247, 0.95), 0 0 6px rgba(251, 250, 247, 0.8); }
 .casa__ponto--d { text-align: right; }
 /* área de toque maior que o texto, a linha e o ponto: fácil de acertar com o dedo */
 .casa__ponto::before { content: ""; position: absolute; inset: -10px -8px; }
-.casa__linha-toque { fill: none; stroke: transparent; stroke-width: 24; stroke-linecap: round; pointer-events: none; cursor: pointer; }
+.casa__linha-toque { fill: none; stroke: transparent; stroke-width: 22; stroke-linecap: round; pointer-events: none; cursor: pointer; }
 .casa__pontos.on .casa__linha-toque { pointer-events: stroke; }
 .casa__ponto:hover { color: var(--azul); }
 @media (max-width: 759px) {
@@ -379,6 +379,14 @@ main { position: relative; z-index: 2; }
 .casa--pronta .casa__palco { cursor: pointer; }
 .casa__dica { margin: 0 0 10px; font-size: 0.9rem; font-weight: 650; color: var(--azul); opacity: 0; transition: opacity 0.35s; }
 .casa--pronta .casa__dica { opacity: 1; }
+/* chave "Blocão aparente": tira a pintura e mostra o Blocão cru na maquete */
+.casa__tinta { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 6px 0; border: 0; background: none; color: #14161a; font: inherit;
+  font-size: 0.88rem; font-weight: 800; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+.casa--pronta.casa--maquete .casa__tinta { opacity: 1; pointer-events: auto; }
+.casa__tinta-chave { position: relative; flex: none; width: 38px; height: 22px; border-radius: 999px; background: #c9c5bd; transition: background 0.25s; }
+.casa__tinta-chave::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(20, 22, 26, 0.35); transition: transform 0.25s; }
+.casa__tinta[aria-pressed="true"] .casa__tinta-chave { background: #14161a; }
+.casa__tinta[aria-pressed="true"] .casa__tinta-chave::after { transform: translateX(16px); }
 /* POR DENTRO: o site continua aparecendo (título, botão, contador) e a página rola normal (rolar = sair da casa);
    a câmera anda por toque */
 .casa__txt, .casa__contador, .casa__nota { transition: opacity 0.35s; }

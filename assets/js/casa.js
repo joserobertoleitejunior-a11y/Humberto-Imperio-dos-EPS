@@ -143,6 +143,7 @@
     e.btn.style.opacity = 0;
     e.btn.style.pointerEvents = "none";
     e.dot.style.opacity = 0;
+    e.dot.style.pointerEvents = "none"; // invisível não pode segurar o dedo (travava o giro)
     e.linha.setAttribute("d", "");
     e.toque.setAttribute("d", "");
   }
@@ -198,6 +199,7 @@
         e.btn.style.pointerEvents = "auto";
         e.dot.style.transform = "translate(" + q.px.toFixed(1) + "px," + q.py.toFixed(1) + "px)";
         e.dot.style.opacity = 1;
+        e.dot.style.pointerEvents = "";
         // a linha sublinha o texto inteiro e segue até o ponto da casa
         var yl = y + bh / 2;
         var de = lado === "e" ? x : x + bw;
@@ -205,7 +207,8 @@
         var cx = lado === "e" ? ax + 12 : ax - 12;
         var d = "M" + de.toFixed(1) + " " + yl.toFixed(1) + " H" + cx.toFixed(1) + " L" + q.px.toFixed(1) + " " + q.py.toFixed(1);
         e.linha.setAttribute("d", d);
-        e.toque.setAttribute("d", d);
+        // área de toque só no trecho sob o texto (a parte que cruza a casa fica livre pro dedo girar a maquete)
+        e.toque.setAttribute("d", "M" + de.toFixed(1) + " " + yl.toFixed(1) + " H" + cx.toFixed(1));
       });
     });
   }
@@ -217,9 +220,10 @@
     e.btn.style.opacity = 0;
     e.btn.style.pointerEvents = "none";
     e.toque.setAttribute("d", "");
-    if (!c || !c.width) { e.dot.style.opacity = 0; e.linha.setAttribute("d", ""); return; }
+    if (!c || !c.width) { e.dot.style.opacity = 0; e.dot.style.pointerEvents = "none"; e.linha.setAttribute("d", ""); return; }
     e.dot.style.transform = "translate(" + q.px.toFixed(1) + "px," + q.py.toFixed(1) + "px)";
     e.dot.style.opacity = 1;
+    e.dot.style.pointerEvents = "none"; // fica no meio da tela, em cima do Blocão: o dedo ali gira a maquete
     var L = c.left - r.left;
     var T = c.top - r.top;
     var ex = Math.min(Math.max(q.px, L + 14), L + c.width - 14);
@@ -268,7 +272,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261027e")
+    import("./casa3d.js?v=20261028a")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -486,6 +490,14 @@
     contador = camada.querySelector("[data-casa-contador]");
     ficha = camada.querySelector("[data-casa-ficha]");
     botoesTipo = Array.prototype.slice.call(camada.querySelectorAll("[data-casa-tipo]"));
+    // "Blocão aparente": tira a pintura das paredes da maquete (e põe de volta)
+    var chaveTinta = camada.querySelector("[data-casa-tinta]");
+    if (chaveTinta) chaveTinta.addEventListener("click", function () {
+      if (!C3 || !C3.semTinta) return;
+      var on = chaveTinta.getAttribute("aria-pressed") !== "true";
+      chaveTinta.setAttribute("aria-pressed", on ? "true" : "false");
+      C3.semTinta(on);
+    });
     botoesTipo.forEach(function (b) {
       b.addEventListener("click", function () { escolherTipo(b.getAttribute("data-casa-tipo")); });
     });
