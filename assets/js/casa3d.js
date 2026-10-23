@@ -25,14 +25,14 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261025v";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261025y";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
   // resolução FIXA (sem trocar entre rolar/parar — a troca realocava a imagem na GPU e travava)
   alta: { hd: 2, leve: 2, min: 1, tex: 2048, sombra: true, mapa: 2048, aa: true, ambiente: true },
-  media: { hd: 2, leve: 2, min: 1, tex: 1024, sombra: false, mapa: 1024, aa: true, ambiente: true },
-  baixa: { hd: 1.5, leve: 1.5, min: 1, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
+  media: { hd: 2, leve: 2, min: 1, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
+  baixa: { hd: 1.5, leve: 1.5, min: 1, tex: 256, sombra: false, mapa: 1024, aa: true, ambiente: true },
 };
 
 const R90 = Math.PI / 2;
@@ -1512,6 +1512,7 @@ async function iniciar(canvas) {
   }
   cena.add(sol);
   criarMateriais();
+  await respirar(); // etapas curtas: a animação do bloco não congela enquanto a casa é preparada
   montar(tipoAtual);
   redimensionar();
   await respirar();
@@ -1587,7 +1588,25 @@ window.ImperioCasa3D = {
   giro() { return giroUser; },
   /** arrasto do dedo/mouse (px): gira a casa em volta; dentro dela, vira o olhar */
 girar(dx, dy = 0, dtMs = 16) {
-    if (!renderer || p < 0.12 || interior || tour) return; // por dentro a câmera anda por toque, não por arrasto
+    if (!renderer || p < 0.12 || tour) return;
+    if (interior) {
+      // por dentro: arrastar gira a vista EM VOLTA do ponto mostrado (igual girar a maquete por fora)
+      if (!passeio || voo) return;
+      const d = _a.copy(passeio.pos).sub(passeio.alvo);
+      const R = Math.max(0.8, d.length());
+      const ang = Math.atan2(d.x, d.z) - dx * 0.008;
+      const el = limitarEntre(Math.atan2(d.y, Math.hypot(d.x, d.z)) + dy * 0.004, -0.5, 0.95);
+      const piso = pisoDe(passeio.andar);
+      _passo.set(Math.sin(ang) * Math.cos(el), Math.sin(el), Math.cos(ang) * Math.cos(el));
+      // parede/móvel entre o ponto e a câmera: ela encosta antes (nunca entra na parede nem vê por dentro dela)
+      const livre = obstaculo(passeio.alvo, _passo, R + 0.4);
+      const r = livre < R + 0.3 ? Math.max(0.5, livre - 0.35) : R;
+      passeio.pos.copy(passeio.alvo).addScaledVector(_passo, r);
+      passeio.pos.y = limitarEntre(passeio.pos.y, piso + 0.5, piso + 2.7);
+      pDesenhado = -1;
+      pedir();
+      return;
+    }
     const dts = Math.max(8, dtMs) / 1000;
     giroUser -= dx * 0.008;
     giroVel = (-dx * 0.008) / dts;

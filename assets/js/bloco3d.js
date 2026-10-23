@@ -33,8 +33,8 @@ const NIVEIS = {
   // resolução FIXA (2× = nítido em qualquer tela, inclusive Retina): trocar a resolução entre rolar/parar realocava
   // a imagem inteira na GPU a cada parada e o site dava trancos desde o 1º bloco
   alta: { min: 1, max: 2, tex: 2048, sombra: true, mapaSombra: 2048, aniso: 8, particulas: 70, antialias: true },
-  media: { min: 1, max: 2, tex: 2048, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 34, antialias: true },
-  baixa: { min: 1, max: 1.5, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 4, particulas: 0, antialias: true },
+  media: { min: 1, max: 2, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 34, antialias: true },
+  baixa: { min: 1, max: 1.5, tex: 512, sombra: false, mapaSombra: 1024, aniso: 4, particulas: 0, antialias: true },
 };
 
 // Medidas em metros. Face do bloco PROVISÓRIA (confirmar com o Vinicius).
@@ -163,7 +163,11 @@ function texturasConcreto(tam, serrado, semente) {
 }
 
 /** EPS: pérolas expandidas coladas umas nas outras (corte mostra as células). */
-function texturasEPS(tam, semente) {
+const REPETE_EPS = 4;
+function texturasEPS(tamTotal, semente) {
+  // um LADRILHO de 1/4 do tamanho, repetido 4× (o desenho emenda nas bordas): mesmas pérolas na tela,
+  // 16× menos círculos pra desenhar — antes eram ~1.800 pérolas com 2 degradês cada e a abertura travava
+  const tam = Math.max(32, tamTotal / REPETE_EPS);
   const r = aleatorio(semente);
   const cor = tela(tam);
   const rel = tela(tam);
@@ -173,8 +177,9 @@ function texturasEPS(tam, semente) {
   c.fillRect(0, 0, tam, tam);
   b.fillStyle = "#3a3a3a";
   b.fillRect(0, 0, tam, tam);
-  const k = tam / 1024;
-  const passo = 26 * k;
+  const k = tamTotal / 1024;
+  // passo que fecha um número inteiro de pérolas no ladrilho (emenda sem costura)
+  const passo = tam / Math.max(2, Math.round(tam / (26 * k)));
   for (let y = -passo; y < tam + passo; y += passo * 0.86) {
     const linha = Math.round(y / (passo * 0.86));
     for (let x = -passo; x < tam + passo; x += passo) {
@@ -208,9 +213,10 @@ function texturasEPS(tam, semente) {
   return { cor, rel };
 }
 
-function textura(canvas, srgb, anis) {
+function textura(canvas, srgb, anis, rep = 1) {
   const t = new CanvasTexture(canvas);
   t.wrapS = t.wrapT = RepeatWrapping;
+  if (rep !== 1) t.repeat.set(rep, rep);
   if (srgb) t.colorSpace = SRGBColorSpace;
   t.anisotropy = anis;
   return t;
@@ -628,6 +634,35 @@ function redimensionar() {
   sujo = true;
 }
 
+/** troca as texturas leves pelas nítidas, uma por vez, em momentos ociosos (a rolagem não engasga) */
+function melhorarTexturas(anis) {
+  const ocioso = (fn) => (window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 400));
+  const trocar = (nome, cor, rel) => {
+    const todas = [mats].concat(matsCamada);
+    const rep = nome === "eps" ? REPETE_EPS : 1;
+    const mapa = textura(cor, true, anis, rep);
+    const relevo = textura(rel, false, anis, rep);
+    const velhas = new Set();
+    todas.forEach((grupo) => {
+      const m = grupo[nome];
+      if (!m) return;
+      velhas.add(m.map);
+      velhas.add(m.bumpMap);
+      m.map = mapa;
+      m.bumpMap = relevo;
+    });
+    velhas.forEach((t) => { if (t) t.dispose(); });
+    sujo = true;
+  };
+  const passos = [
+    () => { const t = texturasEPS(nivel.tex, 5); trocar("eps", t.cor, t.rel); },
+    () => { const t = texturasConcreto(nivel.tex, false, 7); trocar("liso", t.cor, t.rel); },
+    () => { const t = texturasConcreto(nivel.tex, true, 19); trocar("serrado", t.cor, t.rel); },
+  ];
+  const proximo = () => { const f = passos.shift(); if (!f) return; f(); if (passos.length) ocioso(proximo); };
+  setTimeout(() => ocioso(proximo), 1200);
+}
+
 function iniciar(canvas) {
   nivel = NIVEIS[document.documentElement.getAttribute("data-qualidade")] || NIVEIS.media;
   renderer = new WebGLRenderer({ canvas, antialias: nivel.antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: !!window.__gravandoVideo });
@@ -668,18 +703,22 @@ function iniciar(canvas) {
   cena.add(new AmbientLight(0xffffff, 0.08));
 
   const anis = Math.min(nivel.aniso, renderer.capabilities.getMaxAnisotropy());
-  const liso = texturasConcreto(nivel.tex, false, 7);
-  const serrado = texturasConcreto(nivel.tex, true, 19);
-  const eps = texturasEPS(nivel.tex, 5);
+  // abertura rápida: o bloco aparece já com texturas leves (256) e as nítidas entram depois, num momento ocioso
+  // (desenhar o concreto/EPS pixel a pixel em 2048 travava a página ~3 s antes do 1º bloco aparecer)
+  const TAM0 = window.__gravandoVideo ? nivel.tex : 256;
+  const liso = texturasConcreto(TAM0, false, 7);
+  const serrado = texturasConcreto(TAM0, true, 19);
+  const eps = texturasEPS(TAM0, 5);
   mats = {
     liso: new MeshStandardMaterial({ map: textura(liso.cor, true, anis), bumpMap: textura(liso.rel, false, anis), bumpScale: 1.6, roughness: 0.93, metalness: 0 }),
     serrado: new MeshStandardMaterial({ map: textura(serrado.cor, true, anis), bumpMap: textura(serrado.rel, false, anis), bumpScale: 2.2, roughness: 0.82, metalness: 0 }),
-    eps: new MeshStandardMaterial({ map: textura(eps.cor, true, anis), bumpMap: textura(eps.rel, false, anis), bumpScale: 3, roughness: 0.97, metalness: 0, color: new Color(1, 1, 1) }),
+    eps: new MeshStandardMaterial({ map: textura(eps.cor, true, anis, REPETE_EPS), bumpMap: textura(eps.rel, false, anis, REPETE_EPS), bumpScale: 3, roughness: 0.97, metalness: 0, color: new Color(1, 1, 1) }),
   };
 
   const clonar = (lista) => Object.fromEntries(Object.entries(lista).map(([k, m]) => [k, m.clone()]));
   matsCamada = [clonar({ liso: mats.liso, serrado: mats.serrado }), clonar({ eps: mats.eps }), clonar({ liso: mats.liso, serrado: mats.serrado })];
 
+  if (TAM0 < nivel.tex) melhorarTexturas(anis);
   raiz = new Group();
   cena.add(raiz);
   reconstruir();

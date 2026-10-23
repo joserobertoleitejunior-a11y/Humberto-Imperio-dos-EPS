@@ -127,7 +127,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025v")
+    import("./casa3d.js?v=20261025y")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -240,13 +240,13 @@
       var dx = e.clientX - x0, dy = e.clientY - y0;
       if (!girando && !vertical && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
         // por dentro qualquer arrasto vira o olhar; por fora, na vertical a página rola (a obra anda)
-        // por dentro: arrastar não mexe na câmera (ela anda por toque) — a página rola normal
-        if (dentro()) vertical = true;
-        else if (maquete() || tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true;
+        // arrastar pro lado gira (por fora a maquete, por dentro a vista em volta do ponto); na vertical a página rola
+        // (com a maquete completa na tela, o dedo mexe só nela)
+        if ((maquete() && !dentro()) || tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true;
         else vertical = true;
         if (girando) camada.classList.add("casa--girando");
       }
-      if (girando) C3.girar(e.clientX - xa, maquete() || tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
+      if (girando) C3.girar(e.clientX - xa, (maquete() && !dentro()) || tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
       xa = e.clientX; ya = e.clientY; ta = e.timeStamp;
     });
     function soltar(e, cancelado) {
@@ -357,14 +357,21 @@
     };
     if (window.__gravandoVideo) iniciar3D();
     else {
-      if ("IntersectionObserver" in window) {
-        var obs = new IntersectionObserver(function (en) {
-          if (en[0].isIntersecting) { obs.disconnect(); quandoOcioso(); }
-        }, { rootMargin: "100% 0px 100% 0px" });
-        obs.observe(jornadaEl);
-      }
-      // o mais pesado (criar o contexto gráfico) vai pro começo, com a pessoa ainda no topo e a página parada
-      window.addEventListener("load", function () { setTimeout(quandoOcioso, 3000); }, { once: true });
+      // a casa é preparada só com a página PARADA (nunca no meio da rolagem) e só depois que o Blocão já está na tela:
+      // ~5 s depois de abrir, ou quando o visitante chega no meio do "L"; se ele correr até a casa antes, prepara na hora
+      var ultimaRolagem = 0;
+      window.addEventListener("scroll", function () { ultimaRolagem = Date.now(); }, { passive: true });
+      var tentar = function () {
+        if (carregando) return;
+        if (Date.now() - ultimaRolagem < 700) { setTimeout(tentar, 500); return; }
+        quandoOcioso();
+      };
+      window.addEventListener("load", function () { setTimeout(tentar, 5000); }, { once: true });
+      if (window.ImperioMotion) window.ImperioMotion.aoRolar(function (j) {
+        if (carregando || !j || !j.dentro) return;
+        if (j.casa > 0) iniciar3D();
+        else if (j.p > 0.3) tentar();
+      });
     }
     if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);
     window.addEventListener("resize", function () { ultimoQ = -1; ancoraFim = -1; }, { passive: true });

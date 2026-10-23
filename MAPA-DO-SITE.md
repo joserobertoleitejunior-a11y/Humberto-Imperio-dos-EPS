@@ -72,7 +72,12 @@ botão de andar, sobe/desce voando. O site continua aparecendo (título, botão,
 rolar de verdade sai da casa. "↺ Sair da casa" (ou Esc) volta. Motor: `criarVoo`/`posVoo` (Catmull-Rom com
 aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
 
-**Tour pela casa** (botão "▶ Tour pela casa", com a casa pronta): sobrevoo automático com legendas de cinema — chega
+**Sem botões na casa** (pedido do cliente): a casa é só CLICÁVEL e ARRASTÁVEL. Por fora: arrastar gira a maquete,
+tocar numa parede desmonta e a câmera entra voando. Por dentro: tocar no chão voa até lá, tocar numa parede desmonta
+(mostra o Blocão por dentro), arrastar pro lado gira a vista em volta do ponto mostrado (a câmera encosta antes de
+qualquer parede); rolar a página de verdade remonta a casa e a câmera sai.
+
+**Tour pela casa** (sem botão no site; usado no VÍDEO — `ImperioCasa3D.tour()`): sobrevoo automático com legendas de cinema — chega
 de longe, a parede da frente sai (o corte mostra o Blocão), voos rasantes pela sala, cozinha e quartos, close no
 "Dentro do Blocão", sobe a escada (sobrado e casarão), corredor, varanda com a paisagem, garagem, e volta pra vista
 de fora. O cliente só assiste ("■ Parar o tour" ou rolar a página para). Roteiro em `PROJETOS.*.tour`
@@ -80,7 +85,9 @@ de fora. O cliente só assiste ("■ Parar o tour" ou rolar a página para). Rot
 
 **Paisagem no fundo** (casa pronta, 90–98% da obra): céu, gramado até o horizonte, morros, árvores, casas vizinhas e
 rua surgem atrás da maquete (o fundo da seção vira o lugar da casa); por dentro é o que se vê pelas janelas.
-Desempenho: móveis e paisagem são montados num momento ocioso e FUNDIDOS por material (`fundirPorMaterial`: centenas
+Desempenho: o Blocão abre com texturas leves (256) e troca pelas nítidas em momentos ociosos; o EPS é um ladrilho
+repetido 4× (16× menos pérolas pra desenhar — era o que travava ~2 s a abertura); a casa só é preparada com a página
+parada (5 s depois de abrir ou no meio do "L"), em etapas curtas. Móveis e paisagem são montados num momento ocioso e FUNDIDOS por material (`fundirPorMaterial`: centenas
 de peças viram ~20 desenhos); resolução fixa 2× nos dois 3D (sem realocar a imagem ao rolar/parar — tirou os trancos).
 
 **Interior de projeto real** (`assets/js/casa-interior.js`, só aparece com a casa aberta): cada casa tem `mobilia`,
@@ -174,8 +181,7 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 - Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).
 
 ## Pendências (próxima sessão)
-- Tour: deixar MAIS RÁPIDO e com foco em mostrar o Blocão (cortes da parede, concreto + EPS + concreto).
-- Tour: deixar o cliente ARRASTAR a câmera durante o tour (olhar em volta sem parar o sobrevoo).
+- Tour (só no vídeo): mais rápido e com foco em mostrar o Blocão (cortes da parede, concreto + EPS + concreto).
 - Vídeo: locução contínua (`FALA_CONTINUA=1`) gerada; o corte das cenas ainda escorrega até 1 palavra em algumas
   cenas (conferido com reconhecimento de voz) — ajustar e então regravar o vídeo com a transformação do Blocão
   em casa (mais lenta) + o tour (cenas tour1–tour8 em `video/blocao.html`).

@@ -289,7 +289,8 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
     if (await page.locator("[data-casa]").evaluate((c) => c.classList.contains("casa--dentro"))) break;
   }
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
-  await expect(page.locator("[data-casa-recolocar]")).toBeVisible();
+  // sem botões: a casa é só clicável e arrastável
+  await expect(page.locator("[data-casa] button:not([data-casa-tipo])")).toHaveCount(0);
   // por dentro: o site continua aparecendo (a página rola normal) e a câmera anda por TOQUE
   await expect(page.locator("[data-casa-passeio]")).toBeVisible();
   expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("pan-y");
@@ -302,16 +303,12 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.evaluate(() => scrollBy(0, 4));
   await page.waitForTimeout(500);
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
-  await page.click("[data-casa-recolocar]");
+  // arrastar por dentro gira a vista em volta do ponto mostrado
+  await page.evaluate(() => window.ImperioCasa3D.girar(-120, 0, 16));
+  await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
+  // rolar a página de verdade remonta a casa e a câmera sai
+  await page.evaluate(() => window.ImperioCasa3D.recolocar());
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/, { timeout: 10000 });
-  // tour automático: sobrevoo com legendas (o cliente só assiste); "Parar" volta pra vista de fora
-  await page.click(".casa__tour");
-  expect(await page.evaluate(() => window.ImperioCasa3D.emTour())).toBe(true);
-  await expect(page.locator("[data-casa-legenda]")).toBeVisible();
-  await expect(page.locator("[data-casa-passeio]")).toBeHidden();
-  expect(await page.evaluate(() => window.ImperioCasa3D.__irTour(0.3))).toBeTruthy();
-  await page.click("[data-casa-parar-tour]");
-  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTour()), { timeout: 30000 }).toBe(false);
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);

@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261025v"></script>
+  <script src="assets/js/dispositivo.js?v=20261025y"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash");if(!sessionStorage.getItem("imperio_bv")&&!/[?&]video/.test(location.search))document.documentElement.classList.add("abre-video")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261025v">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261025y">
 
   <script type="application/ld+json">
   {
@@ -263,8 +263,7 @@
               <li data-etapa="4"><b>05</b> Platibanda, vidro e madeira</li>
               <li data-etapa="5"><b>06</b> Pintura e jardim: casa pronta</li>
             </ol>
-            <p class="casa__dica">Arraste a maquete pra girar · toque numa parede pra entrar voando.</p>
-            <button type="button" class="botao casa__tour" data-casa-tour><svg class="casa__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg><span>Tour pela casa</span></button>
+            <p class="casa__dica">Arraste a maquete pra girar · toque numa parede pra desmontar e entrar voando.</p>
             <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
           </div>
           <div class="casa__tipos" role="group" aria-label="Escolha o tipo de casa">
@@ -273,16 +272,10 @@
             <button type="button" data-casa-tipo="casarao" aria-pressed="false">Casarão</button>
           </div>
           <div class="casa__passeio" data-casa-passeio hidden>
-            <p class="casa__passeio-dica">Toque num ponto pra voar até lá · toque numa parede pra ver o Blocão por dentro</p>
-            <div class="casa__passeio-botoes">
-              <button type="button" class="casa__botao" data-casa-andar hidden><svg class="casa__ico casa__ico--traco" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg><span>Andar de cima</span></button>
-              <button type="button" class="casa__botao" data-casa-tour><svg class="casa__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg><span>Tour</span></button>
-              <button type="button" class="casa__botao casa__recolocar" data-casa-recolocar><svg class="casa__ico casa__ico--traco" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v4.5h4.5"/></svg><span>Sair da casa</span></button>
-            </div>
+            <p class="casa__passeio-dica">Toque num ponto pra voar até lá · toque numa parede pra desmontar · arraste pra girar</p>
           </div>
           <div class="casa__tourbarra" data-casa-tourbarra hidden>
             <p class="casa__legenda" data-casa-legenda aria-live="polite" hidden></p>
-            <button type="button" class="casa__botao" data-casa-parar-tour><svg class="casa__ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>Parar o tour</span></button>
           </div>
           <p class="casa__aviso" data-casa-aviso hidden><b>Dentro do Blocão</b> concreto + EPS + concreto</p>
           <p class="casa__corte" data-casa-corte hidden><b>Dentro do Blocão</b> concreto + EPS + concreto</p>
@@ -552,7 +545,7 @@
 
   <!-- ===== BOAS-VINDAS: vídeo "Por que comprar o Blocão" + 2 caminhos (1x por sessão, depois da splash) -->
   <div class="bv" id="boas-vindas" hidden role="dialog" aria-modal="true" aria-label="Como você quer começar?">
-    <video class="bv__video" src="video/blocao.mp4?v=20261025v" poster="video/blocao-capa.jpg?v=20261025v" muted playsinline loop preload="none"></video>
+    <video class="bv__video" src="video/blocao.mp4?v=20261025y" poster="video/blocao-capa.jpg?v=20261025y" muted playsinline loop preload="none"></video>
     <div class="bv__veu"></div>
     <button class="bv__som" type="button" data-bv-som aria-label="Ligar o som do vídeo">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="bv__onda" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
@@ -602,20 +595,20 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261025v"></script>
-  <script src="assets/js/observabilidade.js?v=20261025v"></script>
-  <script src="assets/js/boas-vindas.js?v=20261025v"></script>
-  <script src="assets/js/supabase-init.js?v=20261025v"></script>
-  <script src="assets/js/analytics.js?v=20261025v"></script>
-  <script src="assets/js/main.js?v=20261025v"></script>
-  <script src="assets/js/especificacoes.js?v=20261025v"></script>
-  <script src="assets/js/motion.js?v=20261025v"></script>
-  <script src="assets/js/cliente.js?v=20261025v"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261025v"></script>
-  <script src="assets/js/calculadora.js?v=20261025v"></script>
-  <script src="assets/js/conteudo.js?v=20261025v"></script>
-  <script src="assets/js/cena.js?v=20261025v"></script>
-  <script src="assets/js/casa.js?v=20261025v"></script>
-  <script src="assets/js/toque.js?v=20261025v"></script>
+  <script src="assets/js/config.js?v=20261025y"></script>
+  <script src="assets/js/observabilidade.js?v=20261025y"></script>
+  <script src="assets/js/boas-vindas.js?v=20261025y"></script>
+  <script src="assets/js/supabase-init.js?v=20261025y"></script>
+  <script src="assets/js/analytics.js?v=20261025y"></script>
+  <script src="assets/js/main.js?v=20261025y"></script>
+  <script src="assets/js/especificacoes.js?v=20261025y"></script>
+  <script src="assets/js/motion.js?v=20261025y"></script>
+  <script src="assets/js/cliente.js?v=20261025y"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261025y"></script>
+  <script src="assets/js/calculadora.js?v=20261025y"></script>
+  <script src="assets/js/conteudo.js?v=20261025y"></script>
+  <script src="assets/js/cena.js?v=20261025y"></script>
+  <script src="assets/js/casa.js?v=20261025y"></script>
+  <script src="assets/js/toque.js?v=20261025y"></script>
 </body>
 </html>
