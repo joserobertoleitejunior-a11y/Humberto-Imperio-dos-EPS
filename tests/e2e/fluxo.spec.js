@@ -290,18 +290,12 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   }
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
   await expect(page.locator("[data-casa-recolocar]")).toBeVisible();
-  // passeio por dentro: barra com dica + "Sair da casa"; os gestos vão todos pro 3D (a página não rola nem dá zoom)
+  // por dentro: o site continua aparecendo (a página rola normal) e a câmera anda por TOQUE
   await expect(page.locator("[data-casa-passeio]")).toBeVisible();
-  expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("none");
+  expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("pan-y");
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.passeioInfo()), { timeout: 10000 }).not.toBeNull();
-  // joystick e altura na tela; o joystick faz o drone voar
-  await expect(page.locator("[data-casa-joy]")).toBeVisible();
-  await expect(page.locator("[data-casa-altura]")).toBeVisible();
-  await page.evaluate(() => window.ImperioCasa3D.joystick(0, 1));
-  expect(await page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando)).toBe(true);
-  await page.evaluate(() => window.ImperioCasa3D.joystick(0, 0));
-  // modo drone: tocar voa até o ponto (com inércia) e ele para sozinho no ar
-  await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth * 0.5, innerHeight * 0.7));
+  // tocar num ponto: a câmera voa (rasante) até lá e para mostrando o lugar
+  await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth * 0.5, innerHeight * 0.88));
   expect(await page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando)).toBe(true);
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando), { timeout: 45000 }).toBe(false);
   // um tremidinho da rolagem (dedo/barra do navegador) não fecha a casa
@@ -310,6 +304,14 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
   await page.click("[data-casa-recolocar]");
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/, { timeout: 10000 });
+  // tour automático: sobrevoo com legendas (o cliente só assiste); "Parar" volta pra vista de fora
+  await page.click(".casa__tour");
+  expect(await page.evaluate(() => window.ImperioCasa3D.emTour())).toBe(true);
+  await expect(page.locator("[data-casa-legenda]")).toBeVisible();
+  await expect(page.locator("[data-casa-passeio]")).toBeHidden();
+  expect(await page.evaluate(() => window.ImperioCasa3D.__irTour(0.3))).toBeTruthy();
+  await page.click("[data-casa-parar-tour]");
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTour()), { timeout: 30000 }).toBe(false);
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);

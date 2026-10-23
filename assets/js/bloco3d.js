@@ -30,9 +30,11 @@ import {
 // min/max = resolução de desenho em múltiplos da tela. min > 1 faz SUPERAMOSTRAGEM: em tela comum (1×)
 // o bloco é desenhado em 2× e reduzido, o que suaviza as bordas (antes ficavam serrilhadas).
 const NIVEIS = {
-  alta: { min: 2, max: 3, tex: 2048, sombra: true, mapaSombra: 4096, aniso: 16, particulas: 70, antialias: true },
-  media: { min: 2, max: 3, tex: 2048, sombra: false, mapaSombra: 1024, aniso: 16, particulas: 34, antialias: true },
-  baixa: { min: 1.5, max: 3, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 0, antialias: true },
+  // resolução FIXA (2× = nítido em qualquer tela, inclusive Retina): trocar a resolução entre rolar/parar realocava
+  // a imagem inteira na GPU a cada parada e o site dava trancos desde o 1º bloco
+  alta: { min: 1, max: 2, tex: 2048, sombra: true, mapaSombra: 2048, aniso: 8, particulas: 70, antialias: true },
+  media: { min: 1, max: 2, tex: 2048, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 34, antialias: true },
+  baixa: { min: 1, max: 1.5, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 4, particulas: 0, antialias: true },
 };
 
 // Medidas em metros. Face do bloco PROVISÓRIA (confirmar com o Vinicius).
@@ -631,7 +633,7 @@ function iniciar(canvas) {
   renderer = new WebGLRenderer({ canvas, antialias: nivel.antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: !!window.__gravandoVideo });
   const nativo = window.devicePixelRatio || 1;
   ratioHD = Math.min(nivel.max, Math.max(nivel.min, nativo));
-  ratioLeve = Math.min(ratioHD, Math.max(1, Math.min(nativo, nivel === NIVEIS.baixa ? 1.5 : 2))); // em movimento: até 2× (fraco 1,5×)
+  ratioLeve = ratioHD; // mesma resolução rolando e parado: nada de realocar a imagem no meio da rolagem
   renderer.setPixelRatio(ratioHD);
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;

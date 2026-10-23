@@ -8,8 +8,8 @@
  * Convenção dos móveis: origem no chão, no meio da peça; a FRENTE olha pra +z local; rot = giro em y (rad).
  */
 import {
-  BoxGeometry, CanvasTexture, Color, Group, IcosahedronGeometry, InstancedMesh, Mesh, MeshStandardMaterial, Object3D,
-  PlaneGeometry, SRGBColorSpace,
+  BoxGeometry, CanvasTexture, Color, Group, IcosahedronGeometry, InstancedMesh, Mesh, MeshBasicMaterial, MeshStandardMaterial,
+  Object3D, PlaneGeometry, SRGBColorSpace,
 } from "../vendor/three-imperio.min.js";
 
 const R90 = Math.PI / 2;
@@ -415,28 +415,95 @@ export function texCeu() {
 }
 
 /**
+ * Junta todas as malhas de um grupo que usam o MESMO material numa malha só (centenas de caixinhas viram ~20
+ * desenhos): o celular desenha os móveis e a paisagem sem engasgar. Malhas instanciadas ficam como estão.
+ */
+export function fundirPorMaterial(g) {
+  g.updateMatrixWorld(true);
+  const Geo = Object.getPrototypeOf(BoxGeometry.prototype).constructor; // BufferGeometry
+  const porMat = new Map();
+  const manter = [];
+  g.traverse((o) => {
+    if (!o.isMesh) return;
+    if (o.isInstancedMesh || o.userData.manter) { manter.push(o); return; }
+    let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    geo.applyMatrix4(o.matrixWorld);
+    if (!porMat.has(o.material)) porMat.set(o.material, []);
+    porMat.get(o.material).push(geo);
+  });
+  const saida = new Group();
+  porMat.forEach((geos, material) => {
+    let n = 0;
+    geos.forEach((q) => { n += q.attributes.position.count; });
+    const pos = new Float32Array(n * 3);
+    const nor = new Float32Array(n * 3);
+    const uv = new Float32Array(n * 2);
+    let k = 0;
+    geos.forEach((q) => {
+      const c = q.attributes.position.count;
+      pos.set(q.attributes.position.array, k * 3);
+      if (q.attributes.normal) nor.set(q.attributes.normal.array, k * 3);
+      if (q.attributes.uv) uv.set(q.attributes.uv.array, k * 2);
+      k += c;
+      q.dispose();
+    });
+    const A = geos[0].attributes.position.constructor;
+    const m = new Geo();
+    m.setAttribute("position", new A(pos, 3));
+    m.setAttribute("normal", new A(nor, 3));
+    m.setAttribute("uv", new A(uv, 2));
+    m.computeBoundingSphere();
+    const malha = new Mesh(m, material);
+    malha.receiveShadow = true;
+    saida.add(malha);
+  });
+  manter.forEach((o) => {
+    o.updateMatrixWorld(true);
+    o.matrixWorld.decompose(o.position, o.quaternion, o.scale);
+    saida.add(o);
+  });
+  return saida;
+}
+
+/**
  * Paisagem em volta (só aparece com o drone dentro: é o que se vê pela janela). Fica fora da base da maquete.
  * base = { x, z, cz } (tamanho da base), frente = z da frente da varanda.
  */
 export function cenario(base, frente, cxCasa) {
   materiais();
   const g = new Group();
+  // céu: esfera grande por dentro (degradê), atrás de tudo
+  const matCeu = new MeshBasicMaterial({ map: texCeu(), side: 1, depthWrite: false, transparent: true, opacity: 0 });
+  const ceu = new Mesh(new IcosahedronGeometry(380, 3), matCeu);
+  ceu.position.set(cxCasa, 0, base.cz);
+  ceu.renderOrder = -10;
+  ceu.userData.manter = true;
+  g.add(ceu);
   // gramado até o horizonte (um pouco abaixo da grama da maquete)
-  const chao = new Mesh(new PlaneGeometry(420, 420), M.gramado);
+  const matChao = M.gramado.clone();
+  matChao.transparent = true;
+  matChao.opacity = 0;
+  matChao.depthWrite = false;
+  const chao = new Mesh(new PlaneGeometry(700, 700), matChao);
   chao.rotation.x = -R90;
   chao.position.set(cxCasa, -0.01, base.cz);
+  chao.renderOrder = -5;
+  chao.userData.manter = true;
   g.add(chao);
+  // o resto (rua, morros, árvores, vizinhos, canteiros) "brota" do chão quando a casa fica pronta
+  const relevo = new Group();
+  g.add(relevo);
   // rua na frente + calçadas
   const zRua = base.cz + base.z / 2 + 4.5;
-  cx(g, 420, 0.02, 7, M.asfalto, cxCasa, 0.0, zRua);
-  cx(g, 420, 0.03, 1.8, M.calcada, cxCasa, 0.01, zRua - 4.4);
-  cx(g, 420, 0.03, 1.8, M.calcada, cxCasa, 0.01, zRua + 4.4);
-  for (let i = -20; i <= 20; i++) cx(g, 2.2, 0.025, 0.14, M.calcada, cxCasa + i * 6, 0.012, zRua);
+  cx(relevo, 420, 0.02, 7, M.asfalto, cxCasa, 0.0, zRua);
+  cx(relevo, 420, 0.03, 1.8, M.calcada, cxCasa, 0.01, zRua - 4.4);
+  cx(relevo, 420, 0.03, 1.8, M.calcada, cxCasa, 0.01, zRua + 4.4);
+  for (let i = -20; i <= 20; i++) cx(relevo, 2.2, 0.025, 0.14, M.calcada, cxCasa + i * 6, 0.012, zRua);
   // morros ao longe (2 camadas: perto mais verde, longe mais azulado)
   const morro = (r, cor, n, a0, alt) => {
     for (let i = 0; i < n; i++) {
       const a = a0 + (i / n) * Math.PI * 2;
-      bola(g, 1, cor, cxCasa + Math.cos(a) * r, -alt * 0.15, base.cz + Math.sin(a) * r, 26 + (i % 3) * 8, alt + (i % 4) * 3, 22 + (i % 2) * 10);
+      bola(relevo, 1, cor, cxCasa + Math.cos(a) * r, -alt * 0.15, base.cz + Math.sin(a) * r, 26 + (i % 3) * 8, alt + (i % 4) * 3, 22 + (i % 2) * 10);
     }
   };
   morro(150, M.morroLonge, 14, 0.2, 18);
@@ -460,7 +527,7 @@ export function cenario(base, frente, cxCasa) {
     o.position.set(x, 2.6 * s, z); o.scale.set(1.4 * s, 1.8 * s, 1.4 * s); o.rotation.set(0, i, 0); o.updateMatrix(); copas.setMatrixAt(i, o.matrix);
     copas.setColorAt(i, new Color().setHSL(0.27 + (i % 5) * 0.012, 0.32, 0.3 + (i % 4) * 0.035));
   });
-  g.add(troncos, copas);
+  relevo.add(troncos, copas);
   // casas vizinhas (dos 2 lados e do outro lado da rua)
   const vizinhas = [[-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]];
   vizinhas.forEach(([lado, outra], i) => {
@@ -468,17 +535,28 @@ export function cenario(base, frente, cxCasa) {
     const z = outra ? zRua + 12 : base.cz - 1;
     const w = 8 + (i % 2) * 2;
     const d = 7;
-    cx(g, w, 3.2 + (i % 2) * 2.8, d, M.vizinha, x, (3.2 + (i % 2) * 2.8) / 2, z);
-    cx(g, w + 0.6, 0.25, d + 0.6, M.vizinhaTelhado, x, 3.2 + (i % 2) * 2.8 + 0.12, z);
-    for (let k = 0; k < 3; k++) cx(g, 1.1, 1.2, 0.05, mat("#3a4a55", { roughness: 0.15 }), x - w / 3 + k * (w / 3), 1.6, z + (outra ? -d / 2 - 0.03 : d / 2 + 0.03));
+    cx(relevo, w, 3.2 + (i % 2) * 2.8, d, M.vizinha, x, (3.2 + (i % 2) * 2.8) / 2, z);
+    cx(relevo, w + 0.6, 0.25, d + 0.6, M.vizinhaTelhado, x, 3.2 + (i % 2) * 2.8 + 0.12, z);
+    for (let k = 0; k < 3; k++) cx(relevo, 1.1, 1.2, 0.05, mat("#3a4a55", { roughness: 0.15 }), x - w / 3 + k * (w / 3), 1.6, z + (outra ? -d / 2 - 0.03 : d / 2 + 0.03));
   });
   // canteiros floridos na beira da base
   for (let i = 0; i < 26; i++) {
     const t = i / 26;
     const x = cxCasa - base.x / 2 + 0.6 + t * (base.x - 1.2);
-    bola(g, 0.22, M.flores[i % 4], x, 0.2, base.cz + base.z / 2 - 0.5, 1, 0.8, 1);
-    if (i % 2) bola(g, 0.35, M.folha, x + 0.2, 0.25, base.cz - base.z / 2 + 0.6, 1, 0.8, 1);
+    bola(relevo, 0.22, M.flores[i % 4], x, 0.2, base.cz + base.z / 2 - 0.5, 1, 0.8, 1);
+    if (i % 2) bola(relevo, 0.35, M.folha, x + 0.2, 0.25, base.cz - base.z / 2 + 0.6, 1, 0.8, 1);
   }
+  // junta tudo do relevo por material (poucos desenhos) e deixa os instanciados como estão
+  const fundido = fundirPorMaterial(relevo);
+  g.remove(relevo);
+  g.add(fundido);
   g.traverse((m) => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = false; } });
+  /** k = 0..1: céu e gramado aparecem, o resto brota do chão */
+  g.userData.surgir = (k) => {
+    matCeu.opacity = k;
+    matChao.opacity = k;
+    fundido.scale.y = Math.max(0.001, k);
+    fundido.visible = k > 0.01;
+  };
   return g;
 }

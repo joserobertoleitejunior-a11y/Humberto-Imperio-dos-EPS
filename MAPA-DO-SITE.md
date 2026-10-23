@@ -64,15 +64,24 @@ escritório, sala integrada e cozinha, em cima suítes nos cantos e sala íntima
 **Girar com o dedo** (sempre, depois do voo do Blocão): arrastar pro lado gira a casa; na vertical a página rola
 normal. No mouse, arrastar também inclina. Dentro da casa, arrastar desliza a câmera ao longo da abertura (cômodo a cômodo).
 
-**Modo drone por dentro** (depois de tirar uma parede): a câmera entra num ARCO pela abertura (sobe, faz a curva
-inclinada e mergulha) e vira um drone, com física de verdade (`quadroDrone` em `casa3d.js`, em tempo real com
-subpassos — num celular lento o voo dura o mesmo): inércia ao acelerar, frear e girar; tomba pro lado na curva e
-embica pra frente ao acelerar; flutua de leve enquanto voa; não atravessa parede nem móvel (freia 55 cm antes).
-Controles (a tela toda vai pro 3D: `touch-action: none` — a página não rola nem dá zoom):
-- JOYSTICK na tela (embaixo à esquerda) = voar pra frente/trás e de lado; ▲▼ (segurar) = subir/descer;
-- arrastar no resto da tela = olhar em 360° — a vista vai pro lado OPOSTO do dedo ("pega a cena"), com inércia;
-- tocar = voar até o ponto, virando o nariz pro rumo; pinça = acelerar; botão "↑ Andar de cima / ↓ Ir pro térreo";
-- computador: setas/WASD voam, Q/E viram, R/F sobem/descem, roda acelera, Esc sai. "↺ Sair da casa" volta em arco.
+**Por dentro, por toque (sensação de drone sobrevoando)**: tocar numa parede de fora tira ela e a câmera entra num
+ARCO pela abertura. Lá dentro a câmera anda por TOQUE — tocou no chão/num móvel, ela voa (rasante, em curva suave,
+acelerando e freando, inclinando na curva) até 1,2 m antes do ponto e PARA mostrando o lugar; tocou numa parede
+(interna ou externa), a parede desliza e mostra o Blocão por dentro (aviso "Dentro do Blocão"); tocou na escada ou no
+botão de andar, sobe/desce voando. O site continua aparecendo (título, botão, contador) e a página rola normal —
+rolar de verdade sai da casa. "↺ Sair da casa" (ou Esc) volta. Motor: `criarVoo`/`posVoo` (Catmull-Rom com
+aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
+
+**Tour pela casa** (botão "▶ Tour pela casa", com a casa pronta): sobrevoo automático com legendas de cinema — chega
+de longe, a parede da frente sai (o corte mostra o Blocão), voos rasantes pela sala, cozinha e quartos, close no
+"Dentro do Blocão", sobe a escada (sobrado e casarão), corredor, varanda com a paisagem, garagem, e volta pra vista
+de fora. O cliente só assiste ("■ Parar o tour" ou rolar a página para). Roteiro em `PROJETOS.*.tour`
+([x, y, z, olharX, olharY, olharZ, m/s, legenda]).
+
+**Paisagem no fundo** (casa pronta, 90–98% da obra): céu, gramado até o horizonte, morros, árvores, casas vizinhas e
+rua surgem atrás da maquete (o fundo da seção vira o lugar da casa); por dentro é o que se vê pelas janelas.
+Desempenho: móveis e paisagem são montados num momento ocioso e FUNDIDOS por material (`fundirPorMaterial`: centenas
+de peças viram ~20 desenhos); resolução fixa 2× nos dois 3D (sem realocar a imagem ao rolar/parar — tirou os trancos).
 
 **Interior de projeto real** (`assets/js/casa-interior.js`, só aparece com a casa aberta): cada casa tem `mobilia`,
 `quadros` e `luzes` em `PROJETOS` — salas com sofá, rack e TV, tapete e mesa de centro; mesa de jantar com cadeiras;
@@ -82,8 +91,6 @@ poltronas, plantas, quadros pintados na hora (canvas) e luminárias de teto. Por
 Piso de madeira em cada andar e paredes internas com tinta areia.
 **Escada** (sobrado e casarão): degraus de concreto com piso de madeira e guarda-corpo de vidro; a laje e o piso de
 cima têm o vão da escada (`furo`) com guarda-corpo em volta (`guarda`).
-**Paisagem das janelas** (`cenario()`, só com a casa aberta): gramado até o horizonte, céu em degradê, morros em 2
-camadas, 70 árvores (instanciadas), casas vizinhas, rua com faixa e calçadas, canteiros floridos; o vidro fica claro.
 **Garagem coberta com carro** em cada casa (aparece na maquete também).
 **Maquete completa na tela** (`casa--maquete`, a partir de 97% da obra): o dedo na maquete só gira e inclina ela —
 a página não rola por cima (rola pelo texto); antes disso a rolagem continua montando a casa.
