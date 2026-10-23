@@ -1,10 +1,13 @@
 // Renderiza um vídeo da pasta /video quadro a quadro (sem depender de tempo real) e junta a música com ffmpeg.
 // Uso: node scripts/renderizar-video.js index.html video/como-orcar.mp4 31.8 video/trilha-como-orcar.mp3 [porta]
+// Por trechos (retoma se a máquina reiniciar): DE=quadro inicial ATE=quadro final → MP4 só com imagem desse trecho;
+// depois scripts/juntar-trechos.sh junta os trechos e põe a música.
 // Precisa do servidor estático da raiz do projeto rodando (ex.: python3 -m http.server 8765) e de imageio-ffmpeg.
 const { chromium } = require('playwright');
 const { spawn, execSync } = require('child_process');
 const path = require('path');
-const [, , pagina, saida, dur, musica, porta = '8765'] = process.argv;
+const [, , pagina, saida, dur, musicaArg, porta = '8765'] = process.argv;
+let musica = musicaArg;
 const FPS = 30;
 const FONTES = `@font-face{font-family:'Archivo Black';src:url(http://localhost:${porta}/video/fontes/ArchivoBlack-Regular.ttf)}
 @font-face{font-family:'Work Sans';src:url(http://localhost:${porta}/video/fontes/WorkSans.ttf);font-weight:100 900}`;
@@ -26,17 +29,23 @@ const FONTES = `@font-face{font-family:'Archivo Black';src:url(http://localhost:
   await p.goto(`http://localhost:${porta}/video/${pagina}?gravar`);
   await p.waitForFunction('window.__pronto === true', null, { timeout: 30000 });
   await p.evaluate('document.fonts.ready');
+  const total = Math.round(+dur * FPS);
+  const DE = +(process.env.DE || 0);
+  const ATE = Math.min(total, +(process.env.ATE || total));
+  const trecho = !!process.env.DE || !!process.env.ATE;
   const args = ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-'];
-  if (musica) args.push('-i', musica);
+  if (musica && !trecho) args.push('-i', musica);
+  else musica = '';
   args.push('-map', '0:v', ...(musica ? ['-map', '1:a'] : []), '-vf', 'scale=1080:1920:flags=lanczos', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS),
-    ...(musica ? ['-c:a', 'aac', '-b:a', '192k'] : []), '-t', dur, '-movflags', '+faststart', saida);
+    ...(musica ? ['-c:a', 'aac', '-b:a', '192k'] : []), ...(trecho ? [] : ['-t', dur]), '-movflags', '+faststart', saida);
   const soAmostras = !!process.env.SO_AMOSTRAS; // só gera os quadros de amostra (teste rápido, sem MP4)
   const ff = soAmostras ? null : spawn(ffmpeg, args, { stdio: ['pipe', 'inherit', 'inherit'] });
-  const total = Math.round(+dur * FPS);
   const amostras = (process.env.AMOSTRAS || '').split(',').filter(Boolean).map(Number);
-  for (let i = 0; i < total; i++) {
+  // trecho: roda 2 s antes do início sem gravar (o site e o 3D chegam no estado certo, como se viessem do começo)
+  for (let i = Math.max(0, DE - 60); i < ATE; i++) {
     const t = i / FPS;
     await p.evaluate(x => window.quadro(x), t);
+    if (i < DE) continue;
     const ehAmostra = amostras.some(a => Math.abs(a - t) < 1 / FPS / 2);
     if (soAmostras && !ehAmostra) continue;
     const img = await p.screenshot({ type: 'jpeg', quality: 96 });
