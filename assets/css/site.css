@@ -307,8 +307,10 @@ main { position: relative; z-index: 2; }
 /* o Blocão do site voa POR CIMA da maquete até o canto da obra (sem cópia); no celular o canvas dele ocupa a tela */
 .fase-casa .palco3d { z-index: 7; transition: none; }
 .fase-casa .jornada__fixo > .palco3d--local { height: 100%; }
-.fase-casa .controles, .fase-casa .jornada__janela, .fase-casa .jornada__h, .fase-casa .jornada__toque, .fase-casa .jornada__rotulos {
-  opacity: 0 !important; visibility: hidden !important; pointer-events: none; }
+/* fichas, botões e textos do "L" esmaecem JUNTO com a rolagem (--sai vai de 1 a 0 enquanto a casa entra) */
+.controles, .jornada__janela { opacity: var(--sai, 1); }
+.fase-casa .controles, .fase-casa .jornada__janela, .fase-casa .jornada__h { pointer-events: none; }
+.fase-casa .jornada__toque, .fase-casa .jornada__rotulos { display: none; }
 .casa__ceu { position: absolute; inset: 0; background: linear-gradient(180deg, #dfe6ea 0%, #eef0ec 46%, var(--cal) 78%); }
 .casa__ceu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #f6d9b4 0%, #f7e6cf 45%, var(--cal) 80%); opacity: var(--ouro); }
 .casa__palco { position: absolute; inset: 0; }

@@ -99,7 +99,7 @@
     var q = j.dentro ? j.casa : j.pTotal >= 1 ? 1 : 0;
     if (q === ultimoQ) return;
     ultimoQ = q;
-    var op = limitar(q / TROCA);
+    var op = limitar((q - 0.012) / (TROCA - 0.012)); // ...depois a casa entra (cruzam só um pouquinho, sem letras sobrepostas)
     if (op !== ultimaOp) { ultimaOp = op; camada.style.opacity = op; }
     var p = limitar((q - TROCA) / (1 - TROCA));
     pintar(p);
@@ -117,7 +117,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261024d")
+    import("./casa3d.js?v=20261024f")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;

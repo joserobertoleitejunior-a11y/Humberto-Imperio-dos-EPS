@@ -176,7 +176,10 @@
     j.vertical.style.opacity = opV;
     j.vertical.style.visibility = opV < 0.01 ? "hidden" : "visible"; // sem pintar o que não se vê
     j.trilho.style.transform = "translate3d(" + tx + "px," + (1 - suave((p - 0.38) / 0.14)) * 40 + "vh,0)";
-    var opH = suave((p - 0.42) / 0.08);
+    // quando a casa entra, tudo do "L" esmaece no mesmo ritmo do céu da maquete (sem sumir de uma vez)
+    var sai = 1 - suave(j.casa / 0.018); // primeiro o "L" sai...  (a casa entra logo depois: casa.js)
+    if (sai !== j.sai) { j.sai = sai; j.el.style.setProperty("--sai", sai.toFixed(3)); }
+    var opH = suave((p - 0.42) / 0.08) * sai;
     j.trilho.style.opacity = opH;
     j.trilho.style.visibility = opH < 0.01 ? "hidden" : "visible";
     // painel em foco = o mais perto do centro da tela (conta feita com os números em cache)
