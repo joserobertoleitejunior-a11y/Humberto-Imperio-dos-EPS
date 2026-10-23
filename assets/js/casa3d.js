@@ -25,6 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
+import { cenario, escada, garagem, guardaCorpo, mobiliar, texCeu } from "./casa-interior.js?v=20261025q";
 
 // MÁXIMA RESOLUÇÃO: parado desenha na resolução nativa da tela (até 3×; min > 1 = superamostragem em tela comum).
 // Enquanto rola desenha leve (sem travar) e, parado ~0,16 s, refaz no máximo — em qualquer aparelho.
@@ -34,6 +35,7 @@ const NIVEIS = {
   baixa: { hd: 3, leve: 1.5, min: 1.5, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
 };
 
+const R90 = Math.PI / 2;
 const BL = 1.0;    // comprimento do bloco
 const BA = 0.5;    // altura (1 fiada)
 const BE = 0.15;   // espessura (Blocão 15 cm)
@@ -175,12 +177,25 @@ const PROJETOS = {
       fundos: [{ a: -1, b: 0.2, f0: 3, f1: 5 }],
       esquerda: [{ a: -1.8, b: -0.6, f0: 2, f1: 5 }],
     },
-    // paredes internas (também de Blocão): sala/cozinha na frente, 2 quartos no fundo
+    // paredes internas (também de Blocão): sala/cozinha na frente, 2 quartos e o banheiro no fundo
     internasA: [
       ["x", -0.3, -3.1, 3.1, [{ a: -2.2, b: -1.4, f0: 0, f1: 4 }, { a: 1.3, b: 2.1, f0: 0, f1: 4 }]],
       ["z", 0.5, -3.85, -0.375, []],
+      ["z", 1.9, -3.85, -1.975, []],
+      ["x", -1.9, 0.575, 1.825, [{ a: 0.85, b: 1.55, f0: 0, f1: 4 }]],
     ],
-    base: { x: 11, z: 13, cz: 0.8 },
+    mobilia: [
+      ["rackTv", -2.87, 1.4, R90], ["sofa", -0.55, 1.4, -R90, 0, { w: 2.0 }], ["mesaCentro", -1.7, 1.4, R90], ["tapete", -1.6, 1.4, R90, 0, { w: 2.2, d: 1.6 }],
+      ["cozinha", 2.8, 1.2, -R90, 0, { w: 2.6, alto: false }], ["geladeira", 2.73, 2.95, -R90], ["mesaJantar", 0.9, 1.0, R90, 0, { w: 1.2, lugares: 4 }],
+      ["planta", -2.8, 3.0, 0],
+      ["cama", -1.75, -2.75, 0], ["criado", -2.85, -3.55, 0], ["criado", -0.65, -3.55, 0], ["armario", -0.45, -0.69, Math.PI, 0, { w: 1.6 }],
+      ["cama", 2.5, -2.8, 0, 0, { solteiro: true, tecido: "verde" }], ["armario", 0.875, -0.95, R90, 0, { w: 1.1 }],
+      ["vaso", 1.6, -3.55, 0], ["box", 0.98, -3.4, 0, 0, { w: 0.8 }], ["pia", 0.83, -2.4, R90, 0, { w: 0.6 }],
+    ],
+    quadros: [[0, 1.6, -0.205, 0, 0.8, 1.0, 0], [-3.08, 1.6, -3.0, R90, 0.6, 0.8, 1], [2.5, 1.75, -3.83, 0, 0.7, 0.5, 2]],
+    luzes: [[-1.5, 1.4], [1.5, 1.4], [-1.4, -2.2], [2.4, -1.4], [1.2, -2.9]],
+    garagem: { x: 4.95, z: 1.4 },
+    base: { x: 14, z: 13, cz: 0.8 },
     centro: [0, 1.5, 0.8],
     raio: 9.8,
     jardim: {
@@ -202,17 +217,38 @@ const PROJETOS = {
       fundos: [{ a: -2, b: 1, f0: 2, f1: 5 }],
       esquerda: [{ a: -1.6, b: 0.4, f0: 2, f1: 5 }],
     },
-    // térreo: cozinha/lavanderia no fundo + parede que separa a sala do lavabo
+    // térreo: cozinha/lavanderia no fundo, lavabo, sala/jantar e a escada encostada na parede da direita
     internasA: [
-      ["x", -2.5, -4.35, 4.35, [{ a: -3.2, b: -2.4, f0: 0, f1: 4 }, { a: 2.4, b: 3.2, f0: 0, f1: 4 }]],
+      ["x", -2.5, -4.35, 3.2, [{ a: -3.2, b: -2.4, f0: 0, f1: 4 }]],
       ["z", 1.6, -2.425, 1, []],
+      ["x", -0.9, 1.675, 3.25, [{ a: 2.1, b: 2.8, f0: 0, f1: 4 }]],
+      ["z", 3.25, -2.425, -0.975, []],
     ],
-    // em cima: 3 quartos no fundo e o corredor na frente (saída pra varanda)
+    // em cima: quarto de solteiro com banheiro, suíte do casal, corredor na frente (varanda) e o vão da escada
     internasB: [
-      ["x", 1, -4.35, 4.35, [{ a: -3.2, b: -2.4, f0: 0, f1: 4 }, { a: 0, b: 0.8, f0: 0, f1: 4 }, { a: 3, b: 3.8, f0: 0, f1: 4 }]],
+      ["x", 1, -4.35, 3.2, [{ a: -3.2, b: -2.4, f0: 0, f1: 4 }, { a: 0, b: 0.8, f0: 0, f1: 4 }]],
       ["z", -1.5, -3.85, 0.925, []],
-      ["z", 2.3, -3.85, 0.925, []],
+      ["z", 3.2, -3.85, 0.925, []],
+      ["z", -2.8, -3.85, -2.275, [{ a: -3.1, b: -2.45, f0: 0, f1: 4 }]],
+      ["x", -2.2, -4.35, -2.875, []],
     ],
+    escada: { x0: 3.35, x1: 4.35, z0: -2.35, z1: 1.95, eixo: "z", sobe: 1, aberto: { x: 3.33 } },
+    furo: { x0: 3.35, x1: 4.35, z0: -0.75, z1: 1.95 },
+    guarda: [[3.35, -0.75, 4.35, -0.75], [3.3, 1.0, 3.3, 1.95]],
+    mobilia: [
+      ["cozinha", 0.6, -3.55, 0, 0, { w: 3.2, alto: false }], ["geladeira", 2.7, -3.49, 0], ["lavadora", -3.9, -3.55, 0], ["planta", -3.0, -3.5, 0, 0, { s: 0.8 }],
+      ["sofa", -3.4, -0.6, R90, 0, { w: 2.2 }], ["rackTv", 1.3, -0.6, -R90], ["mesaCentro", -1.9, -0.6, R90], ["tapete", -1.7, -0.6, R90, 0, { w: 2.6, d: 2.0 }],
+      ["mesaJantar", -1.8, 1.85, 0, 0, { w: 1.6, lugares: 4 }], ["planta", 0.9, 2.5, 0], ["planta", 2.9, 2.5, 0, 0, { s: 0.8 }],
+      ["vaso", 2.8, -2.1, 0], ["pia", 2.0, -2.18, 0, 0, { w: 0.6 }],
+      ["cama", -2.64, -0.4, -R90, 1, { solteiro: true, tecido: "verde" }], ["escrivaninha", -3.65, 0.62, Math.PI, 1], ["armario", -2.15, -3.53, 0, 1, { w: 1.0 }],
+      ["vaso", -4.05, -3.0, R90, 1], ["box", -3.25, -3.43, 0, 1, { w: 0.8 }], ["pia", -3.7, -2.52, Math.PI, 1, { w: 0.6 }],
+      ["cama", 0.8, -2.75, 0, 1], ["criado", -0.3, -3.55, 0, 1], ["criado", 1.9, -3.55, 0, 1], ["armario", 2.83, -1.0, -R90, 1, { w: 1.8 }],
+      ["poltrona", -0.8, 0.3, Math.PI * 0.75, 1], ["tapete", 0.8, -1.3, 0, 1, { w: 2.2, d: 1.4, cor: "azul" }],
+      ["banco", -1.0, 1.28, 0, 1, { w: 1.4 }], ["planta", -4.0, 2.5, 0, 1], ["planta", 2.8, 2.5, 0, 1], ["planta", 3.8, -3.4, 0, 1, { s: 0.8 }],
+    ],
+    quadros: [[-1.0, 1.6, -2.4, 0, 1.0, 0.7, 1], [1.6, 1.6, 0.9, Math.PI, 0.9, 0.7, 0, 1], [-1.555, 1.6, -0.4, -R90, 0.6, 0.6, 2, 1], [-2.0, 1.6, 1.095, 0, 0.8, 0.6, 1, 1]],
+    luzes: [[-2, -0.6], [-1.8, 1.8], [0.6, -3.2], [2.4, -1.7], [2.4, 1.5], [-2.8, -0.8, 1], [0.8, -1.5, 1], [-3.6, -3.1, 1], [0, 2, 1]],
+    garagem: { x: 6.3, z: 2.4 },
     vaosB: {
       frente: [{ a: -3.6, b: 1.2, f0: 0, f1: 5 }, { a: 2.5, b: 3.7, f0: 2, f1: 5 }],
       direita: [{ a: -2.2, b: -0.4, f0: 2, f1: 5 }],
@@ -220,13 +256,13 @@ const PROJETOS = {
       esquerda: [{ a: -2, b: -0.4, f0: 2, f1: 5 }],
     },
     ripado: { x: 2.2, n: 12 },
-    base: { x: 15, z: 14, cz: 0.6 },
+    base: { x: 17, z: 14, cz: 0.6 },
     centro: [0, 2.6, 0.6],
     raio: 10.4,
     jardim: {
       caminho: { x: 1.6, n: 4 },
       cerca: [[-3.6, 4.6], [4.9, 2.8]],
-      arvores: [[-6, -2.6, 1], [6.1, -1.2, 0.85], [-6.2, 3.6, 0.7]],
+      arvores: [[-6, -2.6, 1], [6.6, -2.6, 0.85], [-6.2, 3.6, 0.7]],
       gente: [[3, 7.4], [-1.4, 4.1]],
     },
   },
@@ -242,18 +278,42 @@ const PROJETOS = {
       fundos: [{ a: -4, b: 4, f0: 0, f1: 5 }],
       esquerda: [{ a: -2, b: 2, f0: 2, f1: 5 }],
     },
-    // térreo: escritório à esquerda, cozinha à direita, sala integrada no meio
+    // térreo: escritório com lavabo e quarto de hóspedes à esquerda, sala integrada com escada, cozinha com ilha à direita
     internasA: [
       ["z", -4.5, -4.85, 1.5, []],
       ["x", 2.6, -7.35, -4.425, [{ a: -6.4, b: -5.6, f0: 0, f1: 4 }]],
       ["z", 4.6, -4.85, 1, []],
+      ["z", -5.6, -4.85, -3.275, [{ a: -4.4, b: -3.7, f0: 0, f1: 4 }]],
+      ["x", -3.2, -7.35, -5.525, []],
     ],
-    // em cima: suítes nos cantos, sala íntima no meio, corredor na frente
+    // em cima: 2 suítes com banheiro nos cantos, sala íntima no meio (chega a escada), corredor na frente
     internasB: [
       ["z", -4, -4.85, 1.525, []],
       ["z", 4, -4.85, 1.525, []],
       ["x", 1.6, -7.35, 4.075, [{ a: -6, b: -5.2, f0: 0, f1: 4 }, { a: -1, b: -0.2, f0: 0, f1: 4 }]],
+      ["x", -2.6, -7.35, -4.075, [{ a: -5.8, b: -5.0, f0: 0, f1: 4 }]],
+      ["x", -3.0, 4.075, 7.35, [{ a: 5.0, b: 5.8, f0: 0, f1: 4 }]],
     ],
+    escada: { x0: -2.0, x1: 2.3, z0: -4.85, z1: -3.85, eixo: "x", sobe: 1, aberto: { z: -3.83 } },
+    furo: { x0: -0.4, x1: 2.3, z0: -4.85, z1: -3.85 },
+    guarda: [[-0.4, -3.82, 2.3, -3.82], [-0.42, -4.85, -0.42, -3.82]],
+    mobilia: [
+      ["escrivaninha", -7.05, -1.0, R90], ["estante", -4.75, -2.0, -R90, 0, { w: 1.6 }], ["poltrona", -6.6, 0.8, R90 + 0.4],
+      ["vaso", -7.05, -3.8, R90], ["box", -6.1, -4.43, 0, 0, { w: 0.8 }], ["pia", -6.3, -3.52, Math.PI, 0, { w: 0.6 }],
+      ["cama", -6.29, 3.8, R90, 0, { solteiro: true }], ["planta", -4.9, 4.4, 0, 0, { s: 0.8 }],
+      ["rackTv", -4.21, -0.8, R90, 0, { w: 2.2 }], ["sofa", -1.5, -0.8, -R90, 0, { w: 2.8 }], ["mesaCentro", -2.9, -0.8, R90], ["tapete", -2.7, -0.8, R90, 0, { w: 3.0, d: 2.4 }],
+      ["poltrona", -2.9, 1.1, Math.PI], ["mesaJantar", 2.0, 1.6, 0, 0, { w: 2.2, lugares: 6 }], ["planta", 3.9, 4.3, 0], ["planta", -3.9, 4.3, 0],
+      ["geladeira", 5.1, -4.48, 0], ["cozinha", 6.43, -4.55, 0, 0, { w: 1.7 }], ["ilha", 6.0, -1.6, 0, 0, { w: 2.0 }],
+      ["cama", -5.15, -0.5, -R90, 1], ["criado", -4.4, -1.6, -R90, 1], ["criado", -4.4, 0.6, -R90, 1], ["armario", -6.6, -2.22, 0, 1, { w: 1.2 }],
+      ["vaso", -7.05, -4.3, R90, 1], ["box", -4.48, -4.43, 0, 1, { w: 0.8 }], ["pia", -5.8, -4.6, 0, 1, { w: 0.9 }],
+      ["cama", 5.15, -0.8, R90, 1, { tecido: "verde" }], ["criado", 4.4, -1.9, R90, 1], ["criado", 4.4, 0.3, R90, 1], ["poltrona", 6.6, 2.8, -Math.PI * 0.75, 1],
+      ["vaso", 7.05, -4.3, -R90, 1], ["box", 4.48, -4.43, 0, 1, { w: 0.8 }], ["pia", 5.8, -4.6, 0, 1, { w: 0.9 }],
+      ["rackTv", 1.0, 1.31, Math.PI, 1, { w: 2.0 }], ["sofa", 1.0, -1.6, 0, 1, { w: 2.4 }], ["tapete", 1.0, -0.2, 0, 1, { w: 2.6, d: 1.8, cor: "azul" }],
+      ["estante", -3.7, -1.5, R90, 1, { w: 1.4 }], ["planta", -7.0, 3.4, 0, 1], ["planta", 4.5, 3.4, 0, 1],
+    ],
+    quadros: [[4.505, 1.7, -2.0, -R90, 1.4, 0.9, 0], [-5.0, 1.6, 2.695, 0, 0.5, 0.6, 2], [-4.095, 1.75, -0.5, -R90, 1.0, 0.6, 1, 1], [4.095, 1.75, -0.8, R90, 1.0, 0.6, 2, 1], [3.905, 1.6, -1.5, -R90, 0.9, 1.1, 0, 1]],
+    luzes: [[-6, -1.5], [-6, 3.7], [-2.5, -0.8], [2, 1.6], [6, -1.5], [-6.5, -4.0], [-5.7, -0.5, 1], [5.7, -0.8, 1], [0, -1.5, 1], [-5.7, -3.8, 1], [5.7, -4.0, 1], [0, 2.7, 1]],
+    garagem: { x: -10.0, z: 1.0 },
     vaosB: {
       frente: [{ a: -6.6, b: -0.8, f0: 0, f1: 5 }, { a: 0.8, b: 4, f0: 0, f1: 5 }],
       direita: [{ a: -2.6, b: 2.6, f0: 0, f1: 6 }],
@@ -269,7 +329,7 @@ const PROJETOS = {
     jardim: {
       caminho: { x: 1, n: 4 },
       cerca: [[-4.5, 6.2], [5.2, 4.6]],
-      arvores: [[-10, -3.5, 1.3], [-9.6, 4.5, 1], [13.6, -6.5, 1.1], [-3, -7.2, 0.9]],
+      arvores: [[-10, -3.5, 1.3], [-12.5, 6.5, 1], [13.6, -6.5, 1.1], [-3, -7.2, 0.9]],
       gente: [[3.4, 9.3], [-3, 6.2], [9.4, 3.6]],
     },
   },
@@ -385,6 +445,10 @@ const DUR_PAREDE = 700;
 let giroUser = 0;          // giro da maquete pelo dedo/mouse (rad, em volta da casa)
 let elevUser = 0;          // inclinação pelo mouse (rad)
 let pRemocao = -1;         // ponto da rolagem quando a parede saiu (rolar de verdade recoloca)
+let mobilia = null;        // móveis, eletros, quadros e portas (só aparecem com a casa aberta)
+let paisagem = null;       // o que se vê pela janela: gramado, morros, árvores, vizinhos, rua
+let solidos = [];          // escada e guarda-corpos: o drone não atravessa
+let ceu = null;
 let zoomUser = 1;          // pinça por fora: aproxima/afasta a maquete (só o 3D — a página não tem zoom)
 let passeio = null;        // por dentro, o DRONE: { pos, vel, yaw, pitch, roll, embique, vYaw, vPitch, alvo, andar, arrastando, t }
 const OLHO = 1.55;         // altura em que o drone entra (m acima do piso)
@@ -415,6 +479,27 @@ function peca(geo, mat, x, y, z, entra, tipo = "desce") {
   obra.add(m);
   pecas.push(m);
   return m;
+}
+
+/** laje/piso retangular com um vão (o da escada): até 4 caixas em volta do furo */
+function lajeFurada(R, f, y, h, mat, entra, tipo) {
+  const partes = !f ? [[R.x0, R.x1, R.z0, R.z1]] : [
+    [R.x0, R.x1, R.z0, f.z0], [R.x0, R.x1, f.z1, R.z1], [R.x0, f.x0, f.z0, f.z1], [f.x1, R.x1, f.z0, f.z1],
+  ];
+  partes.forEach(([a, b, c, d]) => {
+    if (b - a < 0.01 || d - c < 0.01) return;
+    const m = peca(new BoxGeometry(b - a, h, d - c), mat, (a + b) / 2, y, (c + d) / 2, entra, tipo);
+    if (mat === mats.piso) m.castShadow = false;
+  });
+}
+
+/** um Group montado (escada, garagem…) entra na linha do tempo como uma peça */
+function grupoPeca(g, entra, tipo) {
+  g.userData = { base: g.position.clone(), entra, tipo, alt: 0, fixo: true };
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = nivel.sombra; o.receiveShadow = nivel.sombra; } });
+  obra.add(g);
+  pecas.push(g);
+  return g;
 }
 
 function criarMateriais() {
@@ -524,8 +609,8 @@ function montar(id) {
   obra.add(pinturaMesh);
 
   // piso de madeira por dentro (térreo junto com as paredes; em cima, por cima da laje)
-  for (const [R, y, ent] of [[A, CHAO + 0.012, [0.12, 0.16]], ...(B ? [[B, Y2 + 0.012, [0.47, 0.5]]] : [])]) {
-    peca(new BoxGeometry(R.x1 - R.x0 - BE * 2, 0.02, R.z1 - R.z0 - BE * 2), M.piso, (R.x0 + R.x1) / 2, y, (R.z0 + R.z1) / 2, ent, "sobe").castShadow = false;
+  for (const [R, y, ent, furo] of [[A, CHAO + 0.012, [0.12, 0.16], null], ...(B ? [[B, Y2 + 0.012, [0.47, 0.5], P.furo]] : [])]) {
+    lajeFurada({ x0: R.x0 + BE, x1: R.x1 - BE, z0: R.z0 + BE, z1: R.z1 - BE }, furo, y, 0.02, M.piso, ent, "sobe");
   }
 
   const L = A.x1 - A.x0;
@@ -544,7 +629,7 @@ function montar(id) {
   let R; // retângulo coberto pela cobertura
   if (B) {
     // laje do 1º andar avançando sobre a varanda (vira o piso da varanda de cima)
-    peca(new BoxGeometry(L + 0.3, LAJE, zFrente - A.z0 + 0.3), M.branco, xm, CHAO + PE + LAJE / 2, zMeioV, T.laje);
+    lajeFurada({ x0: xm - (L + 0.3) / 2, x1: xm + (L + 0.3) / 2, z0: zMeioV - (zFrente - A.z0 + 0.3) / 2, z1: zMeioV + (zFrente - A.z0 + 0.3) / 2 }, P.furo, CHAO + PE + LAJE / 2, LAJE, M.branco, T.laje, "desce");
     yTopo = Y2 + PE;
     R = { x0: B.x0, x1: B.x1, z0: B.z0, z1: B.z1 + 0.6 };
     // varanda de cima: guarda-corpo de vidro (frente e laterais) com corrimão grafite
@@ -620,6 +705,27 @@ function montar(id) {
     copa.scale.set(1.2 * s, 1.5 * s, 1.2 * s);
     copa.userData.escala = copa.scale.clone();
   });
+  // garagem coberta com o carro (na maquete também)
+  if (P.garagem) {
+    const g = grupoPeca(garagem(P.garagem, M.branco, M.grafite, M.pedra), [0.88, 0.93], "sobe");
+    peca(new BoxGeometry(2.6, 0.03, Math.max(0.1, P.base.cz + P.base.z / 2 - (P.garagem.z + 2.85))), M.pedra, P.garagem.x, 0.03,
+      (P.garagem.z + 2.85 + P.base.cz + P.base.z / 2) / 2, [0.88, 0.93], "sobe"); // entrada de carro até a calçada
+    g.castShadow = false;
+  }
+  // escada (sobrado e casarão) e guarda-corpo em volta do vão no andar de cima
+  solidos = [];
+  if (P.escada && B) {
+    const pisoA = CHAO + 0.022;
+    solidos.push(grupoPeca(escada(P.escada, pisoA, Y2 + 0.022 - pisoA, M.branco, M.piso), T.laje, "sobe"));
+    if (P.guarda) solidos.push(grupoPeca(guardaCorpo(P.guarda, Y2 + 0.022), [T.paredes[1][0], T.paredes[1][0] + 0.04], "sobe"));
+  }
+  // móveis, eletros, quadros, luminárias e portas — e a paisagem das janelas (só com a casa aberta)
+  mobilia = mobiliar(P, [CHAO + 0.022, Y2 + 0.022], BE, [CHAO + PE, B ? Y2 + PE : CHAO + PE]);
+  mobilia.visible = false;
+  obra.add(mobilia);
+  paisagem = cenario(P.base, zFrente, P.centro[0] * 0.4);
+  paisagem.visible = false;
+  obra.add(paisagem);
   J.gente.forEach(([x, z], i) => {
     const ent = [0.9 + i * 0.01, 0.94 + i * 0.01];
     peca(new BoxGeometry(0.34, 1.35, 0.2), M.gente, x, 0.72, z, ent, "cresce").userData.jardim = true;
@@ -779,9 +885,16 @@ function obstaculo(origem, dir, longe) {
   _raycast.set(origem, dir);
   _raycast.far = longe;
   const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
+  let d = Infinity;
   const hit = _raycast.intersectObjects(alvos, false)[0];
+  if (hit) d = hit.distance;
+  // móveis, escada e guarda-corpo (recursivo: são grupos)
+  const outros = solidos.filter((g) => g.visible);
+  if (mobilia && mobilia.visible) outros.push(mobilia);
+  const h2 = outros.length ? _raycast.intersectObjects(outros, true)[0] : null;
+  if (h2 && h2.distance < d) d = h2.distance;
   _raycast.far = Infinity;
-  return hit ? hit.distance : Infinity;
+  return d;
 }
 
 /** um passo da física do drone (dt em s, pequeno) */
@@ -802,10 +915,17 @@ function fisicaDrone(d, dt) {
         d.vYaw += (dYaw * 2 - d.vYaw) * Math.min(1, dt * 3.5);
       }
     }
+  } else if (d.joy) {
+    // joystick: pra frente/trás e de lado, relativo pra onde o drone olha
+    const f = d.joy.y * DRONE.maxV;
+    const l = d.joy.x * DRONE.maxV * 0.8;
+    _vel.set(Math.sin(d.yaw) * f - Math.cos(d.yaw) * l, d.vel.y, Math.cos(d.yaw) * f + Math.sin(d.yaw) * l);
+    d.vel.lerp(_vel, Math.min(1, dt * 3));
   } else d.vel.multiplyScalar(Math.exp(-dt / DRONE.atrito)); // solto: vai parando no ar
+  if (d.subir) d.vel.y += (d.subir * 1.1 - d.vel.y) * Math.min(1, dt * 4); // botões ▲▼
   // giro com inércia (o dedo solta e ele ainda vira um pouco)
   d.yaw += d.vYaw * dt;
-  d.pitch = limitarEntre(d.pitch + d.vPitch * dt, -0.85, 0.75);
+  d.pitch = limitarEntre(d.pitch + d.vPitch * dt, -1.35, 1.35);
   if (!d.arrastando) {
     d.vYaw *= Math.exp(-dt / DRONE.giroAtrito);
     d.vPitch *= Math.exp(-dt / DRONE.giroAtrito);
@@ -814,16 +934,19 @@ function fisicaDrone(d, dt) {
   const piso = pisoDe(d.andar);
   const yMin = piso + DRONE.alturaMin;
   const yMax = piso + DRONE.alturaMax;
-  if (d.pos.y < yMin) d.vel.y += (yMin - d.pos.y) * dt * 6;
-  else if (d.pos.y > yMax) d.vel.y += (yMax - d.pos.y) * dt * 6;
+  if (d.pos.y < yMin) d.vel.y += (yMin - d.pos.y) * dt * (d.subir ? 30 : 6);
+  else if (d.pos.y > yMax) d.vel.y += (yMax - d.pos.y) * dt * (d.subir ? 30 : 6);
   d.vel.clampLength(0, DRONE.maxV * 1.2);
-  // não atravessa parede: freia antes
-  const v = d.vel.length();
-  if (v > 0.001) {
-    _passo.copy(d.vel).divideScalar(v);
-    if (obstaculo(d.pos, _passo, v * dt + DRONE.folga) < v * dt + DRONE.folga) { d.vel.set(0, 0, 0); d.alvo = null; }
-    else d.pos.addScaledVector(d.vel, dt);
+  // não atravessa parede nem móvel: freia antes (só na horizontal — subir/descer é livre, a faixa do andar segura)
+  const vh = Math.hypot(d.vel.x, d.vel.z);
+  if (vh > 0.001) {
+    _passo.set(d.vel.x / vh, 0, d.vel.z / vh);
+    if (obstaculo(d.pos, _passo, vh * dt + DRONE.folga) < vh * dt + DRONE.folga) {
+      d.vel.x = d.vel.z = 0;
+      if (d.alvo && Math.hypot(d.alvo.x - d.pos.x, d.alvo.z - d.pos.z) > 0.2) d.alvo = null;
+    }
   }
+  d.pos.addScaledVector(d.vel, dt);
   const R = d.andar && projeto.B ? projeto.B : projeto.A;
   d.pos.x = limitarEntre(d.pos.x, R.x0 - 2.5, R.x1 + 2.5);
   d.pos.z = limitarEntre(d.pos.z, R.z0 - 2.5, R.z1 + 2.5);
@@ -845,7 +968,7 @@ function quadroDrone(t) {
   const n = Math.max(1, Math.ceil(total / 0.03));
   let foraDaFaixa = false;
   for (let k = 0; k < n; k++) foraDaFaixa = fisicaDrone(d, total / n);
-  const ativo = d.arrastando || d.alvo || d.vel.length() > 0.03 || foraDaFaixa || Math.abs(d.vYaw) > 0.01 || Math.abs(d.vPitch) > 0.01 || Math.abs(d.roll) > 0.003 || Math.abs(d.embique) > 0.003;
+  const ativo = d.arrastando || d.joy || d.subir || d.alvo || d.vel.length() > 0.03 || foraDaFaixa || Math.abs(d.vYaw) > 0.01 || Math.abs(d.vPitch) > 0.01 || Math.abs(d.roll) > 0.003 || Math.abs(d.embique) > 0.003;
   pDesenhado = -1;
   desenhar(!ativo); // nítido (HD) quando o drone para no ar
   if (ativo) requestAnimationFrame(quadroDrone);
@@ -1056,7 +1179,7 @@ function aplicar() {
   // câmera dentro da casa: some o que ficar colado na lente (bonequinhos, pilares, árvores)
   if (interior) {
     for (const m of pecas) {
-      if (m.visible && m.userData.parede === undefined && (m.userData.jardim || m.position.distanceTo(camera.position) < (passeio ? 1.2 : 2.6))) m.visible = false;
+      if (m.visible && m.userData.jardim && m.position.distanceTo(camera.position) < 1.6) m.visible = false;
     }
   }
 
@@ -1073,7 +1196,13 @@ function aplicar() {
   mats.pintura.opacity = tinta;
   mats.pintura.transparent = tinta < 0.999;
   mats.pintura.depthWrite = tinta > 0.5;
-  mats.vidro.emissiveIntensity = 0.55 * suave(faixa(p, 0.9, 1));
+  mats.vidro.emissiveIntensity = interior ? 0 : 0.55 * suave(faixa(p, 0.9, 1));
+  // casa aberta: móveis e a paisagem aparecem, o vidro fica claro (vê o jardim lá fora) e o fundo vira céu
+  if (mobilia) mobilia.visible = !!interior;
+  if (paisagem) paisagem.visible = !!interior;
+  mats.vidro.opacity = interior ? 0.12 : 0.5;
+  mats.vidro.color.set(interior ? "#dfeef3" : "#2b3a44");
+  cena.background = interior ? ceu : null;
 }
 
 /* ---------- HD: leve enquanto rola, nítido quando para ---------- */
@@ -1170,6 +1299,7 @@ async function iniciar(canvas) {
   renderer.outputColorSpace = SRGBColorSpace;
   if (nivel.sombra) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFSoftShadowMap; }
   cena = new Scene();
+  ceu = texCeu();
   camera = new PerspectiveCamera(26, 1, 1, 200); // lente "fechada": perspectiva suave de maquete fotografada
   await respirar();
   if (nivel.ambiente) {
@@ -1260,10 +1390,11 @@ girar(dx, dy = 0, dtMs = 16) {
       if (!passeio) return;
       passeio.arrastando = true;
       passeio.vYaw = passeio.vPitch = 0; // enquanto o dedo está na tela, quem gira é o dedo
-      passeio.yaw -= dx * 0.005;
-      passeio.pitch = limitarEntre(passeio.pitch + dy * 0.004, -0.85, 0.75);
+      // "pega a cena": a vista vai pro lado OPOSTO do dedo (arrasta pra direita = olha pra esquerda), 360° em volta
+      passeio.yaw += dx * 0.005;
+      passeio.pitch = limitarEntre(passeio.pitch + dy * 0.004, -1.35, 1.35);
       // a velocidade do dedo fica guardada pra inércia ao soltar
-      passeio.ultimoVYaw = (-dx * 0.005) / dts;
+      passeio.ultimoVYaw = (dx * 0.005) / dts;
       passeio.ultimoVPitch = (dy * 0.004) / dts;
       acordarDrone();
       return;
@@ -1314,6 +1445,21 @@ girar(dx, dy = 0, dtMs = 16) {
     passeio.vel.z += (Math.cos(yaw) * frente + Math.sin(yaw) * lado) * 0.9;
     passeio.vel.y += alto * 0.7;
     passeio.vel.clampLength(0, DRONE.maxV);
+    acordarDrone();
+  },
+  /** joystick na tela: x (-1 esquerda .. 1 direita), y (-1 trás .. 1 frente); (0, 0) = soltou */
+  joystick(x, y) {
+    if (!passeio) return;
+    const on = Math.hypot(x, y) > 0.06;
+    passeio.joy = on ? { x, y } : null;
+    if (on) passeio.alvo = null;
+    acordarDrone();
+  },
+  /** botões ▲▼ seguros: +1 sobe, -1 desce, 0 solta */
+  altura(v) {
+    if (!passeio) return;
+    passeio.subir = v || 0;
+    if (v) passeio.alvo = null;
     acordarDrone();
   },
   /** sobe/desce de andar (sobrado e casarão): o drone sobe/desce até o outro andar, no mesmo ponto da planta */

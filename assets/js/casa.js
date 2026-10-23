@@ -8,8 +8,9 @@
  * - "estatica": imagem pronta da casa + etapas em lista, depois do "L". Sem WebGL: a fase da casa sai (seção volta ao "L").
  * Casa pronta: tocar numa parede tira ela e a câmera entra pela abertura (corte mostra o EPS dentro do Blocão).
  * Sempre (depois do voo do Blocão): arrastar o dedo pro lado gira a casa e a pinça aproxima — zoom SÓ no 3D
- * (a página continua sem zoom). Por dentro é um DRONE: entra num arco pela parede aberta; arrastar vira (com inércia),
- * tocar voa até o ponto, pinça acelera pra frente/trás, 2 dedos subindo/descendo = altura, botão troca de andar;
+ * (a página continua sem zoom). Com a casa completa na tela, o dedo na maquete só gira/inclina ela (a página rola pelo texto).
+ * Por dentro é um DRONE: entra num arco pela parede aberta; joystick na tela voa, arrastar olha em 360° (a vista vai pro
+ * lado oposto do dedo, com inércia), tocar voa até o ponto, ▲▼ altura, pinça acelera, botão troca de andar;
  * no computador setas/WASD voam, Q/E viram, R/F sobem/descem, roda acelera; "Sair da casa" (ou Esc) volta.
  * Publica window.ImperioCasa = { pronto(), atualizarAgora() } (usado pela gravação do vídeo).
  */
@@ -63,6 +64,7 @@
     }
     camada.style.setProperty("--ouro", (limitar((p - 0.86) / 0.14)).toFixed(3));
     camada.classList.toggle("casa--pronta", p > 0.88); // igual ao PRONTA do casa3d.js (dá pra tirar parede)
+    camada.classList.toggle("casa--maquete", p > 0.97); // casa completa: o dedo na maquete não rola a página
   }
 
   /** Etapas e ficha do tipo atual (simples tem 5 etapas: não tem 2º andar). */
@@ -125,7 +127,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025n")
+    import("./casa3d.js?v=20261025q")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -139,6 +141,7 @@
           var dentro = e.removidas > 0 || e.dentro;
           camada.classList.toggle("casa--dentro", dentro);
           if (passeioEl) passeioEl.hidden = !dentro;
+          camada.querySelectorAll("[data-casa-joy], [data-casa-altura]").forEach(function (el) { el.hidden = !dentro; });
           atualizarAndar();
           // etiqueta "Dentro do Blocão" presa no corte, quando a câmera termina de entrar (só na entrada)
           if (dentro === estavaDentro) return;
@@ -154,6 +157,7 @@
           if (info) botaoAndar.textContent = info.andar ? "↓ Ir pro térreo" : "↑ Andar de cima";
         }
         ligarToque();
+        ligarJoystick();
         if (botaoAndar) botaoAndar.addEventListener("click", function () { C3.trocarAndar(); atualizarAndar(); if (corte) corte.hidden = true; });
         var rec = camada.querySelector("[data-casa-recolocar]");
         if (rec) rec.addEventListener("click", function () { C3.recolocar(); });
@@ -202,6 +206,8 @@
     var pts = {};          // dedos/mouse na tela: id → { x, y }
     var x0 = 0, y0 = 0, xa = 0, ya = 0, ta = 0, girando = false, vertical = false, pinca = false, distA = 0, cyA = 0, tipoPt = "";
     var dentro = function () { return camada.classList.contains("casa--dentro"); };
+    // maquete pronta na tela: o dedo mexe SÓ na maquete (gira e inclina), a página não rola por cima dela
+    var maquete = function () { return camada.classList.contains("casa--maquete"); };
     var nPts = function () { return Object.keys(pts).length; };
     function centroY() {
       var l = Object.keys(pts).map(function (k) { return pts[k].y; });
@@ -233,11 +239,11 @@
       var dx = e.clientX - x0, dy = e.clientY - y0;
       if (!girando && !vertical && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
         // por dentro qualquer arrasto vira o olhar; por fora, na vertical a página rola (a obra anda)
-        if (dentro() || tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true; else vertical = true;
+        if (dentro() || maquete() || tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true; else vertical = true;
         if (girando) camada.classList.add("casa--girando");
       }
       if (girando) {
-        C3.girar(e.clientX - xa, dentro() || tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
+        C3.girar(e.clientX - xa, dentro() || maquete() || tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
         if (dentro()) requestAnimationFrame(posicionarCorte); // a etiqueta acompanha (ou some se sair da tela)
       }
       xa = e.clientX; ya = e.clientY; ta = e.timeStamp;
@@ -264,6 +270,37 @@
       C3.pinca(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
       if (corte) corte.hidden = true;
     }, { passive: false });
+  }
+
+  /** Joystick do drone (canto de baixo) e botões ▲▼ de altura (segurar) — só com a casa aberta. */
+  function ligarJoystick() {
+    var joy = camada.querySelector("[data-casa-joy]");
+    var bolinha = joy && joy.querySelector(".casa__joy-bola");
+    if (joy) {
+      var id = null;
+      var mover = function (e) {
+        var r = joy.getBoundingClientRect();
+        var raio = r.width / 2;
+        var x = (e.clientX - (r.left + raio)) / raio;
+        var y = (e.clientY - (r.top + raio)) / raio;
+        var l = Math.hypot(x, y);
+        if (l > 1) { x /= l; y /= l; }
+        bolinha.style.transform = "translate(" + (x * raio * 0.55).toFixed(1) + "px," + (y * raio * 0.55).toFixed(1) + "px)";
+        C3.joystick(x, -y); // pra cima = pra frente
+      };
+      joy.addEventListener("pointerdown", function (e) { id = e.pointerId; try { joy.setPointerCapture(id); } catch (er) { /* sem captura */ } mover(e); e.stopPropagation(); });
+      joy.addEventListener("pointermove", function (e) { if (e.pointerId === id) mover(e); });
+      var soltarJoy = function (e) { if (e.pointerId !== id) return; id = null; bolinha.style.transform = ""; C3.joystick(0, 0); };
+      joy.addEventListener("pointerup", soltarJoy);
+      joy.addEventListener("pointercancel", soltarJoy);
+    }
+    [["[data-casa-subir]", 1], ["[data-casa-descer]", -1]].forEach(function (par) {
+      var b = camada.querySelector(par[0]);
+      if (!b) return;
+      b.addEventListener("pointerdown", function (e) { try { b.setPointerCapture(e.pointerId); } catch (er) { /* sem captura */ } C3.altura(par[1]); });
+      ["pointerup", "pointercancel", "pointerleave"].forEach(function (t) { b.addEventListener(t, function () { C3.altura(0); }); });
+      b.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    });
   }
 
   /** Nível "estatica": os botões trocam a imagem pronta de cada casa. */

@@ -268,6 +268,9 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.click('[data-casa-tipo="simples"]');
   await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(5);
   await expect(page.locator("[data-casa-ficha]")).toContainText("49 m²");
+  // casa completa na tela: o dedo na maquete mexe só nela (a página não rola por cima)
+  await expect(page.locator("[data-casa]")).toHaveClass(/casa--maquete/);
+  expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("none");
   // paredes internas (também de Blocão) em todas as casas
   expect(await page.evaluate(() => window.ImperioCasa3D.internas())).toBeGreaterThan(0);
   // arrastar pro lado gira a casa (e não tira parede)
@@ -291,6 +294,12 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect(page.locator("[data-casa-passeio]")).toBeVisible();
   expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("none");
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.passeioInfo()), { timeout: 10000 }).not.toBeNull();
+  // joystick e altura na tela; o joystick faz o drone voar
+  await expect(page.locator("[data-casa-joy]")).toBeVisible();
+  await expect(page.locator("[data-casa-altura]")).toBeVisible();
+  await page.evaluate(() => window.ImperioCasa3D.joystick(0, 1));
+  expect(await page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando)).toBe(true);
+  await page.evaluate(() => window.ImperioCasa3D.joystick(0, 0));
   // modo drone: tocar voa até o ponto (com inércia) e ele para sozinho no ar
   await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth * 0.5, innerHeight * 0.7));
   expect(await page.evaluate(() => window.ImperioCasa3D.passeioInfo().voando)).toBe(true);

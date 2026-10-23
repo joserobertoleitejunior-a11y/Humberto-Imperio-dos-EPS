@@ -51,9 +51,9 @@ o "L" (mesmos 540vh de rolagem de antes, `data-jornada-l="540"`) e, em seguida, 
 as fichas e botões saem, a camada da casa esmaece por cima e o bloco da casa começa **exatamente onde o Blocão estava**
 (mesmo ponto, tamanho e ângulo — `ImperioCena.alvoFinal()`); ele vai pro canto da obra e vira o 1º bloco. Depois:
 **3 maquetes em tamanho real** (botões "Casa simples / Casa média / Casarão"; a rolagem monta a escolhida):
-- Casa simples: térrea 6,5 × 7,5 m, ≈ 49 m², varandinha — 239 Blocões, 5 etapas (sem 2º andar)
-- Casa média: sobrado 9 × 7 m, ≈ 125 m², varanda embaixo e em cima — 554 Blocões
-- Casarão: 15 × 10 m, ≈ 285 m², panos de vidro, varanda larga, porta pivotante, painel de pedra e piscina — 670 Blocões
+- Casa simples: térrea 6,5 × 7,5 m, ≈ 49 m², varandinha, banheiro e garagem — 266 Blocões, 5 etapas (sem 2º andar)
+- Casa média: sobrado 9 × 7 m, ≈ 125 m², varanda embaixo e em cima, escada, lavabo e banheiro — 586 Blocões
+- Casarão: 15 × 10 m, ≈ 285 m², panos de vidro, varanda larga, porta pivotante, painel de pedra, piscina, escada e 3 banheiros — 745 Blocões
 Fiada por fiada → laje/varanda → 2º andar → platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim e bonequinhos.
 HD: enquanto rola desenha leve; parado ~0,16 s refaz em alta resolução (PC/celular bom até 2–2,5×, com superamostragem).
 "estatica": imagem pronta de cada tipo (`assets/img/casa-simples|media|casarao.webp`), trocada pelos mesmos botões.
@@ -67,12 +67,26 @@ normal. No mouse, arrastar também inclina. Dentro da casa, arrastar desliza a c
 **Modo drone por dentro** (depois de tirar uma parede): a câmera entra num ARCO pela abertura (sobe, faz a curva
 inclinada e mergulha) e vira um drone, com física de verdade (`quadroDrone` em `casa3d.js`, em tempo real com
 subpassos — num celular lento o voo dura o mesmo): inércia ao acelerar, frear e girar; tomba pro lado na curva e
-embica pra frente ao acelerar; flutua de leve enquanto voa; não atravessa parede (freia 55 cm antes).
-Gestos (a tela toda vai pro 3D: `touch-action: none` — a página não rola nem dá zoom): arrastar = virar (solta e ainda
-gira um pouco); tocar = voar até o ponto, virando o nariz pro rumo; pinça = acelerar pra frente/trás; 2 dedos subindo
-/descendo = altura; botão "↑ Andar de cima / ↓ Ir pro térreo" = sobe/desce voando. Computador: setas/WASD voam, Q/E
-viram, R/F sobem/descem, roda acelera, Esc sai. "↺ Sair da casa" volta em arco pra vista de fora.
-Por dentro: piso de madeira em cada andar e paredes internas com tinta areia (as externas ficam brancas).
+embica pra frente ao acelerar; flutua de leve enquanto voa; não atravessa parede nem móvel (freia 55 cm antes).
+Controles (a tela toda vai pro 3D: `touch-action: none` — a página não rola nem dá zoom):
+- JOYSTICK na tela (embaixo à esquerda) = voar pra frente/trás e de lado; ▲▼ (segurar) = subir/descer;
+- arrastar no resto da tela = olhar em 360° — a vista vai pro lado OPOSTO do dedo ("pega a cena"), com inércia;
+- tocar = voar até o ponto, virando o nariz pro rumo; pinça = acelerar; botão "↑ Andar de cima / ↓ Ir pro térreo";
+- computador: setas/WASD voam, Q/E viram, R/F sobem/descem, roda acelera, Esc sai. "↺ Sair da casa" volta em arco.
+
+**Interior de projeto real** (`assets/js/casa-interior.js`, só aparece com a casa aberta): cada casa tem `mobilia`,
+`quadros` e `luzes` em `PROJETOS` — salas com sofá, rack e TV, tapete e mesa de centro; mesa de jantar com cadeiras;
+cozinha com bancada, pia, cooktop, micro-ondas, armários, geladeira inox (ilha no casarão), lavanderia; quartos com
+cama, criados com abajur, guarda-roupa, escrivaninha; banheiros com vaso, pia com espelho e box de vidro; estantes,
+poltronas, plantas, quadros pintados na hora (canvas) e luminárias de teto. Portas internas com batente e folha aberta.
+Piso de madeira em cada andar e paredes internas com tinta areia.
+**Escada** (sobrado e casarão): degraus de concreto com piso de madeira e guarda-corpo de vidro; a laje e o piso de
+cima têm o vão da escada (`furo`) com guarda-corpo em volta (`guarda`).
+**Paisagem das janelas** (`cenario()`, só com a casa aberta): gramado até o horizonte, céu em degradê, morros em 2
+camadas, 70 árvores (instanciadas), casas vizinhas, rua com faixa e calçadas, canteiros floridos; o vidro fica claro.
+**Garagem coberta com carro** em cada casa (aparece na maquete também).
+**Maquete completa na tela** (`casa--maquete`, a partir de 97% da obra): o dedo na maquete só gira e inclina ela —
+a página não rola por cima (rola pelo texto); antes disso a rolagem continua montando a casa.
 **Zoom só no 3D**: por fora, a pinça (ou Ctrl + roda / pinça do touchpad) aproxima e afasta a maquete; o giro por fora também tem inércia.
 
 **Paredes móveis**: com a casa de pé (a partir de 88% da obra), tocar numa parede externa tira ela (desliza pra fora e
