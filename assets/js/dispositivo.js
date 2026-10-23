@@ -16,8 +16,9 @@
   var toque = (nav.maxTouchPoints || 0) > 0;
   var reduzir = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var nivel = "media";
-  if (reduzir || con.saveData === true || /(^|-)2g$/.test(con.effectiveType || "") || (mem && mem <= 2)) nivel = "estatica";
-  else if ((mem && mem <= 4) || (nucleos && nucleos <= 4)) nivel = "baixa";
+  // memória: o navegador arredonda pra baixo (celular de 6 GB informa 4) — "fraco" só com ≤ 2 GB ou ≤ 4 núcleos
+  if (reduzir || con.saveData === true || /(^|-)2g$/.test(con.effectiveType || "") || (mem && mem < 2)) nivel = "estatica";
+  else if ((mem && mem <= 2) || (nucleos && nucleos <= 4)) nivel = "baixa";
   else if (!toque && window.innerWidth >= 1100 && nucleos >= 8 && (!mem || mem >= 8)) nivel = "alta";
   try {
     var busca = new URLSearchParams(location.search);

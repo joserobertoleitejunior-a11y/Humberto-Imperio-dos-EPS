@@ -304,6 +304,9 @@ main { position: relative; z-index: 2; }
 .jornada__ancora-casa { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; }
 .casa { position: absolute; inset: 0; z-index: 6; opacity: 0; visibility: hidden; pointer-events: none; --ouro: 0; }
 .fase-casa .casa { visibility: visible; pointer-events: auto; }
+/* o Blocão do site voa POR CIMA da maquete até o canto da obra (sem cópia); no celular o canvas dele ocupa a tela */
+.fase-casa .palco3d { z-index: 7; transition: none; }
+.fase-casa .jornada__fixo > .palco3d--local { height: 100%; }
 .fase-casa .controles, .fase-casa .jornada__janela, .fase-casa .jornada__h, .fase-casa .jornada__toque, .fase-casa .jornada__rotulos {
   opacity: 0 !important; visibility: hidden !important; pointer-events: none; }
 .casa__ceu { position: absolute; inset: 0; background: linear-gradient(180deg, #dfe6ea 0%, #eef0ec 46%, var(--cal) 78%); }

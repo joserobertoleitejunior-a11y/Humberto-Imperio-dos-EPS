@@ -117,7 +117,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261024a")
+    import("./casa3d.js?v=20261024d")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -193,6 +193,8 @@
   });
 
   window.ImperioCasa = {
+    /** voo do Blocão do site até a obra (lido pela cena do bloco a cada quadro da fase da casa) */
+    voo: function () { return C3 && C3.voo ? C3.voo() : null; },
     /** troca o tipo de casa (vídeo e testes) */
     tipo: function (id) { escolherTipo(id); },
     pronto: function () { return parado || !camada || camada.hidden || camada.classList.contains("casa--sem3d") || !!C3; },

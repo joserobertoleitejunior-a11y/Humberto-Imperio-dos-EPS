@@ -12,7 +12,10 @@ const FONTES = `@font-face{font-family:'Archivo Black';src:url(http://localhost:
   const ffmpeg = execSync('python3 -c "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())"').toString().trim();
   // WebGL por software (SwiftShader): o Blocão 3D renderiza igual em qualquer máquina, sem GPU
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'], ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}) });
-  const ctx = await b.newContext({ viewport: { width: 1080, height: 1920 } });
+  // NITIDEZ=2 (padrão): grava como tela Retina (2160×3840) e reduz pra 1080×1920 no final — o site dentro do
+  // celular é ampliado 1,6× no vídeo e, gravado em 1×, ficava desfocado
+  const NITIDEZ = +(process.env.NITIDEZ || 2);
+  const ctx = await b.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: NITIDEZ });
   // sem internet na máquina de render: fontes do Google vêm da pasta local e o Firebase é simulado
   await ctx.route(/fonts\.googleapis\.com/, r => r.fulfill({ status: 200, contentType: 'text/css', body: FONTES }));
   await ctx.route(/fonts\.gstatic\.com/, r => r.abort());
@@ -25,7 +28,7 @@ const FONTES = `@font-face{font-family:'Archivo Black';src:url(http://localhost:
   await p.evaluate('document.fonts.ready');
   const args = ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-'];
   if (musica) args.push('-i', musica);
-  args.push('-map', '0:v', ...(musica ? ['-map', '1:a'] : []), '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', String(FPS),
+  args.push('-map', '0:v', ...(musica ? ['-map', '1:a'] : []), '-vf', 'scale=1080:1920:flags=lanczos', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS),
     ...(musica ? ['-c:a', 'aac', '-b:a', '192k'] : []), '-t', dur, '-movflags', '+faststart', saida);
   const soAmostras = !!process.env.SO_AMOSTRAS; // só gera os quadros de amostra (teste rápido, sem MP4)
   const ff = soAmostras ? null : spawn(ffmpeg, args, { stdio: ['pipe', 'inherit', 'inherit'] });

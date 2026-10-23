@@ -26,11 +26,12 @@ import {
   WebGLRenderer,
 } from "../vendor/three-imperio.min.js";
 
-// hd = resolução parada (nítida); leve = enquanto rola. min 1.5 no PC/celular bom = superamostragem (bordas lisas)
+// MÁXIMA RESOLUÇÃO: parado desenha na resolução nativa da tela (até 3×; min > 1 = superamostragem em tela comum).
+// Enquanto rola desenha leve (sem travar) e, parado ~0,16 s, refaz no máximo — em qualquer aparelho.
 const NIVEIS = {
-  alta: { hd: 2.5, leve: 1.25, min: 1.5, tex: 1024, sombra: true, mapa: 2048, aa: true, ambiente: true },
-  media: { hd: 2, leve: 1, min: 1.5, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
-  baixa: { hd: 1, leve: 1, min: 1, tex: 128, sombra: false, mapa: 512, aa: false, ambiente: false },
+  alta: { hd: 3, leve: 2, min: 2, tex: 2048, sombra: true, mapa: 4096, aa: true, ambiente: true },
+  media: { hd: 3, leve: 2, min: 2, tex: 1024, sombra: false, mapa: 1024, aa: true, ambiente: true },
+  baixa: { hd: 3, leve: 1.5, min: 1.5, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
 };
 
 const BL = 1.0;    // comprimento do bloco
@@ -58,7 +59,7 @@ function telaTex(tam, desenhar) {
   const t = new CanvasTexture(c);
   t.wrapS = t.wrapT = RepeatWrapping;
   t.colorSpace = SRGBColorSpace;
-  t.anisotropy = 4;
+  t.anisotropy = 16; // a placa limita ao máximo que suporta
   return t;
 }
 
@@ -311,6 +312,10 @@ let guia;
 let primeiro = 0;
 let tipoAtual = "media";
 let alvoTela = null;      // { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" (px na tela)
+let blocoDoSite = false;  // true = o PRÓPRIO Blocão do site (bloco3d) faz o voo; a cópia daqui não aparece
+let camAng = 0;
+let camElev = 0;
+const _proj = new Vector3();
 const _o = new Object3D();
 const _ini = new Object3D();
 const _fim = new Object3D();
@@ -537,6 +542,8 @@ function posicionarCamera() {
   const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p));
   const ang = MathUtils.lerp(-0.6, 0.45, suave(p));
   const elev = MathUtils.lerp(0.5, 0.36, suave(p)); // começa mais de cima (vê os blocos assentando) e desce
+  camAng = ang;
+  camElev = elev;
   camera.position.set(centro.x + Math.sin(ang) * Math.cos(elev) * dist, centro.y + Math.sin(elev) * dist, centro.z + Math.cos(ang) * Math.cos(elev) * dist);
   camera.far = dist * 3;
   camera.lookAt(centro);
@@ -550,7 +557,7 @@ function posicionarCamera() {
  */
 function moverGuia() {
   const e = suave(faixa(p, 0, 0.12));
-  guia.visible = e < 1;
+  guia.visible = e < 1 && !blocoDoSite;
   if (!guia.visible) return;
   const el = renderer.domElement;
   const w = el.clientWidth;
@@ -723,7 +730,7 @@ async function iniciar(canvas) {
     pm.dispose();
     await respirar();
   }
-  cena.add(new HemisphereLight("#fff6e8", "#7d8a66", nivel.ambiente ? 0.9 : 1.6));
+  cena.add(new HemisphereLight("#fff6e8", "#b9b2a3", nivel.ambiente ? 0.9 : 1.6)); // chão neutro: nada de tom esverdeado nas paredes
   const sol = new DirectionalLight("#ffe7c4", 2.4);
   sol.position.set(14, 22, 12);
   if (nivel.sombra) {
@@ -770,6 +777,35 @@ window.ImperioCasa3D = {
     if (alvoTela && alvoTela.cx === a.cx && alvoTela.cy === a.cy && alvoTela.larg === a.larg) return;
     alvoTela = a;
     pDesenhado = -1;
+  },
+  /**
+   * Voo do Blocão do site até o canto da obra (quem desenha o bloco voando é o bloco3d, sem cópia → sem "fantasma"):
+   * devolve { e: 0..1 do voo, alvo: { cx, cy, larg, giro, inclinar } } = onde o 1º bloco da casa está NA TELA agora
+   * (px, mesmo sistema do bloco3d), já com a câmera da casa na posição desta rolagem.
+   */
+  voo() {
+    if (!renderer) return null;
+    blocoDoSite = true;
+    posicionarCamera();
+    camera.updateMatrixWorld();
+    const el = renderer.domElement;
+    const w = el.clientWidth;
+    const h = el.clientHeight;
+    const bl = lista[primeiro];
+    _proj.set(bl.x, bl.y, bl.z);
+    camera.getWorldDirection(_dir);
+    const d = Math.max(0.1, _raio.copy(_proj).sub(camera.position).dot(_dir));
+    _proj.project(camera);
+    const pxPorM = h / (2 * d * Math.tan(MathUtils.degToRad(camera.fov) / 2));
+    // o bloco (girado 0 no mundo) visto pela câmera que gira ang em volta: aparece girado −ang
+    let giro = (bl.girado ? Math.PI / 2 : 0) - camAng;
+    const ini = alvoTela ? alvoTela.giro : -0.5;
+    while (giro - ini > Math.PI / 2) giro -= Math.PI; // a peça é simétrica: gira pelo caminho mais curto
+    while (giro - ini < -Math.PI / 2) giro += Math.PI;
+    return {
+      e: suave(faixa(p, 0, 0.12)),
+      alvo: { cx: ((_proj.x + 1) / 2) * w, cy: ((1 - _proj.y) / 2) * h, larg: bl.comp * pxPorM, giro, inclinar: camElev - 0.144 },
+    };
   },
   /** fn({ assentados, total }) depois de cada desenho (contador de blocos da seção) */
   aoDesenhar(fn) { ouvinte = fn; },

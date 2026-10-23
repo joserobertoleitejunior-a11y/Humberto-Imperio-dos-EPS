@@ -30,9 +30,9 @@ import {
 // min/max = resolução de desenho em múltiplos da tela. min > 1 faz SUPERAMOSTRAGEM: em tela comum (1×)
 // o bloco é desenhado em 2× e reduzido, o que suaviza as bordas (antes ficavam serrilhadas).
 const NIVEIS = {
-  alta: { min: 2, max: 3, tex: 2048, sombra: true, mapaSombra: 2048, aniso: 16, particulas: 70, antialias: true },
-  media: { min: 1.5, max: 2, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 34, antialias: true },
-  baixa: { min: 1, max: 1.5, tex: 512, sombra: false, mapaSombra: 1024, aniso: 4, particulas: 0, antialias: true },
+  alta: { min: 2, max: 3, tex: 2048, sombra: true, mapaSombra: 4096, aniso: 16, particulas: 70, antialias: true },
+  media: { min: 2, max: 3, tex: 2048, sombra: false, mapaSombra: 1024, aniso: 16, particulas: 34, antialias: true },
+  baixa: { min: 1.5, max: 3, tex: 1024, sombra: false, mapaSombra: 1024, aniso: 8, particulas: 0, antialias: true },
 };
 
 // Medidas em metros. Face do bloco PROVISÓRIA (confirmar com o Vinicius).
@@ -386,7 +386,8 @@ function aplicar() {
     const centro = telaParaMundo(atual.cx, atual.cy);
     const borda = telaParaMundo(atual.cx + atual.larg / 2, atual.cy);
     raiz.position.set(centro.x, centro.y + respiro, 0);
-    raiz.scale.setScalar(Math.max(0.05, (borda.x - centro.x) * 2) / COMPRIMENTO);
+    // mínimo bem pequeno: no voo pra casa o bloco encolhe até o tamanho do 1º bloco da maquete (~20 px)
+    raiz.scale.setScalar(Math.max(0.004, (borda.x - centro.x) * 2) / COMPRIMENTO);
   } else {
     raiz.position.set(0, respiro, 0);
     raiz.scale.setScalar(1);
@@ -607,8 +608,7 @@ function laco(t) {
   // Aparelho engasgando mesmo no modo leve? Reduz o teto da resolução HD e o leve (até 1×).
   if (gasto > 34 && gasto < 250 && ++lentos > 24) {
     lentos = 0;
-    ratioLeve = Math.max(1, ratioLeve - 0.25);
-    ratioHD = Math.max(ratioLeve, ratioHD - 0.5);
+    ratioLeve = Math.max(1, ratioLeve - 0.25); // só o desenho EM MOVIMENTO fica mais leve; parado continua no máximo
     usarRatio(emHD ? ratioHD : ratioLeve);
   }
 }
@@ -631,7 +631,7 @@ function iniciar(canvas) {
   renderer = new WebGLRenderer({ canvas, antialias: nivel.antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: !!window.__gravandoVideo });
   const nativo = window.devicePixelRatio || 1;
   ratioHD = Math.min(nivel.max, Math.max(nivel.min, nativo));
-  ratioLeve = Math.min(ratioHD, Math.max(1, Math.min(nativo, 1.5))); // em movimento: nativa da tela (máx. 1,5×)
+  ratioLeve = Math.min(ratioHD, Math.max(1, Math.min(nativo, nivel === NIVEIS.baixa ? 1.5 : 2))); // em movimento: até 2× (fraco 1,5×)
   renderer.setPixelRatio(ratioHD);
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;

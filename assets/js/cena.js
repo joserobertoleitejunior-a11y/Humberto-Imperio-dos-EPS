@@ -108,12 +108,41 @@
     if (!celular) { casa = null; document.body.appendChild(canvas); B.redimensionar(); }
   }
 
+  /**
+   * Fase da casa: o PRÓPRIO Blocão voa (sem cópia → sem "fantasma") do lugar onde terminou o "L" até o canto da
+   * obra, por cima da maquete; quando assenta, some e a casa mostra o 1º bloco no mesmíssimo lugar.
+   * Devolve null fora da fase da casa; { visivel } dentro dela (alvo já ajustado).
+   */
+  function vooDaCasa(j, alvo) {
+    if (!j || !(j.casa > 0)) return null;
+    var v = window.ImperioCasa && window.ImperioCasa.voo ? window.ImperioCasa.voo() : null;
+    if (!v) return { visivel: j.casa < 0.06 }; // casa ainda carregando: o bloco só sai de cena
+    ["cx", "cy", "larg", "giro", "inclinar"].forEach(function (k) { alvo[k] = mix(alvo[k], v.alvo[k], v.e); });
+    alvo.separacao = 0;
+    alvo.abertura = 0;
+    alvo.dim0 = alvo.dim1 = alvo.dim2 = 0;
+    alvo.rotulos = 0;
+    return { visivel: v.e < 1 };
+  }
+
+  var ultimaFaseCasa = false;
+  /** a fase da casa muda o tamanho do canvas no celular (ocupa a tela toda pra o bloco voar até a obra) */
+  function conferirFaseCasa(j) {
+    var f = !!(j && j.casa > 0);
+    if (f === ultimaFaseCasa) return;
+    ultimaFaseCasa = f;
+    B.redimensionar();
+  }
+
   function atualizarCelular(j) {
     var naJornada = j && j.dentro && j.entrada > 0 && !palcoVisivel;
     morarEm(naJornada ? fixo : palco);
     var alvo;
+    var voo = null;
     if (naJornada) {
       alvo = alvoJornada(j);  // coordenadas da parte fixa = da tela quando ela gruda no topo
+      conferirFaseCasa(j);
+      voo = vooDaCasa(j, alvo);
     } else {
       if (!tamPalco) tamPalco = { pw: palco.offsetWidth, ph: palco.offsetHeight, cw: canvas.clientWidth, ch: canvas.clientHeight };
       var t = tamPalco;
@@ -131,12 +160,13 @@
     }
     var opRotulos = naJornada ? alvo.rotulos : 0;
     if (rotulos && opRotulos !== ultimaOpRot) { ultimaOpRot = opRotulos; rotulos.style.opacity = opRotulos; }
-    var visivel = naJornada ? !(j && j.casa > 0.06) : palcoVisivel; // na fase da casa quem desenha é a casa
+    var visivel = naJornada ? (voo ? voo.visivel : true) : palcoVisivel;
     if (visivel !== ultimaVis) { ultimaVis = visivel; canvas.style.opacity = visivel ? 1 : 0; }
     B.pausar(!visivel);
     B.respirar(!naJornada);
     delete alvo.rotulos;
-    B.estado(alvo);
+    if (voo && visivel) B.instantaneo(alvo); // voo preso à rolagem, sem atraso: assenta exatamente no lugar
+    else B.estado(alvo);
   }
 
   function atualizar(j) {
@@ -154,6 +184,8 @@
       opRotulos = jj.rotulos * e;
     }
     alvo.espessura = espessuraEscolhida();
+    var voo = dentroJ ? vooDaCasa(j, alvo) : null;
+    if (voo) opRotulos = 0;
     // área de toque da jornada acompanha o bloco
     if (areaToque) {
       var chave = Math.round(alvo.cx) + "," + Math.round(alvo.cy) + "," + Math.round(alvo.larg);
@@ -165,11 +197,12 @@
       }
     }
     if (rotulos && opRotulos !== ultimaOpRot) { ultimaOpRot = opRotulos; rotulos.style.opacity = opRotulos; }
-    var visivel = heroVisivel || (dentroJ && !(j && j.casa > 0.06)); // na fase da casa quem desenha é a casa
+    var visivel = heroVisivel || (dentroJ && (voo ? voo.visivel : true));
     if (visivel !== ultimaVis) { ultimaVis = visivel; canvas.style.opacity = visivel ? 1 : 0; }
     B.pausar(!visivel);
     B.respirar(heroVisivel && !dentroJ);
-    B.estado(alvo);
+    if (voo && visivel) B.instantaneo(alvo); // voo preso à rolagem, sem atraso: assenta exatamente no lugar
+    else B.estado(alvo);
   }
 
   /** Etiquetas (concreto / EPS / concreto) presas no topo de cada peça. */
@@ -203,7 +236,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261022a")
+    import("./bloco3d.js?v=20261024d")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);
