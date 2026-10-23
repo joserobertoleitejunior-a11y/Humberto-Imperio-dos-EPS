@@ -104,7 +104,7 @@
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "casa__ponto";
-      btn.innerHTML = '<span class="casa__ponto-n">' + (i + 1) + "</span><span>" + q.titulo + "</span>";
+      btn.textContent = q.titulo; // só o texto, sublinhado pela linha preta (sem caixinha)
       btn.addEventListener("click", function (ev) { ev.stopPropagation(); C3.irPonto(q.id); });
       var dot = document.createElement("span");
       dot.className = "casa__ponto-dot";
@@ -112,9 +112,14 @@
       dot.addEventListener("click", function () { C3.irPonto(q.id); });
       var linha = document.createElementNS(SVGNS, "path");
       linhasEl.appendChild(linha);
+      // faixa larga e invisível por cima da linha: tocar em qualquer parte da linha abre a vantagem
+      var toque = document.createElementNS(SVGNS, "path");
+      toque.setAttribute("class", "casa__linha-toque");
+      toque.addEventListener("click", function (ev) { ev.stopPropagation(); C3.irPonto(q.id); });
+      linhasEl.appendChild(toque);
       pontosEl.appendChild(dot);
       pontosEl.appendChild(btn);
-      etiquetas[q.id] = { btn: btn, dot: dot, linha: linha };
+      etiquetas[q.id] = { btn: btn, dot: dot, linha: linha, toque: toque, w: 0, h: 0 };
     });
     var card = camada.querySelector("[data-casa-vantagem]");
     C3.aoPonto(function (e) {
@@ -139,6 +144,12 @@
     e.btn.style.pointerEvents = "none";
     e.dot.style.opacity = 0;
     e.linha.setAttribute("d", "");
+    e.toque.setAttribute("d", "");
+  }
+
+  /** tamanho da etiqueta medido uma vez (ler o layout a cada quadro do giro pesava no celular) */
+  function medir(e) {
+    if (!e.w) { e.w = e.btn.offsetWidth; e.h = e.btn.offsetHeight; }
   }
 
   /** etiquetas em colunas nas margens (celular: dos 2 lados; PC: à direita), sem sobrepor, e a linha até o ponto */
@@ -168,23 +179,30 @@
       var c = cols[lado].sort(function (a, b) { return a.py - b.py; });
       if (!c.length) return;
       var ys = c.map(function (q) { return Math.min(base, Math.max(topo, q.py)); });
-      for (var i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + 42);
+      var hs = c.map(function (q) { medir(etiquetas[q.id]); return etiquetas[q.id].h; });
+      for (var i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + (hs[i - 1] + hs[i]) / 2 + 14); // altura real: nunca sobrepõe
       var sobra = ys[ys.length - 1] - base;
       if (sobra > 0) ys = ys.map(function (y) { return Math.max(topo, y - sobra); });
       c.forEach(function (q, k) {
         var e = etiquetas[q.id];
-        var bw = e.btn.offsetWidth;
-        var bh = e.btn.offsetHeight;
+        var bw = e.w;
+        var bh = e.h;
         var x = lado === "e" ? 10 : W - 10 - bw;
         var y = ys[k];
         e.btn.style.transform = "translate(" + x.toFixed(1) + "px," + (y - bh / 2).toFixed(1) + "px)";
+        e.btn.classList.toggle("casa__ponto--d", lado === "d");
         e.btn.style.opacity = 1;
         e.btn.style.pointerEvents = "auto";
         e.dot.style.transform = "translate(" + q.px.toFixed(1) + "px," + q.py.toFixed(1) + "px)";
         e.dot.style.opacity = 1;
+        // a linha sublinha o texto inteiro e segue até o ponto da casa
+        var yl = y + bh / 2;
+        var de = lado === "e" ? x : x + bw;
         var ax = lado === "e" ? x + bw : x;
-        var cx = lado === "e" ? ax + 14 : ax - 14;
-        e.linha.setAttribute("d", "M" + ax.toFixed(1) + " " + y.toFixed(1) + " H" + cx.toFixed(1) + " L" + q.px.toFixed(1) + " " + q.py.toFixed(1));
+        var cx = lado === "e" ? ax + 12 : ax - 12;
+        var d = "M" + de.toFixed(1) + " " + yl.toFixed(1) + " H" + cx.toFixed(1) + " L" + q.px.toFixed(1) + " " + q.py.toFixed(1);
+        e.linha.setAttribute("d", d);
+        e.toque.setAttribute("d", d);
       });
     });
   }
@@ -229,7 +247,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261026c")
+    import("./casa3d.js?v=20261027c")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -478,7 +496,9 @@
       });
     }
     if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);
-    window.addEventListener("resize", function () { ultimoQ = -1; ancoraFim = -1; }, { passive: true });
+    var remedir = function () { Object.keys(etiquetas).forEach(function (k) { etiquetas[k].w = 0; }); };
+    window.addEventListener("resize", function () { ultimoQ = -1; ancoraFim = -1; remedir(); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(remedir);
   });
 
   window.ImperioCasa = {

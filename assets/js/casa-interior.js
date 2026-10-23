@@ -516,22 +516,30 @@ export function cenario(base, frente, cxCasa) {
   const troncos = new InstancedMesh(new BoxGeometry(0.22, 1, 0.22), mat("#5b4636", { roughness: 1 }), pos.length);
   const copas = new InstancedMesh(new IcosahedronGeometry(1, 1), M.folha, pos.length);
   const o = new Object3D();
-  pos.forEach(([x, z, s], i) => {
-    o.position.set(x, 1.0 * s, z); o.scale.set(s, 2 * s, s); o.rotation.set(0, 0, 0); o.updateMatrix(); troncos.setMatrixAt(i, o.matrix);
-    o.position.set(x, 2.6 * s, z); o.scale.set(1.4 * s, 1.8 * s, 1.4 * s); o.rotation.set(0, i, 0); o.updateMatrix(); copas.setMatrixAt(i, o.matrix);
+  // a = quanto a árvore está de pé (1) ou recolhida no chão (0): some quando fica entre a câmera e a casa
+  const plantar = (i, a) => {
+    const [x, z, s] = pos[i];
+    const sy = Math.max(0.001, a);
+    o.position.set(x, 1.0 * s * sy, z); o.scale.set(s, 2 * s * sy, s); o.rotation.set(0, 0, 0); o.updateMatrix(); troncos.setMatrixAt(i, o.matrix);
+    o.position.set(x, 2.6 * s * sy, z); o.scale.set(1.4 * s, 1.8 * s * sy, 1.4 * s); o.rotation.set(0, i, 0); o.updateMatrix(); copas.setMatrixAt(i, o.matrix);
+  };
+  pos.forEach((_, i) => {
+    plantar(i, 1);
     copas.setColorAt(i, new Color().setHSL(0.27 + (i % 5) * 0.012, 0.32, 0.3 + (i % 4) * 0.035));
   });
   relevo.add(troncos, copas);
-  // casas vizinhas (dos 2 lados e do outro lado da rua)
-  const vizinhas = [[-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]];
-  vizinhas.forEach(([lado, outra], i) => {
+  // casas vizinhas (dos 2 lados e do outro lado da rua): cada uma fundida à parte, pra poder abaixar sozinha
+  const vidroViz = mat("#3a4a55", { roughness: 0.15 });
+  const vizinhas = [[-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]].map(([lado, outra], i) => {
     const x = cxCasa + lado * (base.x / 2 + 9);
     const z = outra ? zRua + 12 : base.cz - 1;
     const w = 8 + (i % 2) * 2;
     const d = 7;
-    cx(relevo, w, 3.2 + (i % 2) * 2.8, d, M.vizinha, x, (3.2 + (i % 2) * 2.8) / 2, z);
-    cx(relevo, w + 0.6, 0.25, d + 0.6, M.vizinhaTelhado, x, 3.2 + (i % 2) * 2.8 + 0.12, z);
-    for (let k = 0; k < 3; k++) cx(relevo, 1.1, 1.2, 0.05, mat("#3a4a55", { roughness: 0.15 }), x - w / 3 + k * (w / 3), 1.6, z + (outra ? -d / 2 - 0.03 : d / 2 + 0.03));
+    const v = new Group();
+    cx(v, w, 3.2 + (i % 2) * 2.8, d, M.vizinha, x, (3.2 + (i % 2) * 2.8) / 2, z);
+    cx(v, w + 0.6, 0.25, d + 0.6, M.vizinhaTelhado, x, 3.2 + (i % 2) * 2.8 + 0.12, z);
+    for (let k = 0; k < 3; k++) cx(v, 1.1, 1.2, 0.05, vidroViz, x - w / 3 + k * (w / 3), 1.6, z + (outra ? -d / 2 - 0.03 : d / 2 + 0.03));
+    return { g: fundirPorMaterial(v), x, z, r: Math.hypot(w, d) / 2 };
   });
   // canteiros floridos na beira da base
   for (let i = 0; i < 26; i++) {
@@ -544,12 +552,39 @@ export function cenario(base, frente, cxCasa) {
   const fundido = fundirPorMaterial(relevo);
   g.remove(relevo);
   g.add(fundido);
+  vizinhas.forEach((v) => fundido.add(v.g));
   g.traverse((m) => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = false; } });
   /** k = 0..1: céu e gramado aparecem, o resto brota do chão */
   g.userData.surgir = (k) => {
     matChao.opacity = k;
     fundido.scale.y = Math.max(0.001, k);
     fundido.visible = k > 0.01;
+  };
+  /**
+   * vista livre pro drone: o que fica entre a câmera e a casa (vizinha, árvore) abaixa até o chão, e volta
+   * quando a câmera passa — a maquete nunca fica escondida, em nenhum ângulo do giro.
+   * (ux, uz) = direção horizontal do centro da casa até a câmera; k = 0 desliga (tudo de pé)
+   */
+  const cz = base.cz;
+  const meia = Math.hypot(base.x, base.z) / 2;
+  const suav = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const dePe = (x, z, r, ux, uz, k) => {
+    const dx = x - cxCasa;
+    const dz = z - cz;
+    const ao = dx * ux + dz * uz;                 // quanto está pro lado da câmera
+    const lado = Math.abs(dx * uz - dz * ux);     // quanto está fora da linha câmera → casa
+    const bloqueia = (1 - suav(meia + r, meia + r + 6, lado)) * suav(-2, meia * 0.6, ao);
+    return 1 - bloqueia * k;
+  };
+  let ultimo = "";
+  g.userData.vista = (ux, uz, k) => {
+    const chave = `${ux.toFixed(3)},${uz.toFixed(3)},${k.toFixed(2)}`;
+    if (chave === ultimo) return;
+    ultimo = chave;
+    vizinhas.forEach((v) => { v.g.scale.y = Math.max(0.001, dePe(v.x, v.z, v.r, ux, uz, k)); });
+    pos.forEach(([x, z, s], i) => plantar(i, dePe(x, z, 1.4 * s, ux, uz, k)));
+    troncos.instanceMatrix.needsUpdate = true;
+    copas.instanceMatrix.needsUpdate = true;
   };
   return g;
 }

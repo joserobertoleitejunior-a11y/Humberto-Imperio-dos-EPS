@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261026c";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261027c";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -529,6 +529,12 @@ let ouvintePonto = null;
 let extrasProntos = false; // móveis e paisagem: montados num momento ocioso (não pesa na abertura do site)
 const OLHO = 1.5;          // altura da câmera por dentro (m acima do piso)
 let giroVel = 0;           // inércia do giro por fora (rad/s)
+// drone por fora: o dedo move o "alvo" e a câmera persegue suave, inclinando na curva e planando ao soltar
+let giroAlvo = 0;
+let elevAlvo = 0;
+let rollFora = 0;          // inclinação lateral da câmera (rad), como drone fazendo a curva
+let orbitaViva = false;    // loop do drone rodando
+let arrastando = false;    // dedo na tela
 const _ctrl = new Vector3();
 const _a = new Vector3();
 const _b = new Vector3();
@@ -888,6 +894,7 @@ function posicionarCamera() {
   camera.near = modoDentro() ? 0.1 : 1;
   if (paisagem && paisagem.visible) camera.far = Math.max(camera.far, 800); // céu e morros lá longe
   camera.lookAt(alvo);
+  if (!interior && !voo && !foco) rolagemCam += rollFora * suave(faixa(p, 0.12, 0.2));
   if (rolagemCam) camera.rotateZ(rolagemCam); // inclina na curva, como drone
   ultimoAlvo.copy(alvo);
   ultimoOff = off;
@@ -1196,9 +1203,19 @@ function montarPontos() {
     { id: "silencio", p: V((jan.a + jan.b) / 2, CHAO + ((jan.f0 + jan.f1) / 2) * BA, A.z1 + 0.02), n: n(0, 0, 1), dist: 6 },
     { id: "rapida", p: V(A.x1 + 0.02, CHAO + 0.9, (A.z0 + A.z1) / 2 - 0.8), n: n(1, 0, 0), dist: 6 },
     { id: "leve", p: V(A.x1 + 0.15, CHAO + PE + LAJE / 2, A.z0 + 1.2), n: n(1, 0, 0), dist: 6.5 },
-    { id: "acabamento", p: V(R.x1 + 0.02, topo - 1.1, (R.z0 + R.z1) / 2 + 0.9), n: n(1, 0, 0), dist: 6 },
+    { id: "acabamento", p: V(R.x1 + 0.02, topo - 1.1, (R.z0 + R.z1) / 2 + 0.9), n: n(1, 0, 0), dist: 6, caixa: R },
     { id: "mofo", p: V(A.x0 + 1.0, CHAO + 0.25, A.z1 + 0.02), n: n(0, 0, 1), dist: 5 },
-  ].map((q) => ({ ...q, titulo: VANTAGENS[q.id][0], texto: VANTAGENS[q.id][1] }));
+  ].map((q) => {
+    // o mesmo ponto espelhado do outro lado da casa: girando 360°, as vantagens nunca somem da tela
+    const c = q.caixa || A;
+    const espelho = { p: V(c.x0 + c.x1 - q.p.x, q.p.y, c.z0 + c.z1 - q.p.z), n: V(-q.n.x, q.n.y, -q.n.z) };
+    if (q.parede !== undefined) {
+      const m0 = muros.find((m) => m.id === q.parede);
+      const oposta = m0 && muros.find((m) => m.andar === m0.andar && !m.interna && m.eixo === m0.eixo && m.fora === -m0.fora);
+      if (oposta) espelho.parede = oposta.id;
+    }
+    return { ...q, cands: [{ p: q.p, n: q.n, parede: q.parede }, espelho], titulo: VANTAGENS[q.id][0], texto: VANTAGENS[q.id][1] };
+  });
 }
 
 function avisarPonto() {
@@ -1268,6 +1285,13 @@ function pontosNaTela() {
   const r = renderer.domElement.getBoundingClientRect();
   camera.updateMatrixWorld();
   return pontos.map((q) => {
+    // usa o lado do ponto que está virado pra câmera (com folga, pra não ficar trocando no meio do giro)
+    if (!foco && !voo) {
+      const nota = (c) => _olho.copy(camera.position).sub(c.p).normalize().dot(c.n);
+      const atual = q.cands.find((c) => c.p === q.p);
+      const outro = q.cands.find((c) => c !== atual);
+      if (outro && nota(outro) > nota(atual) + 0.25) { q.p = outro.p; q.n = outro.n; q.parede = outro.parede; }
+    }
     _olho.copy(camera.position).sub(q.p).normalize();
     _tela.copy(q.p).project(camera);
     const frente = q.n.dot(_olho) > 0.2 && _tela.z < 1;
@@ -1275,18 +1299,38 @@ function pontosNaTela() {
   });
 }
 
-/** giro de fora com inércia (o dedo solta e a maquete ainda gira um pouco, desacelerando) */
+/** drone por fora: a câmera persegue o alvo do dedo (mola), inclina na curva e, ao soltar, plana e vai parando */
 let tGiro = 0;
-function quadroGiro(t) {
+function quadroOrbita(t) {
   const dt = Math.min(0.05, tGiro ? (t - tGiro) / 1000 : 0.016);
   tGiro = t;
-  giroUser += giroVel * dt;
-  giroVel *= Math.exp(-dt / 0.35);
+  if (interior || tour) { orbitaViva = false; tGiro = 0; rollFora = 0; return; }
+  if (!arrastando) {
+    giroAlvo += giroVel * dt; // planando: o embalo do dedo continua e vai perdendo força
+    giroVel *= Math.exp(-dt / 0.5);
+  }
+  const k = 1 - Math.exp(-dt / 0.14);
+  const antes = giroUser;
+  giroUser += (giroAlvo - giroUser) * k;
+  elevUser += (elevAlvo - elevUser) * k;
+  const w = (giroUser - antes) / Math.max(dt, 0.001); // velocidade angular real da câmera
+  rollFora += (limitarEntre(-w * 0.06, -0.13, 0.13) - rollFora) * (1 - Math.exp(-dt / 0.18));
+  const parado = !arrastando && Math.abs(giroVel) < 0.02 && Math.abs(giroAlvo - giroUser) < 0.0005 && Math.abs(elevAlvo - elevUser) < 0.0005 && Math.abs(rollFora) < 0.002;
   pDesenhado = -1;
-  const ativo = Math.abs(giroVel) > 0.02 && !interior;
-  desenhar(!ativo);
-  if (ativo) requestAnimationFrame(quadroGiro);
-  else { giroVel = 0; tGiro = 0; }
+  if (parado) {
+    giroUser = giroAlvo; elevUser = elevAlvo; rollFora = 0; giroVel = 0;
+    orbitaViva = false; tGiro = 0;
+    desenhar(true);
+    return;
+  }
+  desenhar(false);
+  requestAnimationFrame(quadroOrbita);
+}
+function animarOrbita() {
+  if (orbitaViva || window.__gravandoVideo) return;
+  orbitaViva = true;
+  tGiro = 0;
+  requestAnimationFrame(quadroOrbita);
 }
 
 /** móveis e paisagem: montados uma vez por casa, num momento ocioso (ou na hora, se precisar já) */
@@ -1515,6 +1559,13 @@ function aplicar() {
   if (paisagem) {
     paisagem.visible = kP > 0;
     if (kP > 0) paisagem.userData.surgir(kP);
+    // por fora: o que ficar entre o drone e a maquete abaixa (por dentro, tudo de pé pela janela)
+    if (kP > 0) {
+      const vx = camera.position.x - centro.x;
+      const vz = camera.position.z - centro.z;
+      const n = Math.hypot(vx, vz) || 1;
+      paisagem.userData.vista(vx / n, vz / n, dentro ? 0 : 1);
+    }
   }
 }
 
@@ -1694,7 +1745,7 @@ window.ImperioCasa3D = {
   recolocar() { recolocarParedes(); },
   /** testes: paredes internas da casa atual e o giro do dedo */
   internas() { return muros.filter((m) => m.interna).length; },
-  giro() { return giroUser; },
+  giro() { return giroAlvo; },
   /** arrasto do dedo/mouse (px): gira a casa em volta; dentro dela, vira o olhar */
 girar(dx, dy = 0, dtMs = 16) {
     if (!renderer || p < 0.12 || tour) return;
@@ -1717,18 +1768,19 @@ girar(dx, dy = 0, dtMs = 16) {
       return;
     }
     const dts = Math.max(8, dtMs) / 1000;
-    giroUser -= dx * 0.008;
-    giroVel = (-dx * 0.008) / dts;
-    elevUser = limitarEntre(elevUser + dy * 0.004, -0.3, 0.6);
-    pDesenhado = -1;
-    pedir();
+    arrastando = true;
+    giroAlvo -= dx * 0.008;
+    giroVel = giroVel * 0.5 + ((-dx * 0.008) / dts) * 0.5; // média curta: o embalo não depende de um único evento
+    elevAlvo = limitarEntre(elevAlvo + dy * 0.004, -0.12, 0.6); // não desce rente ao chão (o cenário taparia a maquete)
+    if (window.__gravandoVideo) { giroUser = giroAlvo; elevUser = elevAlvo; pDesenhado = -1; pedir(); return; }
+    animarOrbita();
   },
   /** dedo saiu da tela: a maquete continua o giro e vai parando — inércia */
   soltar() {
-    if (interior || tour || Math.abs(giroVel) < 0.05) return;
-    giroVel = limitarEntre(giroVel, -4, 4);
-    tGiro = 0;
-    requestAnimationFrame(quadroGiro);
+    arrastando = false;
+    if (interior || tour) return;
+    giroVel = Math.abs(giroVel) < 0.05 ? 0 : limitarEntre(giroVel, -4, 4);
+    animarOrbita(); // a câmera termina de alcançar o dedo, desinclina e plana até parar
   },
   /** pinça (fator > 1 = abrindo os dedos): por fora aproxima/afasta a maquete (zoom só no 3D) */
   pinca(f) {

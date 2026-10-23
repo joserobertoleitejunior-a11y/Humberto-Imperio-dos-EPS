@@ -72,13 +72,21 @@ botão de andar, sobe/desce voando. O site continua aparecendo (título, botão,
 rolar de verdade sai da casa. "↺ Sair da casa" (ou Esc) volta. Motor: `criarVoo`/`posVoo` (Catmull-Rom com
 aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
 
-**Pontos estratégicos** (casa pronta, sem entrar na casa): 6 pontos na frente e na lateral da maquete — Casa mais
-fresca, Mais silêncio, Obra rápida, Bem mais leve, Acabamento fácil, Sem mofo. Cada um tem uma etiqueta (HTML) nas
-margens, fora do 3D, e uma linha tracejada (svg) até uma bolinha pulsando no ponto da casa. Clicou (etiqueta ou
-bolinha): a câmera dá um zoom moderado até perto daquele ponto (na mesma direção em que a pessoa já olha, sem entrar
-em varanda nem janela) e o cartão no lugar do texto conta a vantagem; em "Casa mais fresca" a parede da frente
-desliza e mostra o Blocão por dentro. Tocar na casa ou rolar a página volta pra vista inteira. Arrastar gira a maquete.
+**Pontos estratégicos** (casa pronta, sem entrar na casa): 6 pontos — Casa mais fresca, Mais silêncio, Obra rápida,
+Bem mais leve, Acabamento fácil, Sem mofo. Cada ponto existe dos 2 lados da casa (espelhado); aparece o lado virado
+pra câmera, então girando 360° as vantagens nunca somem. Etiqueta = só texto preto (sem caixinha, com halo claro pra
+ler sobre o cenário) nas margens, fora do 3D, sublinhado por uma linha preta (svg) que segue até a bolinha no ponto.
+Fácil de clicar: o texto, a linha inteira (faixa invisível de 24 px por cima) e a bolinha abrem a vantagem. Clicou: a
+câmera dá um zoom moderado até perto do ponto e o cartão no lugar do texto conta a vantagem; em "Casa mais fresca" a
+parede daquele lado desliza e mostra o Blocão por dentro. Tocar na casa ou rolar a página volta pra vista inteira.
 Pontos em `montarPontos()` (calculados pela planta de cada casa); textos em `VANTAGENS` (`casa3d.js`).
+Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamento pela altura real (nunca sobrepõem).
+
+**Giro da maquete = drone** (arrastar o dedo/mouse): o dedo move um alvo e a câmera persegue suave (mola ~0,14 s),
+inclina de lado na curva (como drone fazendo a volta) e, ao soltar, plana com o embalo e vai parando (`quadroOrbita`
+em `casa3d.js`). Altura limitada (não desce rente ao chão). **Vista livre:** vizinhas e árvores que ficam entre a
+câmera e a casa abaixam até o chão e voltam quando a câmera passa (`paisagem.userData.vista`, `casa-interior.js`) —
+a maquete nunca fica escondida em nenhum ângulo.
 
 **Tour pela casa** (só no VÍDEO — `ImperioCasa3D.tour()`; no site a casa é vista de fora, pelos pontos): sobrevoo automático com legendas de cinema — chega
 de longe, a parede da frente sai (o corte mostra o Blocão), voos rasantes pela sala, cozinha e quartos, close no
