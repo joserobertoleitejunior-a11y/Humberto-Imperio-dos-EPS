@@ -6,6 +6,7 @@
  * obra e as paredes sobem a partir dele.
  * - Prepara o 3D ~3 s depois de abrir (página parada) ou quando o "Por dentro" chega perto; no vídeo, já na abertura.
  * - "estatica": imagem pronta da casa + etapas em lista, depois do "L". Sem WebGL: a fase da casa sai (seção volta ao "L").
+ * Casa pronta: tocar numa parede tira ela e a câmera entra pela abertura (corte mostra o EPS dentro do Blocão).
  * Publica window.ImperioCasa = { pronto(), atualizarAgora() } (usado pela gravação do vídeo).
  */
 (function () {
@@ -117,11 +118,34 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261024f")
+    import("./casa3d.js?v=20261025d")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
         C3.aoDesenhar(aoDesenhar);
+        // paredes móveis: com a casa pronta, tocar numa parede tira ela e a câmera entra pela abertura
+        var corte = camada.querySelector("[data-casa-corte]");
+        var timerCorte = 0;
+        C3.aoInterior(function (e) {
+          camada.classList.toggle("casa--dentro", e.removidas > 0 || e.dentro);
+          var b = camada.querySelector("[data-casa-recolocar]");
+          if (b) b.hidden = !(e.removidas > 0 || e.dentro);
+          // etiqueta "Dentro do Blocão" presa no corte da parede, quando a câmera termina de entrar
+          clearTimeout(timerCorte);
+          if (corte) corte.hidden = true;
+          if (corte && e.dentro) timerCorte = setTimeout(function () {
+            var pt = C3.pontoCorte();
+            if (!pt) return;
+            var r = camada.getBoundingClientRect();
+            if (pt.x < r.left || pt.x > r.right) return; // corte fora da tela: sem etiqueta apontando pro nada
+            corte.style.left = Math.round(Math.min(r.width - 150, Math.max(12, pt.x - r.left))) + "px";
+            corte.style.top = Math.round(Math.max(90, pt.y - r.top)) + "px";
+            corte.hidden = false;
+          }, 1400);
+        });
+        palco.addEventListener("click", function (ev) { C3.tocar(ev.clientX, ev.clientY); });
+        var rec = camada.querySelector("[data-casa-recolocar]");
+        if (rec) rec.addEventListener("click", function () { C3.recolocar(); });
         var marcado = botoesTipo.filter(function (b) { return b.getAttribute("aria-pressed") === "true"; })[0];
         if (marcado) C3.tipo(marcado.getAttribute("data-casa-tipo"));
         montarEtapas();

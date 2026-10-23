@@ -26,7 +26,9 @@ test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calcul
   // senão o navegador tenta baixar o MP4 de verdade, dá erro antes da simulação e o site (certo) pula a boas-vindas
   await page.addInitScript(() => {
     Object.defineProperty(HTMLMediaElement.prototype, "preload", { get: () => "none", set: () => {}, configurable: true });
-    HTMLMediaElement.prototype.load = function () { setTimeout(() => this.dispatchEvent(new Event("loadeddata")), 50); };
+    // o site começa a baixar o vídeo já na splash: a simulação também responde "pronto" (readyState)
+    Object.defineProperty(HTMLMediaElement.prototype, "readyState", { get() { return this.__pronto ? 4 : 0; }, configurable: true });
+    HTMLMediaElement.prototype.load = function () { setTimeout(() => { this.__pronto = true; this.dispatchEvent(new Event("loadeddata")); }, 50); };
     HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
   });
   await page.goto("/");
@@ -48,6 +50,16 @@ test("splash: botão redondo 'Orçamento' fecha a splash e vai pra calculadora; 
   await expect(page.locator("#splash")).toBeHidden({ timeout: 5000 });
   await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 6000 });
   await expect(page.locator("#boas-vindas")).toBeHidden();
+});
+
+test("splash: 'Conhecer nosso produto' começa do topo do site (cabeçalho), não pula pro produto", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('#splash [data-ir="#topo"]')).toBeVisible({ timeout: 8000 });
+  await page.click('#splash [data-ir="#topo"]');
+  await expect(page.locator("#splash")).toBeHidden({ timeout: 5000 });
+  await page.waitForTimeout(900);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(80);
+  await expect(page.locator(".hero__titulo")).toBeInViewport();
 });
 
 test("celular: botões ficam fora da área do bloco 3D", async ({ page }) => {
@@ -169,6 +181,16 @@ test("painel abre em demonstração", async ({ page }) => {
   await expect(page.locator("[data-kpis] .kpi")).toHaveCount(6);
 });
 
+test("celular: sem zoom (pinça/toque duplo) e o site no tamanho exato da tela", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  expect(await page.getAttribute('meta[name="viewport"]', "content")).toContain("user-scalable=no");
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).touchAction)).toBe("pan-x pan-y");
+  // Ctrl + roda (pinça no touchpad) é barrada
+  expect(await page.evaluate(() => !window.dispatchEvent(new WheelEvent("wheel", { ctrlKey: true, cancelable: true, deltaY: -10 })))).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+});
+
 test("sem rolagem lateral no celular", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   for (const url of ["/", "/admin.html"]) {
@@ -208,6 +230,16 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.click('[data-casa-tipo="simples"]');
   await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(5);
   await expect(page.locator("[data-casa-ficha]")).toContainText("49 m²");
+  // paredes móveis: tocar numa parede tira ela e a câmera entra (etiqueta do corte + botão de recolocar)
+  const caixa = await page.locator("[data-casa-palco]").boundingBox();
+  for (const [fx, fy] of [[0.5, 0.5], [0.6, 0.6], [0.4, 0.55], [0.66, 0.62], [0.5, 0.65], [0.35, 0.5]]) {
+    await page.mouse.click(caixa.x + caixa.width * fx, caixa.y + caixa.height * fy);
+    if (await page.locator("[data-casa]").evaluate((c) => c.classList.contains("casa--dentro"))) break;
+  }
+  await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
+  await expect(page.locator("[data-casa-recolocar]")).toBeVisible();
+  await page.click("[data-casa-recolocar]");
+  await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/, { timeout: 5000 });
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);

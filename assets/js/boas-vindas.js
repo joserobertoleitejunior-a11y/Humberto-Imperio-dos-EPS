@@ -5,7 +5,8 @@
  *     Fecha sozinha (~3,2 s) e pode ser pulada com um toque.
  *     Não reaparece ao navegar dentro do site na mesma sessão (só em recarregar/visita nova).
  *  2. BOAS-VINDAS (1x por sessão): o vídeo "Por que comprar o Blocão" no fundo + 2 caminhos:
- *     "Conhecer nosso produto" (vai pro Blocão por dentro) ou "Orçamento" (calculadora).
+ *     "Conhecer nosso produto" (começa do topo do site, com o cabeçalho) ou "Orçamento" (calculadora).
+ *     O vídeo começa a baixar já durante a splash (adiantarVideo), pra boas-vindas não demorar.
  * Aparelho fraco / economia de dados: o vídeo não baixa sozinho (fica a capa; toca no toque).
  */
 (function () {
@@ -16,6 +17,22 @@
   var CHAVE_BV = "imperio_bv";
   var fechada = false;
   var timer = null;
+  var videoPedido = false;
+
+  /**
+   * O vídeo começa a baixar JÁ NA ABERTURA (enquanto a splash está na tela), não quando ela fecha:
+   * assim a boas-vindas aparece na hora. Não baixa em economia de dados / nível "estatica" nem se a pessoa já viu.
+   */
+  function adiantarVideo() {
+    var cfg = window.IMPERIO_CONFIG || {};
+    if (cfg.boasVindasComVideo !== true || pegarSessao(CHAVE_BV) || window.__gravandoVideo) return;
+    if (html.getAttribute("data-qualidade") === "estatica" || html.classList.contains("sem-splash")) return;
+    var video = document.querySelector("#boas-vindas video");
+    if (!video || videoPedido) return;
+    videoPedido = true;
+    video.preload = "auto";
+    video.load();
+  }
 
   function pegarSessao(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
   function marcar(k) { try { sessionStorage.setItem(k, "1"); } catch (e) { /* sem storage */ } }
@@ -42,6 +59,7 @@
     var video = bv.querySelector("video");
     if (!video) return;
     var mostrou = false;
+    if (video.readyState >= 2) { setTimeout(function () { mostrar(); }, 0); } // já baixou durante a splash
     function mostrar() {
       if (mostrou || fechada === false) return;
       mostrou = true;
@@ -60,8 +78,7 @@
     // só mostra quando o vídeo realmente carregou (se der erro ou demorar > 2,5 s, o site abre direto)
     video.addEventListener("loadeddata", mostrar, { once: true });
     video.addEventListener("error", function () { mostrou = true; }, { once: true });
-    video.preload = "auto";
-    video.load();
+    if (!videoPedido) { videoPedido = true; video.preload = "auto"; video.load(); }
     setTimeout(function () { if (!mostrou) mostrou = true; }, 2500);
   }
 
@@ -113,6 +130,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    adiantarVideo();
     document.addEventListener("pointerdown", onda, { passive: true });
     var s = document.getElementById("splash");
     if (s && !html.classList.contains("sem-splash")) {

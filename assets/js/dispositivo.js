@@ -5,7 +5,8 @@
  *   media    → celular/PC comum: 3D sem sombra real, menos partículas
  *   baixa    → aparelho fraco: 3D em resolução 1x, sem partículas, palavras em vez de letras
  *   estatica → economia de dados, pouquíssima memória ou "reduzir movimento": imagens prontas, sem 3D
- * Também grava --vh (altura real da tela no celular, sem a barra do navegador).
+ * Também grava --vh (altura real da tela no celular, sem a barra do navegador) e trava o zoom
+ * (pinça, toque duplo e Ctrl + roda/teclas): o site fica sempre do tamanho exato da tela do aparelho.
  */
 (function () {
   var h = document.documentElement;
@@ -30,4 +31,15 @@
   function medir() { h.style.setProperty("--vh", window.innerHeight * 0.01 + "px"); }
   medir();
   window.addEventListener("resize", medir, { passive: true });
+  window.addEventListener("orientationchange", function () { setTimeout(medir, 250); }, { passive: true });
+
+  // sem zoom (toque duplo: o touch-action do site.css): o layout já é feito pro tamanho de cada tela (a meta viewport trava no Android; o iPhone ignora, então aqui)
+  function barrar(e) { e.preventDefault(); }
+  document.addEventListener("gesturestart", barrar, { passive: false });   // pinça no Safari do iPhone
+  document.addEventListener("gesturechange", barrar, { passive: false });
+  document.addEventListener("touchmove", function (e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  window.addEventListener("wheel", function (e) { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false }); // Ctrl + roda / pinça no touchpad
+  window.addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && /^(\+|-|=|0|_)$/.test(e.key)) e.preventDefault();
+  });
 })();

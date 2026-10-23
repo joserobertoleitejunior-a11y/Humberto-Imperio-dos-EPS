@@ -57,6 +57,12 @@ as fichas e botões saem, a camada da casa esmaece por cima e o bloco da casa co
 Fiada por fiada → laje/varanda → 2º andar → platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim e bonequinhos.
 HD: enquanto rola desenha leve; parado ~0,16 s refaz em alta resolução (PC/celular bom até 2–2,5×, com superamostragem).
 "estatica": imagem pronta de cada tipo (`assets/img/casa-simples|media|casarao.webp`), trocada pelos mesmos botões.
+**Paredes móveis**: com a casa pronta, tocar numa parede tira ela (desliza pra fora e some) e a câmera entra pela
+abertura até o canto cortado — as pontas dos Blocões vizinhos mostram o miolo (concreto + EPS + concreto) com a etiqueta
+"Dentro do Blocão". No celular em pé a câmera recua e olha mais pro canto. "↺ Recolocar as paredes" ou rolar a página põe tudo de volta.
+
+**Sem zoom**: meta viewport com `user-scalable=no`, `touch-action: pan-x pan-y` no html e `dispositivo.js` barra pinça
+(iPhone) e Ctrl + roda/teclas — o site fica sempre no tamanho exato da tela. Campos com letra ≥ 16px (iPhone não amplia ao tocar).
 O menu "A casa" leva pra `#casa` (âncora posicionada no começo da fase). `motion.js` publica `fim` (onde o "L" acaba) e
 `casa` (0..1 da fase); o vídeo usa `pj` (fração do "L") e `pc` (fração da casa) nas rolagens.
 - Tudo é função do progresso da rolagem (rolar pra cima desmonta); só desenha quando a rolagem muda.

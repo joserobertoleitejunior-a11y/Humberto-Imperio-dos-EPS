@@ -223,7 +223,8 @@
       var sobe = (window.innerWidth < 760 ? [0, 26, 52] : [0, 40, 80])[k];
       if (!itens[k]) return;
       // etiqueta nunca sai da tela (largura medida uma vez por etiqueta)
-      var larg = larguras[k] || (larguras[k] = itens[k].offsetWidth || 120);
+      if (!larguras[k]) larguras[k] = itens[k].offsetWidth || 120;
+      var larg = larguras[k];
       var x = Math.min(window.innerWidth - larg / 2 - 8, Math.max(larg / 2 + 8, pt.x));
       itens[k].style.transform = "translate3d(" + x.toFixed(1) + "px," + (pt.y - sobe).toFixed(1) + "px,0) translate(-50%,-115%)";
       itens[k].style.opacity = pt.visivel ? 1 : 0; // "Só EPS" / "Só concreto": some a etiqueta da peça escondida
@@ -236,7 +237,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261024f")
+    import("./bloco3d.js?v=20261025d")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);

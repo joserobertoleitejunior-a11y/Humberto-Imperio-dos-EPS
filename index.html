@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Império do EPS · Blocão de concreto e EPS em Itapetininga-SP</title>
   <meta name="description" content="Fábrica do Blocão (concreto + EPS + concreto) em Itapetininga-SP. Parede que sobe rápido, leve, térmica e acústica. Calcule sua obra e peça orçamento no WhatsApp.">
   <meta name="keywords" content="blocão, bloco de EPS, bloco sanduíche, bloco de concreto com isopor, casa de EPS, Itapetininga">
@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261022a"></script>
+  <script src="assets/js/dispositivo.js?v=20261025d"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261022a">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261025d">
 
   <script type="application/ld+json">
   {
@@ -51,7 +51,7 @@
     <p class="splash__nome" aria-hidden="true"><span style="--i:0">IMPÉRIO</span> <span class="az" style="--i:1">DO</span> <span class="az" style="--i:2">EPS</span></p>
     <p class="splash__sub" aria-hidden="true">Fábrica do Blocão · Itapetininga</p>
     <div class="splash__acoes">
-      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#por-dentro"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
+      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#topo"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
       <button type="button" class="btn-redondo btn-redondo--azul" data-ir="#calculadora"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M15.5 12h0M8.5 16h1M12 16h1M15.5 16h0"/></svg></span><span class="btn-redondo__tx">Orçamento</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
     </div>
     <p class="splash__toque">toque fora dos botões pra entrar</p>
@@ -263,6 +263,8 @@
               <li data-etapa="4"><b>05</b> Platibanda, vidro e madeira</li>
               <li data-etapa="5"><b>06</b> Pintura e jardim: casa pronta</li>
             </ol>
+            <p class="casa__dica">Toque numa parede pra ver a casa por dentro.</p>
+            <button type="button" class="casa__recolocar" data-casa-recolocar hidden>↺ Recolocar as paredes</button>
             <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
           </div>
           <div class="casa__tipos" role="group" aria-label="Escolha o tipo de casa">
@@ -270,6 +272,7 @@
             <button type="button" data-casa-tipo="media" aria-pressed="true">Casa média</button>
             <button type="button" data-casa-tipo="casarao" aria-pressed="false">Casarão</button>
           </div>
+          <p class="casa__corte" data-casa-corte hidden><b>Dentro do Blocão</b> concreto + EPS + concreto</p>
           <p class="casa__contador"><b data-casa-contador>0</b> Blocões assentados</p>
           <p class="casa__nota"><span data-casa-ficha>Sobrado 9 × 7 m · 2 andares · ≈ 125 m²</span> · maquete ilustrativa</p>
         </div>
@@ -542,7 +545,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="bv__onda" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
     </button>
     <div class="bv__txt">
-      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#por-dentro"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
+      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#topo"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
       <button type="button" class="btn-redondo btn-redondo--azul" data-ir="#calculadora"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M15.5 12h0M8.5 16h1M12 16h1M15.5 16h0"/></svg></span><span class="btn-redondo__tx">Orçamento</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
     </div>
   </div>
@@ -599,7 +602,7 @@
   <script src="assets/js/calculadora.js?v=20261022a"></script>
   <script src="assets/js/conteudo.js?v=20261022a"></script>
   <script src="assets/js/cena.js?v=20261022a"></script>
-  <script src="assets/js/casa.js?v=20261024f"></script>
+  <script src="assets/js/casa.js?v=20261025d"></script>
   <script src="assets/js/toque.js?v=20261022a"></script>
 </body>
 </html>

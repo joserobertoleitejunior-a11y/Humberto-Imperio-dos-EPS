@@ -23,7 +23,7 @@ import {
   ACESFilmicToneMapping, BoxGeometry, CanvasTexture, Color, DirectionalLight, Group, HemisphereLight, IcosahedronGeometry,
   InstancedMesh, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, PCFSoftShadowMap,
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
-  WebGLRenderer,
+  WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
 
 // MÁXIMA RESOLUÇÃO: parado desenha na resolução nativa da tela (até 3×; min > 1 = superamostragem em tela comum).
@@ -91,6 +91,29 @@ function texSanduiche(tam) {
     c.fillRect(0, 0, n, n);
     c.fillStyle = "#f1efe9";
     c.fillRect(0, a, n, n - 2 * a);
+  });
+}
+
+/** Ponta do bloco (corte): concreto | EPS | concreto na largura — o "recheio" do Blocão aparece no corte da parede. */
+function texPonta(tam) {
+  return telaTex(tam, (c, n) => {
+    const r = aleatorio(13);
+    const a = (3.5 / 15) * n;
+    c.fillStyle = "#a6a29a";
+    c.fillRect(0, 0, n, n);
+    c.fillStyle = "#f3f1eb";
+    c.fillRect(a, 0, n - 2 * a, n);
+    for (let i = 0; i < n * 3; i++) { // pérolas do EPS
+      c.fillStyle = `rgba(${205 + r() * 30},${203 + r() * 30},${196 + r() * 30},.7)`;
+      c.beginPath();
+      c.arc(a + r() * (n - 2 * a), r() * n, 0.8 + r() * (n / 90), 0, 7);
+      c.fill();
+    }
+    for (let i = 0; i < n; i++) { // agregado do concreto
+      c.fillStyle = `rgba(${120 + r() * 50},${118 + r() * 50},${112 + r() * 50},.5)`;
+      const x = r() < 0.5 ? r() * a : n - a + r() * a;
+      c.fillRect(x, r() * n, 1 + r() * 2, 1 + r() * 2);
+    }
   });
 }
 
@@ -244,12 +267,15 @@ function tempos(P) {
 function levantar(defs, yBase, andar) {
   const blocos = [];
   const vaos = [];
+  const muros = [];
   let percorrido = 0;
   const comps = defs.map(([, , i, f]) => Math.abs(f - i));
   const total = comps.reduce((s, c) => s + c, 0);
   defs.forEach(([eixo, fixo, ini, fim, abert], w) => {
     const sentido = Math.sign(fim - ini);
     const comp = comps[w];
+    const parede = andar * 4 + w;
+    muros.push({ id: parede, eixo, fixo, ini, fim, andar, y0: yBase, fora: Math.sign(fixo || 1) });
     for (let f = 0; f < FIADAS; f++) {
       let s = 0;
       let primeiro = f % 2 ? BL / 2 : BL;
@@ -278,16 +304,17 @@ function levantar(defs, yBase, andar) {
             girado: eixo === "z",
             fiada: andar * FIADAS + f,
             ordem: (percorrido + Math.abs(meio - ini)) / total, // posição na volta da casa (0..1)
+            parede,
           });
         });
         s = e;
         primeiro = BL;
       }
     }
-    abert.forEach((v) => vaos.push({ eixo, fixo, a: v.a, b: v.b, y0: yBase + v.f0 * BA, y1: yBase + v.f1 * BA, porta: !!v.porta }));
+    abert.forEach((v) => vaos.push({ eixo, fixo, a: v.a, b: v.b, y0: yBase + v.f0 * BA, y1: yBase + v.f1 * BA, porta: !!v.porta, parede }));
     percorrido += comp;
   });
-  return { blocos, vaos };
+  return { blocos, vaos, muros };
 }
 
 /* ---------- cena ---------- */
@@ -316,6 +343,18 @@ let blocoDoSite = false;  // true = o PRÓPRIO Blocão do site (bloco3d) faz o v
 let camAng = 0;
 let camElev = 0;
 const _proj = new Vector3();
+/* paredes móveis (casa pronta): toque numa parede → ela sai e a câmera entra pela abertura */
+let muros = [];            // { id, eixo, fixo, ini, fim, andar, y0, fora }
+let pinturaOrig = [];      // matriz original da pintura de cada bloco
+const fora = new Map();    // id da parede → { de, para, t0 } (0 = no lugar, 1 = removida)
+let revelados = new Set(); // blocos vizinhos do corte: sem pintura (mostram o Blocão cru, com o EPS na ponta)
+let interior = null;       // { de: {pos, alvo, fov, off}, para: {...}, t0, volta }
+let ouvinteInterior = null;
+const DUR_PAREDE = 700;
+const DUR_CAMERA = 1300;
+const _raycast = new Raycaster();
+const _ndcV = new Vector2();
+const _alvoCam = new Vector3();
 const _o = new Object3D();
 const _ini = new Object3D();
 const _fim = new Object3D();
@@ -341,6 +380,7 @@ function criarMateriais() {
   mats = {
     concreto: new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" }),
     topo: new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" }),
+    ponta: new MeshStandardMaterial({ map: texPonta(Math.min(512, nivel.tex)), roughness: 0.9 }),
     guia: new MeshStandardMaterial({ map: tGuia, roughness: 0.9, color: "#d6d1c8" }),
     pintura: new MeshStandardMaterial({ color: "#f2efe8", roughness: 0.85, transparent: true, opacity: 0 }),
     branco: new MeshStandardMaterial({ color: "#f4f2ed", roughness: 0.8 }),
@@ -360,7 +400,7 @@ function criarMateriais() {
   const uv = geoBloco.attributes.uv;
   for (let i = 0; i < uv.count; i++) {
     const face = Math.floor(i / 4);
-    if (face !== 2 && face !== 3) uv.setXY(i, uv.getX(i) * 2.2, uv.getY(i) * 1.1); // topo/base: o sanduíche fica inteiro
+    if (face >= 4) uv.setXY(i, uv.getX(i) * 2.2, uv.getY(i) * 1.1); // frente/verso; pontas e topo: o sanduíche fica inteiro
   }
   // o Blocão "do site" (vira o 1º bloco de qualquer casa): mesma peça, textura mais fina
   guia = new Mesh(geoBloco, [mats.guia, mats.guia, mats.topo, mats.topo, mats.guia, mats.guia]);
@@ -409,8 +449,13 @@ function montar(id) {
   const Y2 = CHAO + PE + LAJE;
   const c = B ? levantar(paredes(B, P.vaosB), Y2, 1) : { blocos: [], vaos: [] };
   lista = t.blocos.concat(c.blocos);
+  muros = t.muros.concat(c.muros);
+  fora.clear();
+  revelados = new Set();
+  interior = null;
   primeiro = lista.reduce((m, bl, i) => (bl.fiada === 0 && bl.ordem < lista[m].ordem ? i : m), 0);
-  blocosMesh = new InstancedMesh(geoBloco, [M.concreto, M.concreto, M.topo, M.topo, M.concreto, M.concreto], lista.length);
+  // faces: +x, -x (pontas: o corte com o EPS), +y, -y (topo/base: sanduíche), +z, -z (concreto)
+  blocosMesh = new InstancedMesh(geoBloco, [M.ponta, M.ponta, M.topo, M.topo, M.concreto, M.concreto], lista.length);
   blocosMesh.castShadow = blocosMesh.receiveShadow = nivel.sombra;
   blocosMesh.frustumCulled = false; // as instâncias se espalham pela casa toda
   obra.add(blocosMesh);
@@ -421,6 +466,7 @@ function montar(id) {
     _o.scale.set(bl.comp + 0.004, 1.01, 1);
     _o.updateMatrix();
     pinturaMesh.setMatrixAt(i, _o.matrix);
+    pinturaOrig[i] = _o.matrix.clone();
   });
   pinturaMesh.visible = false;
   pinturaMesh.frustumCulled = false;
@@ -478,6 +524,7 @@ function montar(id) {
     const ent = [T.vidros + (k % 6) * 0.006, T.vidros + 0.04 + (k % 6) * 0.006];
     const g = v.porta ? new BoxGeometry(larg - 0.04, alt - 0.02, 0.06) : new BoxGeometry(larg - 0.06, alt - 0.06, 0.03);
     const m = peca(g, v.porta ? M.madeira : M.vidro, x, v.y0 + alt / 2, z, ent, "cresce");
+    m.userData.parede = v.parede;
     if (rot) m.rotation.y = Math.PI / 2;
     if (v.porta) return;
     const f = 0.05;
@@ -485,6 +532,7 @@ function montar(id) {
     if (larg > 2.6) quadro.push([f, alt, 0, 0]); // pano grande: montante no meio
     quadro.forEach(([qx, qy, dx, dy]) => {
       const cx = peca(new BoxGeometry(qx, qy, 0.07), M.grafite, rot ? x : x + dx, v.y0 + alt / 2 + dy, rot ? z + dx : z, ent, "cresce");
+      cx.userData.parede = v.parede;
       if (rot) cx.rotation.y = Math.PI / 2;
     });
   });
@@ -492,10 +540,10 @@ function montar(id) {
   // ripado de madeira (brise) na fachada de cima e painel de pedra (casarão)
   if (P.ripado && B) {
     for (let i = 0; i < P.ripado.n; i++) {
-      peca(new BoxGeometry(0.06, PE - 0.2, 0.08), M.madeira, P.ripado.x + i * 0.19, Y2 + PE / 2, B.z1 + 0.12, [0.81 + i * 0.003, 0.85 + i * 0.003], "cresce");
+      peca(new BoxGeometry(0.06, PE - 0.2, 0.08), M.madeira, P.ripado.x + i * 0.19, Y2 + PE / 2, B.z1 + 0.12, [0.81 + i * 0.003, 0.85 + i * 0.003], "cresce").userData.parede = 4;
     }
   }
-  if (P.pedra) peca(new BoxGeometry(P.pedra.larg, PE, 0.06), M.pedraEscura, P.pedra.x, CHAO + PE / 2, A.z1 + 0.04, [T.vidros + 0.02, T.vidros + 0.06], "cresce");
+  if (P.pedra) peca(new BoxGeometry(P.pedra.larg, PE, 0.06), M.pedraEscura, P.pedra.x, CHAO + PE / 2, A.z1 + 0.04, [T.vidros + 0.02, T.vidros + 0.06], "cresce").userData.parede = 0;
 
   // piscina com deck (casarão)
   if (P.piscina) {
@@ -507,18 +555,19 @@ function montar(id) {
   // jardim: caminho de pedra, cerca viva, árvores e bonequinhos de escala
   const J = P.jardim;
   for (let i = 0; i < J.caminho.n; i++) peca(new BoxGeometry(1.1, 0.04, 0.6), M.pedra, J.caminho.x, 0.04, zFrente + 0.6 + i * 0.85, [0.86 + i * 0.006, 0.9 + i * 0.006], "sobe");
-  J.cerca.forEach(([x, larg], i) => peca(new BoxGeometry(larg, 0.5, 0.5), M.folha, x, 0.27, zFrente + 1.6, [0.87 + i * 0.005, 0.91 + i * 0.005], "cresce"));
+  J.cerca.forEach(([x, larg], i) => { peca(new BoxGeometry(larg, 0.5, 0.5), M.folha, x, 0.27, zFrente + 1.6, [0.87 + i * 0.005, 0.91 + i * 0.005], "cresce").userData.jardim = true; });
   J.arvores.forEach(([x, z, s], i) => {
     const ent = [0.88 + i * 0.01, 0.93 + i * 0.01];
-    peca(new BoxGeometry(0.16, 1.5 * s, 0.16), M.tronco, x, 0.75 * s, z, ent, "cresce");
+    peca(new BoxGeometry(0.16, 1.5 * s, 0.16), M.tronco, x, 0.75 * s, z, ent, "cresce").userData.jardim = true;
     const copa = peca(new IcosahedronGeometry(1, 1), M.folha, x, 2.3 * s, z, ent, "cresce");
+    copa.userData.jardim = true;
     copa.scale.set(1.2 * s, 1.5 * s, 1.2 * s);
     copa.userData.escala = copa.scale.clone();
   });
   J.gente.forEach(([x, z], i) => {
     const ent = [0.9 + i * 0.01, 0.94 + i * 0.01];
-    peca(new BoxGeometry(0.34, 1.35, 0.2), M.gente, x, 0.72, z, ent, "cresce");
-    peca(new IcosahedronGeometry(0.13, 1), M.gente, x, 1.6, z, ent, "cresce");
+    peca(new BoxGeometry(0.34, 1.35, 0.2), M.gente, x, 0.72, z, ent, "cresce").userData.jardim = true;
+    peca(new IcosahedronGeometry(0.13, 1), M.gente, x, 1.6, z, ent, "cresce").userData.jardim = true;
   });
   pDesenhado = -1;
 }
@@ -546,9 +595,27 @@ function posicionarCamera() {
   camElev = elev;
   camera.position.set(centro.x + Math.sin(ang) * Math.cos(elev) * dist, centro.y + Math.sin(elev) * dist, centro.z + Math.cos(ang) * Math.cos(elev) * dist);
   camera.far = dist * 3;
-  camera.lookAt(centro);
-  if (largaTela) camera.setViewOffset(w, h, -w * 0.16, 0, w, h);
-  else camera.setViewOffset(w, h, 0, (reserva - topo) / 2, w, h); // a maquete fica no meio da faixa livre
+  const offX = largaTela ? -w * 0.16 : 0;
+  const offY = largaTela ? 0 : (reserva - topo) / 2; // celular: a maquete fica no meio da faixa livre
+  let alvo = centro;
+  let off = 1;
+  let fov = 26;
+  if (interior) {
+    // câmera entrando pela parede aberta (ou voltando pra vista da rolagem)
+    const k = suave((agora() - interior.t0) / DUR_CAMERA);
+    const de = interior.de;
+    const para = interior.volta ? { pos: camera.position.clone(), alvo: centro, fov: 26, off: 1 } : interior.para;
+    camera.position.lerpVectors(de.pos, para.pos, k);
+    alvo = _alvoCam.lerpVectors(de.alvo, para.alvo, k);
+    fov = de.fov + (para.fov - de.fov) * k;
+    off = de.off + (para.off - de.off) * k;
+  }
+  camera.fov = fov;
+  camera.near = interior ? 0.1 : 1;
+  camera.lookAt(alvo);
+  ultimoAlvo.copy(alvo);
+  ultimoOff = off;
+  camera.setViewOffset(w, h, offX * off, offY * off, w, h);
 }
 
 /**
@@ -591,6 +658,109 @@ function moverGuia() {
   guia.scale.set(bl.comp * k, k, k);
 }
 
+/* ---------- paredes móveis (casa pronta) ---------- */
+const ZERO = new Matrix4().makeScale(0, 0, 0);
+const agora = () => performance.now();
+const muroDe = (id) => muros.find((m) => m.id === id);
+const normalDe = (m) => (m.eixo === "x" ? [0, m.fora] : [m.fora, 0]);
+const tangenteDe = (m) => { const s = Math.sign(m.fim - m.ini) || 1; return m.eixo === "x" ? [s, 0] : [0, s]; };
+
+/** 0 = parede no lugar, 1 = removida (animação no tempo, não na rolagem) */
+function estadoParede(id) {
+  const a = fora.get(id);
+  if (!a) return 0;
+  return a.de + (a.para - a.de) * suave((agora() - a.t0) / DUR_PAREDE);
+}
+
+function animando() {
+  const t = agora();
+  for (const a of fora.values()) if (t - a.t0 < DUR_PAREDE) return true;
+  return !!interior && t - interior.t0 < DUR_CAMERA;
+}
+
+/**
+ * Blocos das paredes VIZINHAS que encostam na parede removida: perdem a pintura e mostram o Blocão cru —
+ * no corte aparece o "recheio" (concreto | EPS | concreto) na ponta de cada bloco.
+ */
+function atualizarRevelados() {
+  revelados = new Set();
+  for (const [id, a] of fora) {
+    if (a.para === 0) continue;
+    const m = muroDe(id);
+    const lo = m.eixo === "x" ? Math.min(m.fixo, m.fixo - m.fora * BE) : m.fixo - BE / 2;
+    const hi = m.eixo === "x" ? Math.max(m.fixo, m.fixo - m.fora * BE) : m.fixo + BE / 2;
+    lista.forEach((bl, i) => {
+      if (bl.parede === id || Math.floor(bl.parede / 4) !== m.andar) return;
+      if ((m.eixo === "x") !== bl.girado) return; // só as paredes perpendiculares encostam no corte
+      const c = m.eixo === "x" ? bl.z : bl.x;
+      const e0 = c - bl.comp / 2;
+      const e1 = c + bl.comp / 2;
+      if ((e0 > lo - 0.06 && e0 < hi + 0.06) || (e1 > lo - 0.06 && e1 < hi + 0.06)) revelados.add(i);
+    });
+  }
+}
+
+/** pose da câmera "entrando" pela abertura: de fora, perto de uma ponta, olhando pra dentro na diagonal */
+function poseInterior(m) {
+  const [nx, nz] = normalDe(m);
+  const [tx, tz] = tangenteDe(m);
+  const L = Math.abs(m.fim - m.ini);
+  const meio = (m.ini + m.fim) / 2;
+  const cx = m.eixo === "x" ? meio : m.fixo;
+  const cz = m.eixo === "x" ? m.fixo : meio;
+  // perto da PONTA da abertura (onde a parede vizinha foi "cortada"): o corte com o EPS aparece grande na tela,
+  // e o olhar atravessa a casa na diagonal
+  const jx = m.eixo === "x" ? m.ini : m.fixo;
+  const jz = m.eixo === "x" ? m.fixo : m.ini;
+  // celular em pé (tela estreita): olha mais pro canto e recua um pouco, senão o corte fica fora da tela
+  const empe = camera.aspect < 1;
+  const ir = empe ? Math.min(0.9, L * 0.15) : Math.min(2.4, L * 0.3);
+  const recuo = empe ? 2.6 : 1.9;
+  const dentro = empe ? 1.6 : 2.2;
+  return {
+    pos: new Vector3(jx - tx * (empe ? 0.6 : 0.35) + nx * recuo, m.y0 + 1.5, jz - tz * (empe ? 0.6 : 0.35) + nz * recuo),
+    alvo: new Vector3(jx + tx * ir - nx * dentro, m.y0 + 1.15, jz + tz * ir - nz * dentro),
+    fov: empe ? 72 : 62,
+    off: 0,
+  };
+}
+
+let ultimoAlvo = new Vector3();
+let ultimoOff = 1;
+function capturarPose() {
+  return { pos: camera.position.clone(), alvo: ultimoAlvo.clone(), fov: camera.fov, off: ultimoOff };
+}
+
+function animar() {
+  if (animando()) {
+    desenhar(false);
+    requestAnimationFrame(animar);
+    return;
+  }
+  for (const [id, a] of fora) if (a.para === 0) fora.delete(id);
+  if (interior && interior.volta) interior = null;
+  atualizarRevelados();
+  desenhar(true);
+  if (ouvinteInterior) ouvinteInterior({ dentro: !!interior, removidas: fora.size });
+}
+
+function removerParede(id) {
+  const m = muroDe(id);
+  if (!m || estadoParede(id) > 0.99) return;
+  fora.set(id, { de: estadoParede(id), para: 1, t0: agora() });
+  atualizarRevelados();
+  interior = { de: capturarPose(), para: poseInterior(m), t0: agora(), volta: false, muro: m };
+  if (ouvinteInterior) ouvinteInterior({ dentro: true, removidas: fora.size });
+  requestAnimationFrame(animar);
+}
+
+function recolocarParedes() {
+  if (!fora.size && !interior) return;
+  for (const id of [...fora.keys()]) fora.set(id, { de: estadoParede(id), para: 0, t0: agora() });
+  if (interior) interior = { de: capturarPose(), t0: agora(), volta: true };
+  requestAnimationFrame(animar);
+}
+
 function aplicar() {
   // blocos: cada um cai no lugar no seu tempo (fiada → volta da casa)
   assentados = 0;
@@ -606,7 +776,15 @@ function aplicar() {
     if (e >= 1) assentados++;
     _o.position.set(bl.x, bl.y + (1 - pulo(e)) * 1.8, bl.z);
     _o.rotation.set((1 - e) * 0.5, (bl.girado ? Math.PI / 2 : 0) + (1 - e) * 0.4, 0);
-    const s = e <= 0 ? 0.0001 : 1;
+    let s = e <= 0 ? 0.0001 : 1;
+    const r = fora.size ? estadoParede(bl.parede) : 0;
+    if (r > 0) { // parede saindo: desliza pra fora, sobe e some
+      const [nx, nz] = normalDe(muroDe(bl.parede));
+      _o.position.x += nx * r * 2.4;
+      _o.position.z += nz * r * 2.4;
+      _o.position.y += r * 1.2;
+      s *= Math.max(0.0001, 1 - r);
+    }
     _o.scale.set(bl.comp * s, s, s);
     _o.updateMatrix();
     blocosMesh.setMatrixAt(i, _o.matrix);
@@ -631,8 +809,37 @@ function aplicar() {
     }
   }
 
+  // vidros, portas, caixilhos e ripado saem junto com a parede deles
+  if (fora.size) {
+    for (const m of pecas) {
+      const id = m.userData.parede;
+      if (id === undefined || !m.visible) continue;
+      const r = estadoParede(id);
+      if (r <= 0) { m.position.x = m.userData.base.x; m.position.z = m.userData.base.z; continue; }
+      const [nx, nz] = normalDe(muroDe(id));
+      m.position.x = m.userData.base.x + nx * r * 2.4;
+      m.position.z = m.userData.base.z + nz * r * 2.4;
+      m.position.y += r * 1.2;
+      m.visible = r < 0.98;
+    }
+  }
+
+  // câmera dentro da casa: some o que ficar colado na lente (bonequinhos, pilares, árvores)
+  if (interior) {
+    for (const m of pecas) {
+      if (m.visible && m.userData.parede === undefined && (m.userData.jardim || m.position.distanceTo(camera.position) < 2.6)) m.visible = false;
+    }
+  }
+
   // acabamento: pintura cobre os blocos; luz quente acende
   const tinta = suave(faixa(p, 0.86, 0.94));
+  if (tinta > 0.001) {
+    for (let i = 0; i < lista.length; i++) {
+      const tirar = revelados.has(i) || (fora.size && estadoParede(lista[i].parede) > 0);
+      pinturaMesh.setMatrixAt(i, tirar ? ZERO : pinturaOrig[i]);
+    }
+    pinturaMesh.instanceMatrix.needsUpdate = true;
+  }
   pinturaMesh.visible = tinta > 0.001;
   mats.pintura.opacity = tinta;
   mats.pintura.transparent = tinta < 0.999;
@@ -752,8 +959,46 @@ async function iniciar(canvas) {
 
 window.ImperioCasa3D = {
   iniciar,
-  /** p = 0..1 da fase da casa (só desenha se mudou) */
-  progresso(novo) { p = limitar(novo); pedir(); },
+  /** p = 0..1 da fase da casa (só desenha se mudou). Rolar de novo recoloca as paredes e a câmera volta. */
+  progresso(novo) {
+    novo = limitar(novo);
+    if ((fora.size || interior) && Math.abs(novo - p) > 0.0005) recolocarParedes();
+    p = novo;
+    pedir();
+  },
+  /** toque/clique na tela (px do navegador): com a casa pronta, tira a parede tocada. Devolve true se tirou. */
+  tocar(x, y) {
+    if (!renderer || p < 0.95) return false;
+    const r = renderer.domElement.getBoundingClientRect();
+    _ndcV.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+    camera.updateMatrixWorld();
+    _raycast.setFromCamera(_ndcV, camera);
+    const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
+    const hit = _raycast.intersectObjects(alvos, false)[0];
+    if (!hit) return false;
+    const id = hit.object === blocosMesh ? lista[hit.instanceId].parede : hit.object.userData.parede;
+    if (id === undefined || estadoParede(id) > 0.5) return false;
+    removerParede(id);
+    return true;
+  },
+  recolocar() { recolocarParedes(); },
+  /**
+   * Onde está o corte (a ponta da parede vizinha, com o EPS à mostra) NA TELA, quando a câmera já entrou:
+   * { x, y } em px do navegador, ou null (câmera andando / casa fechada).
+   */
+  pontoCorte() {
+    if (!interior || interior.volta || agora() - interior.t0 < DUR_CAMERA || !interior.muro) return null;
+    const m = interior.muro;
+    const jx = m.eixo === "x" ? m.ini : m.fixo;
+    const jz = m.eixo === "x" ? m.fixo : m.ini;
+    const [nx, nz] = normalDe(m);
+    _proj.set(jx - nx * BE * 1.5, m.y0 + 1.6, jz - nz * BE * 1.5).project(camera);
+    if (_proj.z > 1) return null;
+    const r = renderer.domElement.getBoundingClientRect();
+    return { x: r.left + ((_proj.x + 1) / 2) * r.width, y: r.top + ((1 - _proj.y) / 2) * r.height };
+  },
+  /** fn({ dentro, removidas }) quando a câmera entra/sai da casa */
+  aoInterior(fn) { ouvinteInterior = fn; },
   /** troca a casa ("simples" | "media" | "casarao") mantendo o ponto da rolagem */
   tipo(id) {
     if (id === tipoAtual || !PROJETOS[id]) return;
