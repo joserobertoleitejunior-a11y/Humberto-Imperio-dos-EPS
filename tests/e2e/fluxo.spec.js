@@ -22,8 +22,10 @@ test("vídeo não carrega: a boas-vindas não aparece e o site abre direto", asy
 });
 
 test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calculadora", async ({ page }) => {
-  // simula um vídeo que carrega (o Chromium do teste não decodifica H.264)
+  // simula um vídeo que carrega (o Chromium do teste não decodifica H.264). O "preload" fica travado em "none":
+  // senão o navegador tenta baixar o MP4 de verdade, dá erro antes da simulação e o site (certo) pula a boas-vindas
   await page.addInitScript(() => {
+    Object.defineProperty(HTMLMediaElement.prototype, "preload", { get: () => "none", set: () => {}, configurable: true });
     HTMLMediaElement.prototype.load = function () { setTimeout(() => this.dispatchEvent(new Event("loadeddata")), 50); };
     HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
   });
@@ -55,7 +57,7 @@ test("celular: botões ficam fora da área do bloco 3D", async ({ page }) => {
   await page.evaluate(() => {
     const j = document.querySelector("#por-dentro");
     const r = j.getBoundingClientRect();
-    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.2, behavior: "instant" });
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.2 * window.ImperioMotion.jornada().fim, behavior: "instant" });
   });
   await expect.poll(async () => {
     const toque = await page.locator(".jornada__toque").boundingBox();
@@ -97,7 +99,7 @@ test("bloco 3D carrega e a jornada em L anda na horizontal", async ({ page }) =>
   const x = await page.evaluate(() => {
     const j = document.querySelector("#por-dentro");
     const r = j.getBoundingClientRect();
-    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.9, behavior: "instant" });
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.9 * window.ImperioMotion.jornada().fim, behavior: "instant" });
     window.ImperioMotion.atualizarAgora();
     return new DOMMatrix(getComputedStyle(document.querySelector("[data-jornada-h]")).transform).m41;
   });
@@ -110,7 +112,7 @@ test("cliente mexe nas peças com o dedo e a rolagem põe tudo no lugar", async 
   await page.evaluate(() => {
     const j = document.querySelector("#por-dentro");
     const r = j.getBoundingClientRect();
-    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.2, behavior: "instant" });
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.2 * window.ImperioMotion.jornada().fim, behavior: "instant" });
   });
   await page.waitForTimeout(800);
   const box = await page.locator(".jornada__toque").boundingBox();
@@ -133,7 +135,7 @@ test("fichas andam na horizontal com o gesto lateral (trackpad) e o aviso 'arras
   await page.evaluate(() => {
     const j = document.querySelector("#por-dentro");
     const r = j.getBoundingClientRect();
-    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.55, behavior: "instant" });
+    window.scrollTo({ top: scrollY + r.top + (r.height - innerHeight) * 0.55 * window.ImperioMotion.jornada().fim, behavior: "instant" });
   });
   await page.waitForTimeout(600);
   const x = () => page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector("[data-jornada-h]")).transform).m41);
@@ -176,22 +178,31 @@ test("sem rolagem lateral no celular", async ({ page }) => {
   }
 });
 
-test("casa de Blocão: a rolagem assenta os blocos e no fim aparece o botão", async ({ page }) => {
+test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no fim aparece o botão", async ({ page }) => {
   await abrir(page);
-  await page.evaluate(() => { const c = document.querySelector("#casa"); scrollTo({ top: c.offsetTop - innerHeight, behavior: "instant" }); });
-  await expect(page.locator("#casa")).toHaveClass(/casa--3d/, { timeout: 60000 });
-  const rolar = (f) => page.evaluate((f) => { const c = document.querySelector("#casa"); scrollTo({ top: c.offsetTop + f * (c.offsetHeight - innerHeight), behavior: "instant" }); }, f);
-  await rolar(0.25);
+  await page.evaluate(() => { const j = document.querySelector("#por-dentro"); scrollTo({ top: j.offsetTop, behavior: "instant" }); });
+  await expect(page.locator("[data-casa]")).toHaveClass(/casa--3d/, { timeout: 60000 });
+  // fração da fase da casa (depois do "L"), dentro da MESMA seção
+  const rolar = (f) => page.evaluate((f) => {
+    const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada();
+    scrollTo({ top: el.offsetTop + (j.fim + f * (1 - j.fim)) * (el.offsetHeight - innerHeight), behavior: "instant" });
+  }, f);
+  await rolar(0.3);
+  await expect(page.locator("html")).toHaveClass(/fase-casa/);
+  await expect(page.locator(".jornada__h")).toBeHidden();
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.blocos().assentados), { timeout: 15000 }).toBeGreaterThan(0);
   await rolar(1);
   await expect.poll(() => page.evaluate(() => { const b = window.ImperioCasa3D.blocos(); return b.assentados === b.total; }), { timeout: 15000 }).toBe(true);
   await expect(page.locator(".casa__cta")).toBeVisible();
   await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");
+  // voltar pro "L": as fichas reaparecem
+  await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
+  await expect(page.locator("html")).not.toHaveClass(/fase-casa/);
 });
 
 test("casa de Blocão sem 3D (estatica): imagem pronta e etapas em lista", async ({ page }) => {
   await abrir(page, "/?qualidade=estatica");
-  await expect(page.locator("#casa")).toHaveClass(/casa--sem3d/);
+  await expect(page.locator("[data-casa]")).toHaveClass(/casa--sem3d/);
   await expect(page.locator(".casa__estatica")).toBeVisible();
-  await expect(page.locator("#casa [data-etapa]")).toHaveCount(6);
+  await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(6);
 });

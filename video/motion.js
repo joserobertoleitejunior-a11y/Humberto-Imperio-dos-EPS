@@ -82,6 +82,9 @@ function resolverY(s){
   var e=el(s.el); var r=e.getBoundingClientRect();
   // s.frac: fração da seção alta (jornada em L) — 0 = início, 1 = fim da parte fixa
   if(s.frac!==undefined)return Math.max(0,r.top+W().scrollY+(r.height-W().innerHeight)*s.frac);
+  // "Por dentro" tem 2 fases na mesma tela: pj = fração do "L", pc = fração da casa (o motion.js do site diz onde uma acaba)
+  if(s.pj!==undefined||s.pc!==undefined){var j=W().ImperioMotion.jornada(),fim=j&&j.fim||1,fr=s.pj!==undefined?s.pj*fim:fim+s.pc*(1-fim);
+    return Math.max(0,r.top+W().scrollY+(r.height-W().innerHeight)*fr);}
   return Math.max(0,r.top+W().scrollY-(s.off||0));
 }
 function prepararSite(){

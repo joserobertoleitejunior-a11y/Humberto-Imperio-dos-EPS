@@ -8,8 +8,8 @@
  * Tudo é função do progresso p (0..1) da seção: rolar pra baixo assenta os blocos, rolar pra cima desmonta.
  * Nada anima sozinho, então só desenha quando p muda (0 % de GPU parado).
  *
- *   0,00–0,12  O MESMO Blocão do site (grande, no meio da tela, no mesmo ângulo) encolhe e voa até o canto da obra:
- *              ele é o 1º bloco da casa. O alicerce aparece embaixo enquanto ele desce.
+ *   0,00–0,12  O Blocão do "Por dentro" (mesma posição, tamanho e ângulo em que ele terminou o "L" — guiaTela())
+ *              encolhe e voa até o canto da obra: ele é o 1º bloco da casa. O alicerce aparece embaixo.
  *   0,12–0,40  paredes do térreo: fiada por fiada, cada bloco cai no lugar (dando a volta na casa, como o pedreiro)
  *   0,40–0,47  laje + piso da varanda de cima (com pilares da varanda de baixo)
  *   0,47–0,74  paredes do andar de cima
@@ -220,6 +220,8 @@ const _o = new Object3D();
 const _ini = new Object3D();
 const _fim = new Object3D();
 const _dir = new Vector3();
+const _raio = new Vector3();
+let alvoTela = null;       // { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" (px na tela)
 const centro = new Vector3(0, 2.6, 0.6);
 const RAIO = 10.4;         // esfera que envolve a maquete inteira (base + casa + árvores)
 
@@ -245,23 +247,18 @@ function montar() {
   const pedra = new MeshStandardMaterial({ color: "#d8d3c8", roughness: 0.95 });
   matVidro = new MeshStandardMaterial({ color: "#2b3a44", roughness: 0.08, metalness: 0.25, transparent: true, opacity: 0.5, emissive: new Color("#ffb867"), emissiveIntensity: 0 });
 
-  // base da maquete: placa branca com filete grafite, gramado por cima (já está lá desde o começo)
-  const base = new Mesh(new BoxGeometry(BASE.x, BASE.alt, BASE.z), branco);
-  base.position.set(0, -BASE.alt / 2 - 0.02, 0.6);
-  base.receiveShadow = nivel.sombra;
-  cena.add(base);
-  const filete = new Mesh(new BoxGeometry(BASE.x + 0.02, 0.04, BASE.z + 0.02), grafite);
-  filete.position.set(0, -BASE.alt - 0.02, 0.6);
-  cena.add(filete);
-  const gram = new Mesh(new BoxGeometry(BASE.x - 0.3, 0.04, BASE.z - 0.3), grama);
-  gram.position.set(0, -0.0, 0.6);
-  gram.receiveShadow = nivel.sombra;
-  cena.add(gram);
+  // base da maquete: placa branca com filete grafite e gramado. Na troca o Blocão aparece SOZINHO na tela;
+  // a base surge por baixo quando ele começa a descer (0,02–0,1)
+  const base = peca(new BoxGeometry(BASE.x, BASE.alt, BASE.z), branco, 0, -BASE.alt / 2 - 0.02, 0.6, [0.02, 0.1], "sobe");
+  base.castShadow = false;
+  const filete = peca(new BoxGeometry(BASE.x + 0.02, 0.04, BASE.z + 0.02), grafite, 0, -BASE.alt - 0.02, 0.6, [0.02, 0.1], "sobe");
+  filete.castShadow = false;
+  const gram = peca(new BoxGeometry(BASE.x - 0.3, 0.04, BASE.z - 0.3), grama, 0, 0, 0.6, [0.03, 0.1], "sobe");
+  gram.castShadow = false;
   if (!nivel.sombra) {
-    const sombra = new Mesh(new PlaneGeometry(13, 12), new MeshBasicMaterial({ map: texSombra(), transparent: true, depthWrite: false }));
+    const sombra = peca(new PlaneGeometry(13, 12), new MeshBasicMaterial({ map: texSombra(), transparent: true, depthWrite: false }), 0.3, 0.025, -0.3, [0.06, 0.12], "sobe");
     sombra.rotation.x = -Math.PI / 2;
-    sombra.position.set(0.3, 0.025, -0.3);
-    cena.add(sombra);
+    sombra.castShadow = sombra.receiveShadow = false;
   }
 
   // blocos: 1 malha instanciada (concreto nas faces, sanduíche no topo e na base)
@@ -385,15 +382,19 @@ function posicionarCamera() {
   const largaTela = asp > 1.15;
   const vfov = MathUtils.degToRad(camera.fov);
   const hfov = 2 * Math.atan(Math.tan(vfov / 2) * asp);
-  // na tela larga a casa ocupa a parte direita (o texto fica à esquerda): conta com ~70 % da largura
-  const util = Math.min(vfov, hfov * (largaTela ? 0.7 : 1));
+  // tela larga: a casa ocupa a parte direita (texto à esquerda) → ~70 % da largura.
+  // celular: os textos da casa ficam embaixo → a maquete usa só a faixa de cima (abaixo do cabeçalho)
+  const reserva = largaTela ? 0 : Math.min(300, h * 0.38);
+  const altUtil = h - reserva - (largaTela ? 0 : 64);
+  const vUtil = 2 * Math.atan(Math.tan(vfov / 2) * (altUtil / h));
+  const util = Math.min(vUtil, hfov * (largaTela ? 0.7 : 1));
   const dist = (RAIO / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.94, suave(p));
   const ang = MathUtils.lerp(-0.6, 0.45, suave(p));
   const elev = MathUtils.lerp(0.5, 0.36, suave(p)); // começa mais de cima (vê os blocos assentando) e desce
   camera.position.set(centro.x + Math.sin(ang) * Math.cos(elev) * dist, centro.y + Math.sin(elev) * dist, centro.z + Math.cos(ang) * Math.cos(elev) * dist);
   camera.lookAt(centro);
   if (largaTela) camera.setViewOffset(w, h, -w * 0.16, 0, w, h);
-  else camera.clearViewOffset();
+  else camera.setViewOffset(w, h, 0, (reserva - 64) / 2, w, h); // sobe a maquete pro meio da faixa de cima
 }
 
 /**
@@ -405,16 +406,26 @@ function moverGuia() {
   guia.visible = e < 1;
   if (!guia.visible) return;
   const el = renderer.domElement;
-  const asp = el.clientWidth / Math.max(1, el.clientHeight);
+  const w = el.clientWidth;
+  const h = el.clientHeight;
   const D = 9;
-  const altVis = 2 * D * Math.tan(MathUtils.degToRad(camera.fov) / 2);
-  const largura = Math.min((asp < 1.15 ? 0.72 : 0.36) * altVis * asp, 0.9 * altVis);
+  const tan = Math.tan(MathUtils.degToRad(camera.fov) / 2);
   camera.getWorldDirection(_dir);
-  _ini.position.copy(camera.position).addScaledVector(_dir, D);
-  _ini.quaternion.copy(camera.quaternion);
-  _o.rotation.set(0.3, -0.55, 0);
-  _o.updateMatrix();
-  _ini.quaternion.multiply(_o.quaternion);
+  let largura;
+  if (alvoTela) {
+    // começa EXATAMENTE onde o Blocão estava: mesmo ponto da tela, mesma largura em px, mesmo ângulo
+    _raio.set((alvoTela.cx / w) * 2 - 1, -(alvoTela.cy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
+    _ini.position.copy(camera.position).addScaledVector(_raio, D / Math.max(0.2, _raio.dot(_dir)));
+    largura = (alvoTela.larg * 2 * D * tan) / h;
+    // a câmera do bloco olha levemente pra baixo (~0,144 rad): soma na inclinação pra o ângulo bater na tela
+    _o.rotation.set(alvoTela.inclinar + 0.144, alvoTela.giro, 0);
+  } else {
+    const asp = w / Math.max(1, h);
+    _ini.position.copy(camera.position).addScaledVector(_dir, D);
+    largura = Math.min((asp < 1.15 ? 0.72 : 0.36) * 2 * D * tan * asp, 0.9 * 2 * D * tan);
+    _o.rotation.set(0.3, -0.55, 0);
+  }
+  _ini.quaternion.copy(camera.quaternion).multiply(_o.quaternion);
   const bl = lista[primeiro];
   _fim.position.set(bl.x, bl.y, bl.z);
   _fim.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
@@ -572,6 +583,13 @@ window.ImperioCasa3D = {
   /** vídeo quadro a quadro */
   renderAgora() { desenhar(); },
   blocos() { return { assentados, total: lista.length }; },
+  /** de onde o bloco da casa sai: { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" */
+  guiaTela(a) {
+    if (!a) return;
+    if (alvoTela && alvoTela.cx === a.cx && alvoTela.cy === a.cy && alvoTela.larg === a.larg) return;
+    alvoTela = a;
+    pDesenhado = -1;
+  },
   /** fn({ assentados, total }) depois de cada desenho (contador de blocos da seção) */
   aoDesenhar(fn) { ouvinte = fn; },
 };

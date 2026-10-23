@@ -45,13 +45,15 @@ Forçar pra testar: `?qualidade=baixa` (ou `alta`, `media`, `estatica`) na URL.
 O que mantém o site leve: Three.js só baixa **depois** do `load` + ociosidade; **um** canvas só (hero + jornada);
 o 3D só desenha quando algo muda (parado = 0 % de GPU) e baixa a resolução sozinho se engasgar; fonte própria (90 KB), sem Google Fonts.
 
-### Casa inteira de Blocão (`#casa`, `assets/js/casa.js` + `assets/js/casa3d.js`)
-Seção fixa (sticky) de 520vh logo depois do "Por dentro": a **rolagem vertical monta a maquete de um sobrado em tamanho real**
-(9 × 7 m, ≈ 125 m² nos 2 andares). Começa com **o mesmo Blocão do "Por dentro"** (grande, mesmo ângulo) que voa até o canto
-da obra e vira o 1º bloco; depois **350 Blocões** caem no lugar fiada por fiada → laje com varanda → andar de cima →
-platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim, árvores e bonequinhos de escala. Tudo sobre uma base de
-maquete; a câmera calcula a distância pra maquete caber INTEIRA em qualquer tela (celular pequeno incluído).
-Contador de blocos assentados, etapa atual e botão de WhatsApp no fim.
+### Casa inteira de Blocão — 3ª fase do "Por dentro", na MESMA tela (`assets/js/casa.js` + `assets/js/casa3d.js`)
+Não é uma seção separada: o `#por-dentro` ficou mais longo (1060vh PC / 980vh celular) e tem 2 fases na mesma tela fixa —
+o "L" (mesmos 540vh de rolagem de antes, `data-jornada-l="540"`) e, em seguida, a casa. Quando o "L" termina (Blocão inteiro),
+as fichas e botões saem, a camada da casa esmaece por cima e o bloco da casa começa **exatamente onde o Blocão estava**
+(mesmo ponto, tamanho e ângulo — `ImperioCena.alvoFinal()`); ele vai pro canto da obra e vira o 1º bloco. Depois:
+**maquete de um sobrado em tamanho real** (9 × 7 m, ≈ 125 m²): 350 Blocões fiada por fiada → laje com varanda → andar de
+cima → platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim, árvores e bonequinhos de escala.
+O menu "A casa" leva pra `#casa` (âncora posicionada no começo da fase). `motion.js` publica `fim` (onde o "L" acaba) e
+`casa` (0..1 da fase); o vídeo usa `pj` (fração do "L") e `pc` (fração da casa) nas rolagens.
 - Tudo é função do progresso da rolagem (rolar pra cima desmonta); só desenha quando a rolagem muda.
 - Blocos numa malha instanciada (1 objeto pra 451 peças); topo do bloco mostra o sanduíche concreto | EPS | concreto.
 - O 3D só baixa quando a seção chega perto (1,5 tela antes). "estatica"/sem WebGL: imagem `assets/img/casa-blocao.webp` + etapas em lista.

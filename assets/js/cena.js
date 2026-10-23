@@ -131,7 +131,7 @@
     }
     var opRotulos = naJornada ? alvo.rotulos : 0;
     if (rotulos && opRotulos !== ultimaOpRot) { ultimaOpRot = opRotulos; rotulos.style.opacity = opRotulos; }
-    var visivel = naJornada ? true : palcoVisivel;
+    var visivel = naJornada ? !(j && j.casa > 0.06) : palcoVisivel; // na fase da casa quem desenha é a casa
     if (visivel !== ultimaVis) { ultimaVis = visivel; canvas.style.opacity = visivel ? 1 : 0; }
     B.pausar(!visivel);
     B.respirar(!naJornada);
@@ -165,7 +165,7 @@
       }
     }
     if (rotulos && opRotulos !== ultimaOpRot) { ultimaOpRot = opRotulos; rotulos.style.opacity = opRotulos; }
-    var visivel = heroVisivel || dentroJ;
+    var visivel = heroVisivel || (dentroJ && !(j && j.casa > 0.06)); // na fase da casa quem desenha é a casa
     if (visivel !== ultimaVis) { ultimaVis = visivel; canvas.style.opacity = visivel ? 1 : 0; }
     B.pausar(!visivel);
     B.respirar(heroVisivel && !dentroJ);
@@ -258,6 +258,11 @@
       if (window.ImperioCasa) window.ImperioCasa.atualizarAgora();
     },
     // pronto = bloco 3D carregado (+ a casa 3D, só na gravação do vídeo: no site ela carrega quando a seção chega perto)
+    /** Onde o Blocão termina o "L" (px na tela + ângulo): a casa começa o bloco dela EXATAMENTE aí. */
+    alvoFinal: function () {
+      var v = alvoJornada({ p: 1, foco: 4 });
+      return { cx: v.cx, cy: v.cy, larg: v.larg, giro: v.giro, inclinar: v.inclinar };
+    },
     pronto: function () { return !!B && (!window.__gravandoVideo || !window.ImperioCasa || window.ImperioCasa.pronto()); },
   };
 })();

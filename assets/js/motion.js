@@ -121,6 +121,11 @@
   function medirJornada() {
     var j = jornada;
     if (!j) return;
+    // a seção tem 2 fases na MESMA tela fixa: o "L" (data-jornada-l = rolagem em vh, igual à de antes) e,
+    // depois, a casa sendo montada com o próprio Blocão. fim = fração da rolagem total que é do "L".
+    var l = parseFloat(j.el.getAttribute("data-jornada-l")) || 0;
+    var totalPx = j.el.offsetHeight - window.innerHeight;
+    j.fim = l && totalPx > 0 ? Math.min(1, (l / 100) * window.innerHeight / totalPx) : 1;
     j.largura = Math.max(0, j.trilho.scrollWidth - window.innerWidth);
     j.alturaV = Math.max(0, j.vertical.scrollHeight - j.vertical.parentElement.clientHeight * 0.6);
     j.alturaSecao = j.el.offsetHeight;
@@ -140,12 +145,19 @@
     // posição da seção calculada com o scrollY (sem getBoundingClientRect = sem forçar layout)
     var topo = j.topoSecao - window.scrollY;
     var total = j.alturaSecao - vh;
-    var p = total > 0 ? limitar(-topo / total) : 0;
+    var bruto = total > 0 ? limitar(-topo / total) : 0;
+    j.pTotal = bruto;
+    j.casa = j.fim < 1 ? limitar((bruto - j.fim) / (1 - j.fim)) : 0; // 0..1 da fase da casa
+    var p = limitar(bruto / j.fim);                                    // 0..1 do "L" (como sempre foi)
     j.p = p;
     j.dentro = topo < vh && topo + j.alturaSecao > 0;
     j.entrada = limitar(1 - topo / vh); // 0 quando a seção encosta no pé da tela, 1 quando chega no topo
     if (parado) return;
-    if (!j.dentro) { if (j.faseH) { j.faseH = false; document.documentElement.classList.remove("fase-h"); } return; }
+    if (!j.dentro) {
+      if (j.faseH) { j.faseH = false; document.documentElement.classList.remove("fase-h"); }
+      if (j.faseCasa) { j.faseCasa = false; document.documentElement.classList.remove("fase-casa"); }
+      return;
+    }
     var v = suave(p / 0.5);                  // perna vertical: o bloco desmonta e abre
     // perna horizontal: LINEAR (1 px de rolagem = 1 px de movimento; o easing antigo "empacava" nas pontas)
     var hz = limitar((p - 0.44) / 0.5);
@@ -180,6 +192,9 @@
     }
     var faseH = hz > 0.05;
     if (faseH !== j.faseH) { j.faseH = faseH; document.documentElement.classList.toggle("fase-h", faseH); }
+    // fase da casa (mesma tela): fichas, botões e textos do "L" saem; a camada da casa entra por cima
+    var faseCasa = j.casa > 0;
+    if (faseCasa !== j.faseCasa) { j.faseCasa = faseCasa; document.documentElement.classList.toggle("fase-casa", faseCasa); }
     j.foco = foco;
     j.hz = hz;
   }
@@ -241,7 +256,7 @@
       var j = jornada;
       if (!j.medido) medirJornada();
       var total = j.alturaSecao - window.innerHeight;
-      return j.largura > 0 ? (0.5 * total) / j.largura : 0;
+      return j.largura > 0 ? (0.5 * j.fim * total) / j.largura : 0; // a perna horizontal é metade do "L
     }
     area.addEventListener("pointerdown", function (e) {
       if (e.pointerType === "mouse") return;

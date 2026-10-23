@@ -162,7 +162,7 @@
 
     <!-- ===== JORNADA EM "L": rolando na VERTICAL o Blocão aparece em vista explodida (SÓ DEMONSTRAÇÃO: o concreto não solta do EPS) e depois
          abre ao meio; a rolagem faz a curva e segue na HORIZONTAL com a ficha de cada peça (medidas + peso). -->
-    <section class="jornada" id="por-dentro" data-jornada aria-label="O Blocão por dentro: vista demonstrativa com as peças afastadas">
+    <section class="jornada" id="por-dentro" data-jornada data-jornada-l="540" aria-label="O Blocão por dentro: vista demonstrativa com as peças afastadas">
       <div class="jornada__fixo">
         <div class="controles">
           <div class="espessuras" role="group" aria-label="Escolha a espessura do Blocão">
@@ -247,33 +247,32 @@
             <a class="botao botao--azul" href="#calculadora">Calcular agora</a>
           </article>
         </div>
+        <!-- CASA (3ª fase, na MESMA tela): o próprio Blocão vai pro canto e a casa é montada em volta dele -->
+        <div class="casa" data-casa aria-label="Uma casa inteira de Blocão: maquete de sobrado montada com a rolagem">
+          <div class="casa__ceu" aria-hidden="true"></div>
+          <div class="casa__palco" data-casa-palco></div>
+          <img class="casa__estatica" src="assets/img/casa-blocao.webp" alt="Maquete ilustrativa: sobrado de dois andares com varanda, construído com Blocão" width="1400" height="995" loading="lazy">
+          <div class="casa__txt">
+            <p class="sobretitulo">Do bloco à casa</p>
+            <h2 data-letras>Agora, uma casa <em>inteira de Blocão.</em></h2>
+            <ol class="casa__etapas" aria-label="Etapas da obra">
+              <li data-etapa="0"><b>01</b> O Blocão vai pro lugar</li>
+              <li data-etapa="1"><b>02</b> Paredes do térreo, fiada por fiada</li>
+              <li data-etapa="2"><b>03</b> Laje e varanda</li>
+              <li data-etapa="3"><b>04</b> Segundo andar</li>
+              <li data-etapa="4"><b>05</b> Platibanda, vidro e madeira</li>
+              <li data-etapa="5"><b>06</b> Pintura e jardim: casa pronta</li>
+            </ol>
+            <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
+          </div>
+          <p class="casa__contador"><b data-casa-contador>0</b> Blocões assentados</p>
+          <p class="casa__nota">Maquete ilustrativa · sobrado 9 × 7 m</p>
+        </div>
       </div>
+      <span class="jornada__ancora-casa" id="casa" aria-hidden="true"></span>
     </section>
 
     <!-- ===== BENEFÍCIOS -->
-    <!-- ===== CASA: uma casa inteira de Blocão, montada com a rolagem vertical (ilustração) -->
-    <section class="casa" id="casa" data-casa aria-label="Uma casa inteira de Blocão: maquete de sobrado montada com a rolagem">
-      <div class="casa__fixo">
-        <div class="casa__ceu" aria-hidden="true"></div>
-        <div class="casa__palco" data-casa-palco></div>
-        <img class="casa__estatica" src="assets/img/casa-blocao.webp" alt="Maquete ilustrativa: sobrado de dois andares com varanda, construído com Blocão" width="1400" height="995" loading="lazy">
-        <div class="casa__txt">
-          <p class="sobretitulo">Do bloco à casa</p>
-          <h2 data-letras>Agora, uma casa <em>inteira de Blocão.</em></h2>
-          <ol class="casa__etapas" aria-label="Etapas da obra">
-            <li data-etapa="0"><b>01</b> O primeiro Blocão vai pro lugar</li>
-            <li data-etapa="1"><b>02</b> Paredes do térreo, fiada por fiada</li>
-            <li data-etapa="2"><b>03</b> Laje e varanda</li>
-            <li data-etapa="3"><b>04</b> Segundo andar</li>
-            <li data-etapa="4"><b>05</b> Platibanda, vidro e madeira</li>
-            <li data-etapa="5"><b>06</b> Pintura e jardim: casa pronta</li>
-          </ol>
-          <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
-        </div>
-        <p class="casa__contador"><b data-casa-contador>0</b> Blocões assentados</p>
-        <p class="casa__nota">Maquete ilustrativa · sobrado 9 × 7 m</p>
-      </div>
-    </section>
 
     <section class="secao secao--cal" id="blocao">
       <div class="container">
@@ -595,7 +594,7 @@
   <script src="assets/js/calculadora.js?v=20261022a"></script>
   <script src="assets/js/conteudo.js?v=20261022a"></script>
   <script src="assets/js/cena.js?v=20261022a"></script>
-  <script src="assets/js/casa.js?v=20261023c"></script>
+  <script src="assets/js/casa.js?v=20261023d"></script>
   <script src="assets/js/toque.js?v=20261022a"></script>
 </body>
 </html>
