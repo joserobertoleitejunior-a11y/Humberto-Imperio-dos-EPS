@@ -306,8 +306,8 @@ main { position: relative; z-index: 2; }
 
 /* ---------- Casa inteira de Blocão: 3ª fase do "Por dentro", na MESMA tela fixa ---------- */
 /* a seção ganha a rolagem da casa (+420vh no PC, +340vh no celular); o "L" continua com 540vh (data-jornada-l) */
-.jornada { height: 1060vh; }
-.jornada.jornada--sem-casa { height: 640vh; }
+.jornada { height: 1060vh; height: calc(var(--vh, 1vh) * 1060); }
+.jornada.jornada--sem-casa { height: 640vh; height: calc(var(--vh, 1vh) * 640); }
 .jornada__ancora-casa { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; }
 .casa { position: absolute; inset: 0; z-index: 6; opacity: 0; visibility: hidden; pointer-events: none; --ouro: 0; }
 .fase-casa .casa { visibility: visible; pointer-events: auto; }
@@ -359,7 +359,7 @@ main { position: relative; z-index: 2; }
 .casa__contador b { font-size: 1.25rem; font-stretch: 120%; color: var(--azul); font-variant-numeric: tabular-nums; margin-right: 4px; }
 .casa__nota { position: absolute; z-index: 2; right: max(16px, calc((100vw - 1200px) / 2)); bottom: 5vh; margin: 0; font-size: 0.74rem; color: var(--texto-suave); }
 @media (max-width: 759px) {
-  .jornada { height: 980vh; }
+  .jornada { height: 980vh; height: calc(var(--vh, 1vh) * 980); }
   /* celular: o Blocão está em cima (na zona do bloco) → a maquete fica em cima e os textos da casa embaixo */
   .casa__txt { top: auto; bottom: 64px; }
   .casa__txt .sobretitulo { margin-bottom: 4px; }

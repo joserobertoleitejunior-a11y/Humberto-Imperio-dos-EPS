@@ -191,6 +191,21 @@ test("celular: sem zoom (pinça/toque duplo) e o site no tamanho exato da tela",
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
+test("celular: barra de endereço aparecendo/sumindo não mexe na altura da tela fixa (a casa não pula quando a rolagem para)", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto("/");
+  const antes = await page.evaluate(() => [getComputedStyle(document.documentElement).getPropertyValue("--vh"), document.querySelector("#por-dentro").offsetHeight]);
+  await page.setViewportSize({ width: 390, height: 744 }); // a barra some: +80 px
+  await page.waitForTimeout(200);
+  const depois = await page.evaluate(() => [getComputedStyle(document.documentElement).getPropertyValue("--vh"), document.querySelector("#por-dentro").offsetHeight]);
+  expect(depois).toEqual(antes);
+  await page.setViewportSize({ width: 664, height: 390 }); // girou o aparelho: aí sim recalcula
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--vh"))).not.toBe(antes[0]);
+  await ctx.close();
+});
+
 test("sem rolagem lateral no celular", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   for (const url of ["/", "/admin.html"]) {

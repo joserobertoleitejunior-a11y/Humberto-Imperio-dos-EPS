@@ -61,6 +61,11 @@ HD: enquanto rola desenha leve; parado ~0,16 s refaz em alta resolução (PC/cel
 abertura até o canto cortado — as pontas dos Blocões vizinhos mostram o miolo (concreto + EPS + concreto) com a etiqueta
 "Dentro do Blocão". No celular em pé a câmera recua e olha mais pro canto. "↺ Recolocar as paredes" ou rolar a página põe tudo de volta.
 
+**Sem pulo ao parar a rolagem**: no celular a barra de endereço aparece/some quando a rolagem para e mudava a altura
+da tela. `dispositivo.js` guarda uma altura estável (`ImperioTela.altura()` e `--vh`, que só mudam ao girar o aparelho ou
+numa mudança grande); a seção "Por dentro", a tela fixa e o 3D usam essa medida. A obra também desliza até o ponto da
+rolagem com uma "mola" de ~90 ms (fora do voo do Blocão, que segue a rolagem exata).
+
 **Sem zoom**: meta viewport com `user-scalable=no`, `touch-action: pan-x pan-y` no html e `dispositivo.js` barra pinça
 (iPhone) e Ctrl + roda/teclas — o site fica sempre no tamanho exato da tela. Campos com letra ≥ 16px (iPhone não amplia ao tocar).
 O menu "A casa" leva pra `#casa` (âncora posicionada no começo da fase). `motion.js` publica `fim` (onde o "L" acaba) e

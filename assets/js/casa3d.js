@@ -878,12 +878,24 @@ function redimensionar() {
   pDesenhado = -1;
 }
 
+/* rolagem suave: a obra desliza até o ponto da rolagem (um dedo que dá solavanco ou a rolagem que para de repente
+   não fazem a casa pular) — ~90 ms de "mola", independente da taxa de quadros do aparelho */
+let pAlvo = 0;
+let tUltimo = 0;
+const MOLA = 90;
 let pedido = false;
 function pedir() {
   if (pedido || window.__gravandoVideo) return;
   pedido = true;
-  requestAnimationFrame(() => {
+  requestAnimationFrame((t) => {
     pedido = false;
+    if (p !== pAlvo) {
+      const dt = Math.min(64, tUltimo ? t - tUltimo : 16);
+      p += (pAlvo - p) * (1 - Math.exp(-dt / MOLA));
+      if (Math.abs(pAlvo - p) < 0.0004) p = pAlvo;
+    }
+    tUltimo = p === pAlvo ? 0 : t;
+    if (p !== pAlvo) pedir(); // ainda chegando: próximo quadro
     if (p === pDesenhado) return;
     desenhar(false);
     clearTimeout(timerHD);
@@ -962,8 +974,11 @@ window.ImperioCasa3D = {
   /** p = 0..1 da fase da casa (só desenha se mudou). Rolar de novo recoloca as paredes e a câmera volta. */
   progresso(novo) {
     novo = limitar(novo);
-    if ((fora.size || interior) && Math.abs(novo - p) > 0.0005) recolocarParedes();
-    p = novo;
+    if ((fora.size || interior) && Math.abs(novo - pAlvo) > 0.0005) recolocarParedes();
+    // sem mola: no vídeo (quadro a quadro), em saltos grandes (menu "A casa") e durante o voo do Blocão do site
+    // (0–0,13: a cena do bloco lê voo() a cada rolagem e o bloco tem que bater com a câmera da casa)
+    if (window.__gravandoVideo || Math.abs(novo - p) > 0.3 || Math.min(novo, p) < 0.13) p = novo;
+    pAlvo = novo;
     pedir();
   },
   /** toque/clique na tela (px do navegador): com a casa pronta, tira a parede tocada. Devolve true se tirou. */

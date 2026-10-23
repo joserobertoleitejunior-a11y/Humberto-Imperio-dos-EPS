@@ -12,6 +12,9 @@
 (function () {
   "use strict";
 
+  // altura estável da tela (dispositivo.js): a barra de endereço do celular não mexe no 3D
+  function alturaTela() { return window.ImperioTela ? window.ImperioTela.altura() : window.innerHeight; }
+
   var html = document.documentElement;
   var parado = html.getAttribute("data-qualidade") === "estatica";
   var camada = null;
@@ -90,7 +93,7 @@
   function posicionarAncora(j) {
     if (!ancora || !j || j.fim === ancoraFim) return;
     ancoraFim = j.fim;
-    var total = jornadaEl.offsetHeight - window.innerHeight;
+    var total = jornadaEl.offsetHeight - alturaTela();
     ancora.style.top = Math.round((j.fim + (1 - j.fim) * 0.06) * total) + "px";
   }
 
@@ -118,7 +121,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025d")
+    import("./casa3d.js?v=20261025e")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;

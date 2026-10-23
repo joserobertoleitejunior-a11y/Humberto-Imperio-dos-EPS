@@ -28,10 +28,27 @@
     if (busca.has("video")) window.__gravandoVideo = true;
   } catch (e) { /* navegador antigo */ }
   h.setAttribute("data-qualidade", nivel);
-  function medir() { h.style.setProperty("--vh", window.innerHeight * 0.01 + "px"); }
-  medir();
+  // altura de referência da tela, ESTÁVEL: no celular a barra de endereço aparece/some quando a rolagem para
+  // (muda ~50–120px) — se o 3D seguisse isso, a casa e o Blocão "pulavam" pra cima. Só muda ao girar o aparelho,
+  // ao mudar a largura ou numa mudança grande de verdade (fora o teclado aberto).
+  var largura = window.innerWidth;
+  var altura = window.innerHeight;
+  function medir(forcar) {
+    var w = window.innerWidth;
+    var a = window.innerHeight;
+    if (forcar !== true && w === largura) {
+      if (toque && Math.abs(a - altura) < 160) return;
+      var foco = document.activeElement;
+      if (foco && /^(INPUT|SELECT|TEXTAREA)$/.test(foco.tagName)) return; // teclado na tela
+    }
+    largura = w;
+    altura = a;
+    h.style.setProperty("--vh", altura * 0.01 + "px");
+  }
+  window.ImperioTela = { altura: function () { return altura; } };
+  medir(true);
   window.addEventListener("resize", medir, { passive: true });
-  window.addEventListener("orientationchange", function () { setTimeout(medir, 250); }, { passive: true });
+  window.addEventListener("orientationchange", function () { setTimeout(function () { medir(true); }, 250); }, { passive: true });
 
   // sem zoom (toque duplo: o touch-action do site.css): o layout já é feito pro tamanho de cada tela (a meta viewport trava no Android; o iPhone ignora, então aqui)
   function barrar(e) { e.preventDefault(); }

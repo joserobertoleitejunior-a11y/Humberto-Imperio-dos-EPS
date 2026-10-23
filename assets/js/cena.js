@@ -12,6 +12,9 @@
 (function () {
   "use strict";
 
+  // altura estável da tela (dispositivo.js): a barra de endereço do celular não mexe no 3D
+  function alturaTela() { return window.ImperioTela ? window.ImperioTela.altura() : window.innerHeight; }
+
   var html = document.documentElement;
   var nivel = html.getAttribute("data-qualidade");
   var B = null;
@@ -47,7 +50,7 @@
    */
   function alvoJornada(j) {
     var w = window.innerWidth;
-    var h = window.innerHeight;
+    var h = alturaTela();
     var celular = w < 760;
     var p = j.p;
     var sep = suave((p - 0.08) / 0.14);
@@ -237,7 +240,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261025d")
+    import("./bloco3d.js?v=20261025e")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);

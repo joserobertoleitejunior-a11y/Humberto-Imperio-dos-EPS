@@ -12,6 +12,9 @@
 (function () {
   "use strict";
 
+  // altura estável da tela (dispositivo.js): a barra de endereço do celular não mexe no 3D
+  function alturaTela() { return window.ImperioTela ? window.ImperioTela.altura() : window.innerHeight; }
+
   var html = document.documentElement;
   var nivel = html.getAttribute("data-qualidade") || "media";
   var parado = nivel === "estatica";
@@ -22,7 +25,7 @@
   var jornada = null;
   var ouvintes = [];
   var agendado = false;
-  var vh = window.innerHeight;
+  var vh = alturaTela();
 
   function limitar(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function suave(x) { x = limitar(x); return x * x * (3 - 2 * x); }
@@ -124,8 +127,8 @@
     // a seção tem 2 fases na MESMA tela fixa: o "L" (data-jornada-l = rolagem em vh, igual à de antes) e,
     // depois, a casa sendo montada com o próprio Blocão. fim = fração da rolagem total que é do "L".
     var l = parseFloat(j.el.getAttribute("data-jornada-l")) || 0;
-    var totalPx = j.el.offsetHeight - window.innerHeight;
-    j.fim = l && totalPx > 0 ? Math.min(1, (l / 100) * window.innerHeight / totalPx) : 1;
+    var totalPx = j.el.offsetHeight - alturaTela();
+    j.fim = l && totalPx > 0 ? Math.min(1, (l / 100) * alturaTela() / totalPx) : 1;
     j.largura = Math.max(0, j.trilho.scrollWidth - window.innerWidth);
     j.alturaV = Math.max(0, j.vertical.scrollHeight - j.vertical.parentElement.clientHeight * 0.6);
     j.alturaSecao = j.el.offsetHeight;
@@ -205,7 +208,7 @@
   /* ---------- Laço ---------- */
   function quadro() {
     agendado = false;
-    vh = window.innerHeight;
+    vh = alturaTela();
     var y = window.scrollY;
     if (jornada) pintarJornada();
     if (!parado) {
@@ -258,7 +261,7 @@
     function razao() {
       var j = jornada;
       if (!j.medido) medirJornada();
-      var total = j.alturaSecao - window.innerHeight;
+      var total = j.alturaSecao - alturaTela();
       return j.largura > 0 ? (0.5 * j.fim * total) / j.largura : 0; // a perna horizontal é metade do "L
     }
     area.addEventListener("pointerdown", function (e) {
