@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261028b";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261028c";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -1377,7 +1377,12 @@ function irPonto(id) {
   iniciarVoo(criarVoo([de.pos, meio, pos], [de.alvo, meioA, alvo], [0, 1, 1], {
     fov: [de.fov, 30], off: [de.off, de.off], duracao: 0.8, ponto: true,
     aoFim: () => {
-      foco = { id, pos, alvo, fov: 30 };
+      // em volta do ponto o dedo continua girando a câmera (ângulo/altura/distância a partir do alvo)
+      const d = pos.clone().sub(alvo);
+      const R = d.length();
+      const ang = Math.atan2(d.x, d.z);
+      const el = Math.asin(limitarEntre(d.y / R, -1, 1));
+      foco = { id, pos, alvo, fov: 30, R, ang0: ang, ang, el, angAlvo: ang, elAlvo: el };
       avisarPonto();
     },
   }));
@@ -1430,15 +1435,25 @@ function quadroOrbita(t) {
   tGiro = t;
   if (interior || tour) { orbitaViva = false; tGiro = 0; rollFora = 0; return; }
   if (!arrastando) {
-    giroAlvo += giroVel * dt; // planando: o embalo do dedo continua e vai perdendo força
+    // planando: o embalo do dedo continua e vai perdendo força (no zoom de um ponto, em volta do ponto)
+    if (foco) foco.angAlvo = limitarEntre(foco.angAlvo + giroVel * dt, foco.ang0 - 1.1, foco.ang0 + 1.1);
+    else giroAlvo += giroVel * dt;
     giroVel *= Math.exp(-dt / 0.5);
   }
   const k = 1 - Math.exp(-dt / 0.14);
+  let focoAndando = false;
+  if (foco && foco.R) { // drone em volta do corte: persegue o dedo e recalcula a posição da câmera
+    foco.ang += (foco.angAlvo - foco.ang) * k;
+    foco.el += (foco.elAlvo - foco.el) * k;
+    const c = Math.cos(foco.el);
+    foco.pos.set(foco.alvo.x + Math.sin(foco.ang) * c * foco.R, foco.alvo.y + Math.sin(foco.el) * foco.R, foco.alvo.z + Math.cos(foco.ang) * c * foco.R);
+    focoAndando = Math.abs(foco.angAlvo - foco.ang) > 0.0005 || Math.abs(foco.elAlvo - foco.el) > 0.0005;
+  }
   giroUser += (giroAlvo - giroUser) * k;
   elevUser += (elevAlvo - elevUser) * k;
   // inclinação pela distância até o alvo do dedo (suave; a velocidade por quadro tremia no celular)
   rollFora += (limitarEntre(-(giroAlvo - giroUser) * 0.35, -0.1, 0.1) - rollFora) * (1 - Math.exp(-dt / 0.25));
-  const parado = !saidaFoco && !arrastando && Math.abs(giroVel) < 0.02 && Math.abs(giroAlvo - giroUser) < 0.0005 && Math.abs(elevAlvo - elevUser) < 0.0005 && Math.abs(rollFora) < 0.002;
+  const parado = !focoAndando && !saidaFoco && !arrastando && Math.abs(giroVel) < 0.02 && Math.abs(giroAlvo - giroUser) < 0.0005 && Math.abs(elevAlvo - elevUser) < 0.0005 && Math.abs(rollFora) < 0.002;
   pDesenhado = -1;
   if (parado) {
     giroUser = giroAlvo; elevUser = elevAlvo; rollFora = 0; giroVel = 0;
@@ -1901,7 +1916,15 @@ girar(dx, dy = 0, dtMs = 16) {
       pedir();
       return;
     }
-    if (foco || (voo && voo.ponto)) voltarPonto(); // arrastou no zoom: sai do zoom girando (vê as outras opções)
+    if (voo && voo.ponto) return; // chegando no ponto (0,8 s): o dedo gira assim que a câmera pousa
+    if (foco && foco.R) { // no zoom de um ponto: o dedo gira a câmera em volta do corte (sem sair do zoom)
+      arrastando = true;
+      giroVel = giroVel * 0.5 + ((-dx * 0.008) / (Math.max(8, dtMs) / 1000)) * 0.5;
+      foco.angAlvo = limitarEntre(foco.angAlvo - dx * 0.008, foco.ang0 - 1.1, foco.ang0 + 1.1); // não vai pra trás da parede
+      foco.elAlvo = limitarEntre(foco.elAlvo + dy * 0.004, 0.08, 1.25);
+      animarOrbita();
+      return;
+    }
     const dts = Math.max(8, dtMs) / 1000;
     arrastando = true;
     giroAlvo -= dx * 0.008;
@@ -1956,6 +1979,8 @@ girar(dx, dy = 0, dtMs = 16) {
   irPonto: (id) => irPonto(id),
   /** "Blocão aparente": true tira a pintura das paredes (mostra o Blocão cru), false pinta de novo */
   semTinta: (on) => definirSemTinta(on),
+  /** testes: ângulo do dedo em volta do ponto em foco (null fora do zoom) */
+  focoGiro: () => (foco && foco.R ? foco.angAlvo : null),
   voltarPonto: () => voltarPonto(),
   emFoco: () => (foco ? foco.id : null),
   aoPonto(fn) { ouvintePonto = fn; },

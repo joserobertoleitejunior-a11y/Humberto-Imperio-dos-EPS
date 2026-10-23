@@ -83,7 +83,8 @@ exposto (`montarCorte`). A câmera olha o corte de ~40° de lado, pra borda most
 lugar mais perto do ponto que ela vê inteiro (raios pro meio e pros 4 cantos — sem telhado de garagem ou varanda na
 frente: `vistaLivre`). **"Acabamento fácil" tira a tinta da casa inteira** e mostra o Blocão aparente
 (`definirSemTinta`); ao sair do ponto a pintura volta. A linha vai do ponto até o cartão com a vantagem; as outras opções seguem
-na tela (clicou outra = vai direto). Arrastar no zoom sai do zoom girando (mistura suave da pose, `saidaFoco`);
+na tela (clicou outra = vai direto). Arrastar no zoom gira a câmera em volta do corte, sem sair do zoom (drone com mola e embalo, até ±63° pros lados —
+não vai pra trás da parede);
 tocar na casa ou rolar a página volta pra vista inteira.
 Pontos em `montarPontos()` (calculados pela planta de cada casa); textos em `VANTAGENS` (`casa3d.js`).
 Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamento pela altura real (nunca sobrepõem).
