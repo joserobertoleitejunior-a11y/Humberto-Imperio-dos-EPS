@@ -290,6 +290,14 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();
   await expect(page.locator("[data-casa-vantagem]")).toBeVisible();
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
+  // arrastar no zoom sai do zoom girando (pra ver as outras opções)
+  await page.mouse.move(cx.x, cx.y);
+  await page.mouse.down();
+  await page.mouse.move(cx.x - 120, cx.y, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 15000 }).toBeNull();
+  await page.evaluate(() => window.ImperioCasa3D.irPonto(window.ImperioCasa3D.pontosNaTela().find((q) => q.visivel).id));
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();
   // tocar na casa volta pra vista inteira
   await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth / 2, innerHeight / 2));
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).toBeNull();

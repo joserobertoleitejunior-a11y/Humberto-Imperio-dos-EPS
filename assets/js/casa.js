@@ -155,7 +155,9 @@
   /** etiquetas em colunas nas margens (celular: dos 2 lados; PC: à direita), sem sobrepor, e a linha até o ponto */
   function atualizarPontos() {
     if (!pontosEl || !C3) return;
-    var mostrar = camada.classList.contains("casa--maquete") && !C3.emFoco() && !voandoPonto && !camada.classList.contains("casa--tour");
+    // no zoom de um ponto as outras opções continuam na tela (dá pra ir direto pra outra ou arrastar pra ver)
+    var mostrar = camada.classList.contains("casa--maquete") && !voandoPonto && !camada.classList.contains("casa--tour");
+    var ativo = C3.emFoco();
     pontosEl.classList.toggle("on", mostrar);
     if (!mostrar) return;
     var r = camada.getBoundingClientRect();
@@ -170,9 +172,10 @@
     C3.pontosNaTela().forEach(function (q) {
       var e = etiquetas[q.id];
       if (!e) return;
-      if (!q.visivel) { esconder(e); return; }
       q.px = q.x - r.left;
       q.py = q.y - r.top;
+      if (q.id === ativo) { ligarCartao(e, q, r); return; } // o ponto em foco: linha do ponto até a informação
+      if (!q.visivel) { esconder(e); return; }
       (larga || q.px > W / 2 ? cols.d : cols.e).push(q);
     });
     ["e", "d"].forEach(function (lado) {
@@ -205,6 +208,24 @@
         e.toque.setAttribute("d", d);
       });
     });
+  }
+
+  /** ponto em foco: some a etiqueta e a linha preta vai do ponto da casa até o cartão com a vantagem */
+  function ligarCartao(e, q, r) {
+    var card = camada.querySelector("[data-casa-vantagem]");
+    var c = card && !card.hidden ? card.getBoundingClientRect() : null;
+    e.btn.style.opacity = 0;
+    e.btn.style.pointerEvents = "none";
+    e.toque.setAttribute("d", "");
+    if (!c || !c.width) { e.dot.style.opacity = 0; e.linha.setAttribute("d", ""); return; }
+    e.dot.style.transform = "translate(" + q.px.toFixed(1) + "px," + q.py.toFixed(1) + "px)";
+    e.dot.style.opacity = 1;
+    var L = c.left - r.left;
+    var T = c.top - r.top;
+    var ex = Math.min(Math.max(q.px, L + 14), L + c.width - 14);
+    var ey = q.py < T ? T : q.py > T + c.height ? T + c.height : T;
+    if (q.py >= T && q.py <= T + c.height) { ex = q.px < L ? L : L + c.width; ey = q.py; }
+    e.linha.setAttribute("d", "M" + q.px.toFixed(1) + " " + q.py.toFixed(1) + " L" + ex.toFixed(1) + " " + ey.toFixed(1));
   }
 
   function aoDesenhar(info) {
@@ -247,7 +268,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261027c")
+    import("./casa3d.js?v=20261027e")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;

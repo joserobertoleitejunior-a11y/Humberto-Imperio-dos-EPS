@@ -76,9 +76,14 @@ aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
 Bem mais leve, Acabamento fácil, Sem mofo. Cada ponto existe dos 2 lados da casa (espelhado); aparece o lado virado
 pra câmera, então girando 360° as vantagens nunca somem. Etiqueta = só texto preto (sem caixinha, com halo claro pra
 ler sobre o cenário) nas margens, fora do 3D, sublinhado por uma linha preta (svg) que segue até a bolinha no ponto.
-Fácil de clicar: o texto, a linha inteira (faixa invisível de 24 px por cima) e a bolinha abrem a vantagem. Clicou: a
-câmera dá um zoom moderado até perto do ponto e o cartão no lugar do texto conta a vantagem; em "Casa mais fresca" a
-parede daquele lado desliza e mostra o Blocão por dentro. Tocar na casa ou rolar a página volta pra vista inteira.
+Fácil de clicar: o texto, a linha inteira (faixa invisível de 24 px por cima) e a bolinha abrem a vantagem.
+Clicou: voo rápido (~1 s, tempo fixo, `criarVoo(..., { duracao })`) até o **Blocão em destaque**: o próprio Blocão do
+site (textura de concreto, topo com concreto + EPS + concreto) sai da parede naquele ponto, 2,5× maior, de 3/4, e a
+câmera enquadra ele de frente (`destacarGuia`, `poseDestaque`). Escolhe o bloco mais perto do ponto nas fachadas
+viradas pro mesmo lado que a câmera vê inteiro (raios da câmera pro meio e pros 4 cantos — nada de telhado de garagem
+ou varanda na frente: `vistaLivre`). A linha preta vai do Blocão até o cartão com a vantagem; as outras opções seguem
+na tela (clicou outra = vai direto). Arrastar no zoom sai do zoom girando (mistura suave da pose, `saidaFoco`);
+tocar na casa ou rolar a página volta pra vista inteira.
 Pontos em `montarPontos()` (calculados pela planta de cada casa); textos em `VANTAGENS` (`casa3d.js`).
 Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamento pela altura real (nunca sobrepõem).
 

@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261027c";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261027e";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -524,6 +524,12 @@ let voo = null;            // voo de câmera em andamento (toque, troca de andar
 let tour = null;           // tour automático pela casa { legendas, legenda, ini }
 let ouvinteTour = null;
 let foco = null;           // ponto estratégico em foco: { id, pos, alvo, fov } (câmera perto da casa)
+let saidaFoco = null;          // saindo do zoom de um ponto: mistura a pose do zoom com a da maquete (que o dedo já gira)
+const DUR_SAIDA = 550;
+let destaque = null;       // o Blocão do ponto em foco: sai da parede, cru, mostrando concreto + EPS + concreto
+const DUR_DESTAQUE = 650;
+const _eixo = new Vector3();
+const _c = new Vector3();
 let pontos = [];           // pontos estratégicos da casa atual (vantagens do Blocão)
 let ouvintePonto = null;
 let extrasProntos = false; // móveis e paisagem: montados num momento ocioso (não pesa na abertura do site)
@@ -890,6 +896,14 @@ function posicionarCamera() {
     off = r.off;
     rolagemCam = voo.roll;
   }
+  if (saidaFoco && !foco && !voo) {
+    const k = suave(Math.min(1, (agora() - saidaFoco.t0) / DUR_SAIDA));
+    camera.position.lerpVectors(saidaFoco.pos, camera.position, k);
+    alvo = _alvoCam.lerpVectors(saidaFoco.alvo, alvo, k);
+    fov = saidaFoco.fov + (fov - saidaFoco.fov) * k;
+    off = saidaFoco.off + (off - saidaFoco.off) * k;
+    if (k >= 1) saidaFoco = null;
+  }
   camera.fov = fov;
   camera.near = modoDentro() ? 0.1 : 1;
   if (paisagem && paisagem.visible) camera.far = Math.max(camera.far, 800); // céu e morros lá longe
@@ -906,6 +920,7 @@ function posicionarCamera() {
  * mesma largura em px, mesmo ângulo) e voa encolhendo, num arco, até o canto da obra.
  */
 function moverGuia() {
+  if (destacarGuia()) return;
   const e = suave(faixa(p, 0, 0.12));
   guia.visible = e < 1 && !blocoDoSite;
   if (!guia.visible) return;
@@ -958,6 +973,7 @@ function estadoParede(id) {
 function animando() {
   const t = agora();
   for (const a of fora.values()) if (t - a.t0 < DUR_PAREDE) return true;
+  if (destaque && t - destaque.t0 < DUR_DESTAQUE) return true;
   return !!interior && t - interior.t0 < DUR_CAMERA;
 }
 
@@ -1004,8 +1020,13 @@ function criarVoo(pts, alvos, vels, extra = {}) {
     const d = Math.max(pts[i].distanceTo(pts[i - 1]), alvos[i].distanceTo(alvos[i - 1]) * 0.3, 0.35);
     ts.push(ts[i - 1] + d / (vels[i] || 1.5));
   }
-  const T = ts[ts.length - 1];
-  const R = Math.min(1.1, T / 3); // decola e pousa devagar
+  let T = ts[ts.length - 1];
+  if (extra.duracao) { // voo com tempo fixo (clique num ponto: rápido, não importa a distância)
+    const f = (extra.duracao * 0.75) / T;
+    for (let i = 0; i < ts.length; i++) ts[i] *= f;
+    T = ts[ts.length - 1];
+  }
+  const R = extra.duracao ? T / 3 : Math.min(1.1, T / 3); // decola e pousa devagar
   return { pts, alvos, ts, T, R, D: T + R, t0: agora(), roll: 0, yawAntes: null, tAntes: 0, seg: -1, ...extra };
 }
 
@@ -1189,6 +1210,97 @@ const VANTAGENS = {
 };
 
 /** pontos nas faces que aparecem de frente pra câmera (frente e lado direito), calculados pela planta de cada casa */
+/**
+ * ponto em foco: o Blocão do site (textura de verdade, miolo de EPS no topo) sai da parede no lugar do bloco,
+ * maior, tombando o topo pra câmera — mostra na maquete o que é o Blocão
+ */
+function destacarGuia() {
+  const k = estadoDestaque();
+  if (!destaque || k <= 0.01) return false;
+  const bl = lista[destaque.i];
+  const [nx, nz] = normalDe(muroDe(bl.parede));
+  guia.visible = true;
+  guia.position.set(bl.x + nx * 1.7 * k, bl.y + 0.9 * k, bl.z + nz * 1.7 * k);
+  guia.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
+  guia.rotateOnWorldAxis(_eixo.set(0, 1, 0), 0.55 * k); // 3/4: a face de concreto, a ponta e o topo com o miolo
+  if (bl.girado) guia.rotateOnWorldAxis(_eixo.set(0, 0, 1), -nx * 0.3 * k);
+  else guia.rotateOnWorldAxis(_eixo.set(1, 0, 0), nz * 0.3 * k);
+  const g = 1 + 1.5 * k; // 2,5× o tamanho: de longe dá pra ler o concreto e o miolo de EPS
+  guia.scale.set(bl.comp * g, g, g);
+  return true;
+}
+
+/** 0 = Blocão do ponto no lugar, 1 = fora da parede, mostrando o miolo */
+function estadoDestaque() {
+  if (!destaque) return 0;
+  const k = suave(Math.min(1, (agora() - destaque.t0) / DUR_DESTAQUE));
+  return destaque.de + (destaque.para - destaque.de) * k;
+}
+
+/** blocos das fachadas viradas pro lado do ponto (qualquer andar), do mais perto do ponto pro mais longe */
+function blocosDoPonto(pt, n) {
+  const fachada = new Set(muros.filter((m) => { const [nx, nz] = normalDe(m); return !m.interna && nx * n.x + nz * n.z > 0.3; }).map((m) => m.id));
+  const l = [];
+  lista.forEach((bl, i) => {
+    if (!fachada.has(bl.parede) || bl.comp < 0.5) return;
+    l.push([(bl.x - pt.x) ** 2 + (bl.y - pt.y) ** 2 * 1.5 + (bl.z - pt.z) ** 2, i]);
+  });
+  return l.sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+}
+
+/** onde o Blocão em destaque fica (fora da parede) e de onde a câmera olha pra ele */
+function poseDestaque(i, de) {
+  const bl = lista[i];
+  const [mx, mz] = normalDe(muroDe(bl.parede));
+  const n = _c.set(mx, 0, mz);
+  const alvo = new Vector3(bl.x + n.x * 1.7, bl.y + 0.9, bl.z + n.z * 1.7);
+  const nh = _b.set(n.x, 0, n.z).normalize();
+  const dir = _a.copy(de.pos).sub(alvo).setY(0).normalize().multiplyScalar(0.35).add(nh).normalize();
+  dir.y = 0.62;
+  dir.normalize();
+  // distância pela LARGURA da tela: o Blocão em destaque (2,5 m) ocupa ~metade da largura útil
+  const meiaV = Math.tan(MathUtils.degToRad(30) / 2);
+  const D = Math.max(7.5, 3 / (meiaV * Math.min(1.4, camera.aspect)));
+  return { i, alvo, pos: alvo.clone().addScaledVector(dir, D), dir: dir.clone(), D };
+}
+
+/** nada (telhado da garagem, varanda, pilar) entre a câmera e o Blocão em destaque — no meio e nas pontas? */
+function vistaLivre(pose) {
+  const [nx, nz] = normalDe(muroDe(lista[pose.i].parede));
+  const n = { x: nx, z: nz };
+  const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible));
+  const tx = -n.z;
+  const tz = n.x;
+  // da câmera pra cada canto (de dentro de um telhado pra fora o raio não acharia nada)
+  for (const [a, b] of [[0, 0], [1.2, 0.55], [-1.2, 0.55], [1.2, -0.55], [-1.2, -0.55]]) {
+    _c.set(pose.alvo.x + tx * a, pose.alvo.y + b, pose.alvo.z + tz * a);
+    const d = _c.distanceTo(pose.pos);
+    _raycast.set(pose.pos, _c.sub(pose.pos).divideScalar(d));
+    _raycast.far = d;
+    const hit = _raycast.intersectObjects(alvos, true)[0];
+    _raycast.far = Infinity;
+    if (hit) return false;
+  }
+  return true;
+}
+
+/** parede externa onde o ponto está (pra abrir e mostrar o Blocão por dentro) */
+function paredeDoPonto(pt, nn) {
+  const andar = projeto.B && pt.y > CHAO + PE + LAJE * 0.5 ? 1 : 0;
+  let melhor = null;
+  let dMin = Infinity;
+  for (const m of muros) {
+    if (m.interna || m.andar !== andar) continue;
+    const [nx, nz] = normalDe(m);
+    if (nx * nn.x + nz * nn.z < 0.5) continue;
+    const ao = m.eixo === "x" ? pt.x : pt.z;
+    if (ao < Math.min(m.ini, m.fim) - 0.5 || ao > Math.max(m.ini, m.fim) + 0.5) continue;
+    const d = Math.abs((m.eixo === "x" ? pt.z : pt.x) - m.fixo);
+    if (d < dMin) { dMin = d; melhor = m; }
+  }
+  return melhor && dMin < 1.5 ? melhor.id : undefined;
+}
+
 function montarPontos() {
   const P = projeto;
   const { A } = P;
@@ -1214,7 +1326,10 @@ function montarPontos() {
       const oposta = m0 && muros.find((m) => m.andar === m0.andar && !m.interna && m.eixo === m0.eixo && m.fora === -m0.fora);
       if (oposta) espelho.parede = oposta.id;
     }
-    return { ...q, cands: [{ p: q.p, n: q.n, parede: q.parede }, espelho], titulo: VANTAGENS[q.id][0], texto: VANTAGENS[q.id][1] };
+    const cands = [{ p: q.p, n: q.n, parede: q.parede }, espelho];
+    cands.forEach((c) => { if (c.parede === undefined) c.parede = paredeDoPonto(c.p, c.n); });
+    q.parede = cands[0].parede;
+    return { ...q, cands, titulo: VANTAGENS[q.id][0], texto: VANTAGENS[q.id][1] };
   });
 }
 
@@ -1231,27 +1346,32 @@ function irPonto(id) {
   if (foco && foco.id === id) return true;
   for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
   const de = capturarPose();
-  // zoom moderado: a câmera vem NA MESMA DIREÇÃO em que a pessoa já olha (puxada um pouco pra frente do ponto),
-  // até ~45 % da distância — fica perto da casa, de cima, sem entrar em varanda nem em janela
-  const dir = _a.copy(de.pos).sub(q.p).normalize().multiplyScalar(0.7).addScaledVector(q.n, 0.3).normalize();
-  const D = Math.max(7, de.pos.distanceTo(q.p) * 0.45);
-  const pos = q.p.clone().addScaledVector(dir, D);
-  pos.y = Math.max(pos.y, q.p.y + 2.2);
-  const alvo = q.p.clone();
+  // o Blocão daquele ponto sai da parede (cru: concreto + EPS + concreto) e a câmera enquadra ele de frente, de cima
+  // o mais perto do ponto que a câmera consiga ver inteiro (sem telhado de garagem/varanda na frente)
+  let iBloco = -1;
+  let pose = null;
+  if (q.parede !== undefined) {
+    const cands = blocosDoPonto(q.p, q.n);
+    for (const i of cands) {
+      const ps = poseDestaque(i, de);
+      if (!pose) { pose = ps; iBloco = i; }
+      if (vistaLivre(ps)) { pose = ps; iBloco = i; break; }
+    }
+  }
+  if (destaque && destaque.i !== iBloco) destaque = null;
+  if (iBloco >= 0) destaque = { i: iBloco, de: estadoDestaque(), para: 1, t0: agora() + 350 };
+  const alvo = pose ? pose.alvo : q.p.clone();
+  const pos = pose ? pose.pos : q.p.clone().addScaledVector(q.n, 9).setY(q.p.y + 5);
   const meio = de.pos.clone().lerp(pos, 0.5);
   meio.y = Math.max(de.pos.y, pos.y) + 0.6;
   const meioA = de.alvo.clone().lerp(alvo, 0.6);
   foco = null;
+  saidaFoco = null;
   pRemocao = pAlvo;
-  iniciarVoo(criarVoo([de.pos, meio, pos], [de.alvo, meioA, alvo], [0, 9, 9], {
-    fov: [de.fov, 28], off: [de.off, de.off],
+  iniciarVoo(criarVoo([de.pos, meio, pos], [de.alvo, meioA, alvo], [0, 1, 1], {
+    fov: [de.fov, 30], off: [de.off, de.off], duracao: 1.0, ponto: true,
     aoFim: () => {
-      foco = { id, pos, alvo, fov: 28 };
-      if (q.parede !== undefined) { // casa fresca: a parede desliza e mostra o Blocão por dentro (concreto + EPS + concreto)
-        fora.set(q.parede, { de: 0, para: 1, t0: agora() });
-        atualizarRevelados();
-        requestAnimationFrame(animar);
-      }
+      foco = { id, pos, alvo, fov: 30 };
       avisarPonto();
     },
   }));
@@ -1260,20 +1380,16 @@ function irPonto(id) {
   return true;
 }
 
-/** volta pra vista da maquete inteira */
+/** volta pra vista da maquete inteira (rápido e suave; se o dedo estiver girando, já volta girando) */
 function voltarPonto() {
-  if (!foco || voo) return;
-  const de = capturarPose();
+  if (!foco && !(voo && voo.ponto)) return;
+  saidaFoco = { ...capturarPose(), t0: agora() };
   foco = null;
-  posicionarCamera();
-  const para = capturarPose();
+  voo = null;
   for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
-  const meio = de.pos.clone().lerp(para.pos, 0.5);
-  meio.y = Math.max(de.pos.y, para.pos.y) + 0.6;
-  iniciarVoo(criarVoo([de.pos, meio, para.pos], [de.alvo, de.alvo.clone().lerp(para.alvo, 0.5), para.alvo], [0, 10, 10], {
-    fov: [de.fov, para.fov], off: [de.off, para.off], aoFim: () => avisarPonto(),
-  }));
+  if (destaque) destaque = { i: destaque.i, de: estadoDestaque(), para: 0, t0: agora() };
   requestAnimationFrame(animar);
+  animarOrbita();
   avisarPonto();
 }
 
@@ -1292,8 +1408,9 @@ function pontosNaTela() {
       const outro = q.cands.find((c) => c !== atual);
       if (outro && nota(outro) > nota(atual) + 0.25) { q.p = outro.p; q.n = outro.n; q.parede = outro.parede; }
     }
+    const onde = foco && foco.id === q.id ? foco.alvo : q.p; // em foco: o ponto é o Blocão que saiu da parede
     _olho.copy(camera.position).sub(q.p).normalize();
-    _tela.copy(q.p).project(camera);
+    _tela.copy(onde).project(camera);
     const frente = q.n.dot(_olho) > 0.2 && _tela.z < 1;
     return { id: q.id, titulo: q.titulo, x: r.left + ((_tela.x + 1) / 2) * r.width, y: r.top + ((1 - _tela.y) / 2) * r.height, visivel: frente };
   });
@@ -1315,7 +1432,7 @@ function quadroOrbita(t) {
   elevUser += (elevAlvo - elevUser) * k;
   const w = (giroUser - antes) / Math.max(dt, 0.001); // velocidade angular real da câmera
   rollFora += (limitarEntre(-w * 0.06, -0.13, 0.13) - rollFora) * (1 - Math.exp(-dt / 0.18));
-  const parado = !arrastando && Math.abs(giroVel) < 0.02 && Math.abs(giroAlvo - giroUser) < 0.0005 && Math.abs(elevAlvo - elevUser) < 0.0005 && Math.abs(rollFora) < 0.002;
+  const parado = !saidaFoco && !arrastando && Math.abs(giroVel) < 0.02 && Math.abs(giroAlvo - giroUser) < 0.0005 && Math.abs(elevAlvo - elevUser) < 0.0005 && Math.abs(rollFora) < 0.002;
   pDesenhado = -1;
   if (parado) {
     giroUser = giroAlvo; elevUser = elevAlvo; rollFora = 0; giroVel = 0;
@@ -1489,6 +1606,7 @@ function aplicar() {
       _o.position.y += r * 1.2;
       s *= Math.max(0.0001, 1 - r);
     }
+    if (destaque && destaque.i === i && estadoDestaque() > 0.01) s = 0.0001; // quem aparece é o Blocão de verdade (guia)
     _o.scale.set(bl.comp * s, s, s);
     _o.updateMatrix();
     blocosMesh.setMatrixAt(i, _o.matrix);
@@ -1539,7 +1657,7 @@ function aplicar() {
   const tinta = suave(faixa(p, 0.86, 0.94));
   if (tinta > 0.001) {
     for (let i = 0; i < lista.length; i++) {
-      const tirar = revelados.has(i) || (fora.size && estadoParede(lista[i].parede) > 0);
+      const tirar = revelados.has(i) || (fora.size && estadoParede(lista[i].parede) > 0) || (destaque && destaque.i === i && estadoDestaque() > 0.02);
       pinturaMesh.setMatrixAt(i, tirar ? ZERO : pinturaOrig[i]);
     }
     pinturaMesh.instanceMatrix.needsUpdate = true;
@@ -1767,6 +1885,7 @@ girar(dx, dy = 0, dtMs = 16) {
       pedir();
       return;
     }
+    if (foco || (voo && voo.ponto)) voltarPonto(); // arrastou no zoom: sai do zoom girando (vê as outras opções)
     const dts = Math.max(8, dtMs) / 1000;
     arrastando = true;
     giroAlvo -= dx * 0.008;
