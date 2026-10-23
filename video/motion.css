@@ -30,7 +30,7 @@ html,body{height:100%;background:#000;overflow:hidden;font-family:'Archivo',syst
 #tela::before{content:"9:41";position:absolute;left:0;right:0;top:0;height:88px;z-index:4;box-sizing:border-box;padding:28px 0 0 74px;background:#f3f1ec;
   font:700 30px/1 -apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;color:#151515;letter-spacing:.5px}
 #tela::after{content:"";position:absolute;right:70px;top:34px;width:46px;height:22px;z-index:4;border:2.5px solid #151515;border-radius:7px;box-sizing:border-box;
-  background:linear-gradient(90deg,#151515 0 78%,transparent 78%) content-box;padding:2.5px;box-shadow:-40px 0 0 -8px #151515,-62px 4px 0 -10px #151515}
+  background:linear-gradient(90deg,#151515 0 78%,transparent 78%) content-box;padding:2.5px}
 #site{position:absolute;left:0;top:88px;width:402px;height:580.4px;border:0;transform:scale(1.5920);transform-origin:0 0;background:#0E0E0E}
 #ilha{position:absolute;left:50%;top:22px;width:168px;height:46px;margin-left:-84px;border-radius:23px;background:#000;z-index:5;
   background-image:radial-gradient(circle at 132px 23px,#1d2733 0 7px,#0b0f14 8px 10px,transparent 11px)}
