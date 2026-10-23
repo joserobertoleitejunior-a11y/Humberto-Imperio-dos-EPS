@@ -4,7 +4,8 @@
  *     encaixam, o nome sobe palavra por palavra e o bloco abre ao meio "deixando entrar".
  *     Fecha sozinha (~3,2 s) e pode ser pulada com um toque.
  *     Não reaparece ao navegar dentro do site na mesma sessão (só em recarregar/visita nova).
- *  2. BOAS-VINDAS (1x por sessão): o vídeo "Por que comprar o Blocão" no fundo + 2 caminhos:
+ *  2. BOAS-VINDAS (1x por sessão, e na 1ª visita é a PRIMEIRA tela — sem splash antes: o html já nasce com
+ *     .abre-video e a capa aparece no 1º quadro, o vídeo entra assim que carrega): o vídeo "Por que comprar o Blocão" + 2 caminhos:
  *     "Conhecer nosso produto" (começa do topo do site, com o cabeçalho) ou "Orçamento" (calculadora).
  *     O vídeo começa a baixar já durante a splash (adiantarVideo), pra boas-vindas não demorar.
  * Aparelho fraco / economia de dados: o vídeo não baixa sozinho (fica a capa; toca no toque).
@@ -50,6 +51,30 @@
   }
 
   /* ---------- Boas-vindas com vídeo ---------- */
+  /** 1ª visita: a boas-vindas é a 1ª tela (capa na hora; o vídeo toca quando carregar; se não carregar, fica a capa). */
+  function abrirDireto() {
+    var cfg = window.IMPERIO_CONFIG || {};
+    var bv = document.getElementById("boas-vindas");
+    var video = bv && bv.querySelector("video");
+    if (!video || cfg.boasVindasComVideo !== true) { html.classList.remove("abre-video"); return false; }
+    fechada = true;
+    marcar(CHAVE_SPLASH);
+    marcar(CHAVE_BV);
+    var sp = document.getElementById("splash");
+    if (sp) sp.hidden = true;
+    bv.hidden = false;
+    bv.classList.add("on"); // antes de tirar a classe do html: a tela não pisca
+    html.classList.remove("abre-video");
+    document.body.classList.add("travado");
+    if (!/^(baixa|estatica)$/.test(html.getAttribute("data-qualidade"))) {
+      var tocar = function () { var pl = video.play(); if (pl && pl.catch) pl.catch(function () { /* autoplay bloqueado: fica a capa */ }); };
+      video.preload = "auto";
+      if (video.readyState >= 2) tocar();
+      else { video.addEventListener("loadeddata", tocar, { once: true }); video.load(); }
+    }
+    return true;
+  }
+
   function abrirBoasVindas() {
     if (pegarSessao(CHAVE_BV) || window.__gravandoVideo) return;
     var cfg = window.IMPERIO_CONFIG || {};
@@ -72,8 +97,6 @@
         var pl = video.play();
         if (pl && pl.catch) pl.catch(function () { /* autoplay bloqueado: fica a capa */ });
       }
-      var foco = bv.querySelector("[data-ir]");
-      if (foco) setTimeout(function () { foco.focus({ preventScroll: true }); }, 500);
     }
     // só mostra quando o vídeo realmente carregou (se der erro ou demorar > 2,5 s, o site abre direto)
     video.addEventListener("loadeddata", mostrar, { once: true });
@@ -130,10 +153,11 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    adiantarVideo();
+    var direto = html.classList.contains("abre-video") && !window.__gravandoVideo && abrirDireto();
+    if (!direto) adiantarVideo();
     document.addEventListener("pointerdown", onda, { passive: true });
     var s = document.getElementById("splash");
-    if (s && !html.classList.contains("sem-splash")) {
+    if (s && !direto && !html.classList.contains("sem-splash")) {
       s.addEventListener("click", function (e) {
         var b = e.target.closest("[data-ir]");
         if (b) { e.stopPropagation(); return irDaSplash(b.getAttribute("data-ir")); }

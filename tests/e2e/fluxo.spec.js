@@ -10,15 +10,22 @@ async function abrir(page, url = "/") {
   await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
 }
 
-test("vídeo não carrega: a boas-vindas não aparece e o site abre direto", async ({ page }) => {
+test("1ª visita: abre DIRETO na tela do vídeo (sem splash antes), com os 2 botões na hora; sem vídeo fica a capa", async ({ page }) => {
   await page.route("**/video/blocao.mp4", (rota) => rota.abort());
   await page.goto("/");
-  await page.waitForFunction(() => window.ImperioAbertura);
-  await page.evaluate(() => window.ImperioAbertura.fecharSplash());
-  await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
-  await page.waitForTimeout(3000);
+  await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 2000 });
+  await expect(page.locator("#splash")).toBeHidden();
+  await expect(page.locator('#boas-vindas [data-ir="#calculadora"]')).toBeVisible({ timeout: 2000 });
+  expect(await page.locator("#boas-vindas video").getAttribute("poster")).toContain("blocao-capa");
+  await page.click('#boas-vindas [data-ir="#topo"]');
   await expect(page.locator("#boas-vindas")).toBeHidden();
   await expect(page.locator("body")).not.toHaveClass(/travado/);
+  await page.waitForTimeout(900);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(80);
+  // recarregar na mesma sessão: não abre de novo a tela do vídeo
+  await page.reload();
+  await page.waitForTimeout(600);
+  await expect(page.locator("#boas-vindas")).toBeHidden();
 });
 
 test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calculadora", async ({ page }) => {
@@ -32,8 +39,6 @@ test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calcul
     HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
   });
   await page.goto("/");
-  await page.waitForFunction(() => window.ImperioAbertura);
-  await page.evaluate(() => window.ImperioAbertura.fecharSplash());
   await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 10000 });
   await page.click('#boas-vindas [data-ir="#calculadora"]');
   await expect(page.locator("#boas-vindas")).toBeHidden();
@@ -41,6 +46,7 @@ test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calcul
 });
 
 test("splash: botão redondo 'Orçamento' fecha a splash e vai pra calculadora; 'Conhecer nosso produto' vai pro bloco", async ({ page }) => {
+  await page.addInitScript(() => { try { sessionStorage.setItem("imperio_bv", "1"); } catch (e) {} });
   await page.goto("/");
   await expect(page.locator('#splash [data-ir="#calculadora"]')).toBeVisible({ timeout: 8000 });
   await expect(page.locator("#splash .btn-redondo")).toHaveCount(2);
@@ -53,6 +59,7 @@ test("splash: botão redondo 'Orçamento' fecha a splash e vai pra calculadora; 
 });
 
 test("splash: 'Conhecer nosso produto' começa do topo do site (cabeçalho), não pula pro produto", async ({ page }) => {
+  await page.addInitScript(() => { try { sessionStorage.setItem("imperio_bv", "1"); } catch (e) {} });
   await page.goto("/");
   await expect(page.locator('#splash [data-ir="#topo"]')).toBeVisible({ timeout: 8000 });
   await page.click('#splash [data-ir="#topo"]');
@@ -188,6 +195,19 @@ test("celular: sem zoom (pinça/toque duplo) e o site no tamanho exato da tela",
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).touchAction)).toBe("pan-x pan-y");
   // Ctrl + roda (pinça no touchpad) é barrada
   expect(await page.evaluate(() => !window.dispatchEvent(new WheelEvent("wheel", { ctrlKey: true, cancelable: true, deltaY: -10 })))).toBe(true);
+  // pinça com 2 dedos (touchstart/touchmove) e o gesto do iPhone são barrados — também no painel
+  for (const url of ["/", "/admin.html"]) {
+    await page.goto(url);
+    const barrados = await page.evaluate(() => {
+      const t = (id, x) => new Touch({ identifier: id, target: document.body, clientX: x, clientY: 300 });
+      const dois = [t(1, 100), t(2, 200)];
+      const ini = !document.body.dispatchEvent(new TouchEvent("touchstart", { touches: dois, cancelable: true, bubbles: true }));
+      const mov = !document.body.dispatchEvent(new TouchEvent("touchmove", { touches: dois, cancelable: true, bubbles: true }));
+      const ges = !document.dispatchEvent(new Event("gesturestart", { cancelable: true }));
+      return [ini, mov, ges, getComputedStyle(document.documentElement).touchAction, document.querySelector('meta[name="viewport"]').content.includes("user-scalable=no")];
+    });
+    expect(barrados).toEqual([true, true, true, "pan-x pan-y", true]);
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 

@@ -50,13 +50,41 @@
   window.addEventListener("resize", medir, { passive: true });
   window.addEventListener("orientationchange", function () { setTimeout(function () { medir(true); }, 250); }, { passive: true });
 
-  // sem zoom (toque duplo: o touch-action do site.css): o layout já é feito pro tamanho de cada tela (a meta viewport trava no Android; o iPhone ignora, então aqui)
-  function barrar(e) { e.preventDefault(); }
-  document.addEventListener("gesturestart", barrar, { passive: false });   // pinça no Safari do iPhone
-  document.addEventListener("gesturechange", barrar, { passive: false });
-  document.addEventListener("touchmove", function (e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
-  window.addEventListener("wheel", function (e) { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false }); // Ctrl + roda / pinça no touchpad
+  // SEM ZOOM em qualquer aparelho: o layout já é feito pro tamanho de cada tela.
+  // Camadas: meta viewport (Android), touch-action no site.css (pinça e toque duplo nos navegadores atuais) e aqui
+  // os casos que escapam: pinça do iPhone (gesture*), 2 dedos, toque duplo em navegador antigo/visualizador embutido,
+  // Ctrl + roda / pinça do touchpad e Ctrl + / - / 0 no computador.
+  function barrar(e) { if (e.cancelable) e.preventDefault(); }
+  var opc = { passive: false, capture: true };
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) { document.addEventListener(t, barrar, opc); });
+  document.addEventListener("touchstart", function (e) { if (e.touches && e.touches.length > 1) barrar(e); }, opc);
+  document.addEventListener("touchmove", function (e) {
+    if ((e.touches && e.touches.length > 1) || (e.scale !== undefined && e.scale !== 1)) barrar(e);
+  }, opc);
+  // toque duplo: o 2º toque rápido no mesmo lugar não vira zoom (em botões/links/campos o toque segue normal)
+  var ultimo = { t: 0, x: 0, y: 0 };
+  document.addEventListener("touchend", function (e) {
+    var q = e.changedTouches && e.changedTouches[0];
+    if (!q) return;
+    var agora = Date.now();
+    var perto = Math.abs(q.clientX - ultimo.x) < 40 && Math.abs(q.clientY - ultimo.y) < 40;
+    var alvo = e.target && e.target.closest ? e.target.closest("a, button, input, select, textarea, label, [role=button], [data-casa-palco]") : null;
+    if (agora - ultimo.t < 320 && perto && !alvo) barrar(e);
+    ultimo = { t: agora, x: q.clientX, y: q.clientY };
+  }, opc);
+  window.addEventListener("wheel", function (e) { if (e.ctrlKey || e.metaKey) barrar(e); }, opc);
   window.addEventListener("keydown", function (e) {
-    if ((e.ctrlKey || e.metaKey) && /^(\+|-|=|0|_)$/.test(e.key)) e.preventDefault();
+    if ((e.ctrlKey || e.metaKey) && /^(\+|-|=|0|_|Add|Subtract)$/.test(e.key)) barrar(e);
+  }, true);
+  // se algum navegador ainda assim ampliar (ex.: visualizador dentro de outro app), volta pro tamanho da tela
+  var vv = window.visualViewport;
+  if (vv) vv.addEventListener("resize", function () {
+    if (vv.scale > 1.01) {
+      var m = document.querySelector('meta[name="viewport"]');
+      if (!m) return;
+      var c = m.getAttribute("content");
+      m.setAttribute("content", c + ", initial-scale=1");
+      setTimeout(function () { m.setAttribute("content", c); }, 60);
+    }
   });
 })();

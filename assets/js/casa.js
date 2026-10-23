@@ -121,7 +121,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025e")
+    import("./casa3d.js?v=20261025g")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;

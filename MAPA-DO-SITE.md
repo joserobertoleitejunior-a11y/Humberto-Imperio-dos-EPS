@@ -66,6 +66,10 @@ da tela. `dispositivo.js` guarda uma altura estável (`ImperioTela.altura()` e `
 numa mudança grande); a seção "Por dentro", a tela fixa e o 3D usam essa medida. A obra também desliza até o ponto da
 rolagem com uma "mola" de ~90 ms (fora do voo do Blocão, que segue a rolagem exata).
 
+**Abertura**: na 1ª visita o site abre DIRETO na tela do vídeo (o html já nasce com `.abre-video`: capa no 1º quadro,
+botões na hora, o vídeo toca quando carregar). A splash clara só aparece ao recarregar na mesma sessão.
+Toda mudança em JS/CSS troca o `?v=` no index.html (senão o celular continua com a versão antiga no cache).
+
 **Sem zoom**: meta viewport com `user-scalable=no`, `touch-action: pan-x pan-y` no html e `dispositivo.js` barra pinça
 (iPhone) e Ctrl + roda/teclas — o site fica sempre no tamanho exato da tela. Campos com letra ≥ 16px (iPhone não amplia ao tocar).
 O menu "A casa" leva pra `#casa` (âncora posicionada no começo da fase). `motion.js` publica `fim` (onde o "L" acaba) e

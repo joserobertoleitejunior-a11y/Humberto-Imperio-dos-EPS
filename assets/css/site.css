@@ -101,6 +101,9 @@ button, input, select { font: inherit; color: inherit; }
   animation: splashSeguranca 0.4s 5.5s forwards; /* trava de segurança se o JS morrer */
 }
 .sem-splash #splash { display: none !important; }
+/* 1ª visita: abre DIRETO na tela do vídeo (capa no 1º quadro, botões na hora) — sem splash antes */
+.abre-video #splash { display: none !important; }
+.abre-video #boas-vindas[hidden] { display: block; opacity: 1; }
 #splash.saindo { opacity: 0; pointer-events: none; }
 @keyframes splashSeguranca { to { opacity: 0; visibility: hidden; } }
 .splash__bloco { display: flex; width: 200px; height: 74px; perspective: 600px; }
@@ -184,7 +187,7 @@ button, input, select { font: inherit; color: inherit; }
 .bv .btn-redondo__ico { width: 40px; height: 40px; }
 .bv .btn-redondo__ico svg { width: 21px; height: 21px; }
 .bv .btn-redondo__seta { width: 26px; height: 26px; font-size: 1.1rem; }
-.bv .btn-redondo--claro { --fundo: rgba(22, 24, 27, 0.62); --borda: rgba(255, 255, 255, 0.22); }
+.bv .btn-redondo--claro { --fundo: rgba(18, 20, 24, 0.9); --borda: rgba(255, 255, 255, 0.22); }
 /* sem efeitos contínuos em aparelho fraco / sem 3D / movimento reduzido: botão aparece direto e fica estático */
 [data-qualidade="baixa"] .btn-redondo::before, [data-qualidade="baixa"] .btn-redondo::after, [data-qualidade="baixa"] .btn-redondo--azul,
 [data-qualidade="estatica"] .btn-redondo::before, [data-qualidade="estatica"] .btn-redondo::after, [data-qualidade="estatica"] .btn-redondo--azul { animation: none; }
