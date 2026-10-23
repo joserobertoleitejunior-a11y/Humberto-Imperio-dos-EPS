@@ -74,21 +74,19 @@ aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
 
 **Pontos estratégicos** (casa pronta, sem entrar na casa): 6 pontos — Casa mais fresca, Mais silêncio, Obra rápida,
 Bem mais leve, Acabamento fácil, Sem mofo. Cada ponto existe dos 2 lados da casa (espelhado); aparece o lado virado
-pra câmera, então girando 360° as vantagens nunca somem. Etiqueta = só texto preto (sem caixinha, com halo claro pra
-ler sobre o cenário) nas margens, fora do 3D, sublinhado por uma linha preta (svg) que segue até a bolinha no ponto.
+pra câmera, então girando 360° as vantagens nunca somem. Etiqueta minimalista = texto pequeno, leve e em caixa alta (halo claro pra ler sobre o cenário) nas margens, fora do
+3D, sublinhado por um fio fino (0,8 px) que segue até um ponto discreto (7 px) na casa.
 Fácil de clicar: o texto, a linha inteira (faixa invisível de 24 px por cima) e a bolinha abrem a vantagem.
-Clicou: voo rápido (~0,8 s, tempo fixo, `criarVoo(..., { duracao })`) até o **Blocão em destaque**: o próprio Blocão do
-site (textura de concreto, topo com concreto + EPS + concreto) sai da parede naquele ponto, 2,5× maior, de 3/4, e a
-câmera enquadra ele de frente (`destacarGuia`, `poseDestaque`). Escolhe o bloco mais perto do ponto nas fachadas
-viradas pro mesmo lado que a câmera vê inteiro (raios da câmera pro meio e pros 4 cantos — nada de telhado de garagem
-ou varanda na frente: `vistaLivre`). A linha preta vai do Blocão até o cartão com a vantagem; as outras opções seguem
+Clicou: voo rápido (~0,8 s, tempo fixo, `criarVoo(..., { duracao })`) até um **corte no meio da parede**: ~2 blocos
+× 3 fiadas saem da parede e os blocos da volta perdem a tinta — o miolo do Blocão (concreto + EPS + concreto) fica
+exposto (`montarCorte`). A câmera olha o corte de ~40° de lado, pra borda mostrar a espessura (`poseDestaque`), no
+lugar mais perto do ponto que ela vê inteiro (raios pro meio e pros 4 cantos — sem telhado de garagem ou varanda na
+frente: `vistaLivre`). **"Acabamento fácil" tira a tinta da casa inteira** e mostra o Blocão aparente
+(`definirSemTinta`); ao sair do ponto a pintura volta. A linha vai do ponto até o cartão com a vantagem; as outras opções seguem
 na tela (clicou outra = vai direto). Arrastar no zoom sai do zoom girando (mistura suave da pose, `saidaFoco`);
 tocar na casa ou rolar a página volta pra vista inteira.
 Pontos em `montarPontos()` (calculados pela planta de cada casa); textos em `VANTAGENS` (`casa3d.js`).
 Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamento pela altura real (nunca sobrepõem).
-
-**Chave "Blocão aparente (sem pintura)"** (`[data-casa-tinta]`, no texto da casa, só com a maquete pronta): tira a
-pintura de todas as paredes em 0,6 s e mostra o Blocão cru; tocar de novo pinta de volta (`ImperioCasa3D.semTinta(on)`).
 
 **Toque livre pro giro:** a faixa de toque da linha fica só sob o texto (a parte que cruza a casa não segura o dedo);
 bolinhas escondidas e a bolinha do ponto em foco (no meio da tela) deixam o dedo passar pra maquete.

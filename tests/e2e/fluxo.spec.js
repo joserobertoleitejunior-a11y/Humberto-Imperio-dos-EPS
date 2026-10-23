@@ -284,12 +284,7 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
   // pontos estratégicos: etiquetas nas margens com linha até a casa; clicou = zoom + a vantagem do Blocão
   await expect.poll(() => page.locator(".casa__ponto").evaluateAll((l) => l.filter((b) => getComputedStyle(b).opacity === "1").length), { timeout: 15000 }).toBeGreaterThan(2);
-  await expect(page.locator("[data-casa] button:not([data-casa-tipo]):not(.casa__ponto):not([data-casa-tinta])")).toHaveCount(0);
-  // "Blocão aparente": a chave tira a pintura da maquete e põe de volta
-  await page.click("[data-casa-tinta]");
-  await expect(page.locator("[data-casa-tinta]")).toHaveAttribute("aria-pressed", "true");
-  await page.click("[data-casa-tinta]");
-  await expect(page.locator("[data-casa-tinta]")).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("[data-casa] button:not([data-casa-tipo]):not(.casa__ponto)")).toHaveCount(0);
   const visivel = await page.locator(".casa__ponto").evaluateAll((l) => l.findIndex((b) => getComputedStyle(b).opacity === "1"));
   await page.locator(".casa__ponto").nth(visivel).click();
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();

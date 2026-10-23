@@ -204,7 +204,7 @@
         var yl = y + bh / 2;
         var de = lado === "e" ? x : x + bw;
         var ax = lado === "e" ? x + bw : x;
-        var cx = lado === "e" ? ax + 12 : ax - 12;
+        var cx = lado === "e" ? ax + 8 : ax - 8;
         var d = "M" + de.toFixed(1) + " " + yl.toFixed(1) + " H" + cx.toFixed(1) + " L" + q.px.toFixed(1) + " " + q.py.toFixed(1);
         e.linha.setAttribute("d", d);
         // área de toque só no trecho sob o texto (a parte que cruza a casa fica livre pro dedo girar a maquete)
@@ -272,7 +272,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261028a")
+    import("./casa3d.js?v=20261028b")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -490,14 +490,6 @@
     contador = camada.querySelector("[data-casa-contador]");
     ficha = camada.querySelector("[data-casa-ficha]");
     botoesTipo = Array.prototype.slice.call(camada.querySelectorAll("[data-casa-tipo]"));
-    // "Blocão aparente": tira a pintura das paredes da maquete (e põe de volta)
-    var chaveTinta = camada.querySelector("[data-casa-tinta]");
-    if (chaveTinta) chaveTinta.addEventListener("click", function () {
-      if (!C3 || !C3.semTinta) return;
-      var on = chaveTinta.getAttribute("aria-pressed") !== "true";
-      chaveTinta.setAttribute("aria-pressed", on ? "true" : "false");
-      C3.semTinta(on);
-    });
     botoesTipo.forEach(function (b) {
       b.addEventListener("click", function () { escolherTipo(b.getAttribute("data-casa-tipo")); });
     });

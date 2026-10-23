@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261028a";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261028b";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -528,7 +528,7 @@ let saidaFoco = null;          // saindo do zoom de um ponto: mistura a pose do 
 const DUR_SAIDA = 550;
 let semTinta = { de: 0, para: 0, t0: 0 }; // "Blocão aparente": tira a pintura das paredes (1 = sem tinta)
 const DUR_TINTA = 600;
-let destaque = null;       // o Blocão do ponto em foco: sai da parede, cru, mostrando concreto + EPS + concreto
+let destaque = null;       // corte do ponto em foco: { furo, borda } — blocos que saem da parede e os da volta, sem tinta (miolo à mostra)
 const DUR_DESTAQUE = 500;
 const _eixo = new Vector3();
 const _c = new Vector3();
@@ -922,7 +922,6 @@ function posicionarCamera() {
  * mesma largura em px, mesmo ângulo) e voa encolhendo, num arco, até o canto da obra.
  */
 function moverGuia() {
-  if (destacarGuia()) return;
   const e = suave(faixa(p, 0, 0.12));
   guia.visible = e < 1 && !blocoDoSite;
   if (!guia.visible) return;
@@ -1213,27 +1212,7 @@ const VANTAGENS = {
 };
 
 /** pontos nas faces que aparecem de frente pra câmera (frente e lado direito), calculados pela planta de cada casa */
-/**
- * ponto em foco: o Blocão do site (textura de verdade, miolo de EPS no topo) sai da parede no lugar do bloco,
- * maior, tombando o topo pra câmera — mostra na maquete o que é o Blocão
- */
-function destacarGuia() {
-  const k = estadoDestaque();
-  if (!destaque || k <= 0.01) return false;
-  const bl = lista[destaque.i];
-  const [nx, nz] = normalDe(muroDe(bl.parede));
-  guia.visible = true;
-  guia.position.set(bl.x + nx * 1.7 * k, bl.y + 0.9 * k, bl.z + nz * 1.7 * k);
-  guia.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
-  guia.rotateOnWorldAxis(_eixo.set(0, 1, 0), 0.55 * k); // 3/4: a face de concreto, a ponta e o topo com o miolo
-  if (bl.girado) guia.rotateOnWorldAxis(_eixo.set(0, 0, 1), -nx * 0.3 * k);
-  else guia.rotateOnWorldAxis(_eixo.set(1, 0, 0), nz * 0.3 * k);
-  const g = 1 + 1.5 * k; // 2,5× o tamanho: de longe dá pra ler o concreto e o miolo de EPS
-  guia.scale.set(bl.comp * g, g, g);
-  return true;
-}
-
-/** 0 = Blocão do ponto no lugar, 1 = fora da parede, mostrando o miolo */
+/** 0 = parede inteira, 1 = corte aberto no meio da parede (miolo do Blocão à mostra) */
 function estadoDestaque() {
   if (!destaque) return 0;
   const k = suave(Math.min(1, (agora() - destaque.t0) / DUR_DESTAQUE));
@@ -1251,32 +1230,37 @@ function blocosDoPonto(pt, n) {
   return l.sort((a, b) => a[0] - b[0]).map((x) => x[1]);
 }
 
-/** onde o Blocão em destaque fica (fora da parede) e de onde a câmera olha pra ele */
+/** tira (true) ou repõe (false) a pintura da casa inteira — devagar, mostrando o Blocão */
+function definirSemTinta(on) {
+  const alvo = on ? 1 : 0;
+  if (semTinta.para === alvo) return !!on;
+  const de = semTinta.de + (semTinta.para - semTinta.de) * suave(Math.min(1, (agora() - semTinta.t0) / DUR_TINTA));
+  semTinta = { de, para: alvo, t0: agora() };
+  requestAnimationFrame(animar);
+  return !!on;
+}
+
+/** de onde a câmera olha o corte no meio da parede (de frente, um pouco de cima) */
 function poseDestaque(i, de) {
   const bl = lista[i];
   const [mx, mz] = normalDe(muroDe(bl.parede));
-  const n = _c.set(mx, 0, mz);
-  const alvo = new Vector3(bl.x + n.x * 1.7, bl.y + 0.9, bl.z + n.z * 1.7);
-  const nh = _b.set(n.x, 0, n.z).normalize();
-  const dir = _a.copy(de.pos).sub(alvo).setY(0).normalize().multiplyScalar(0.35).add(nh).normalize();
-  dir.y = 0.62;
-  dir.normalize();
-  // distância pela LARGURA da tela: o Blocão em destaque (2,5 m) ocupa ~metade da largura útil
+  const alvo = new Vector3(bl.x, bl.y, bl.z);
+  // de ~40° de lado (do lado em que a pessoa já está): a borda do corte mostra a espessura — concreto + EPS + concreto
+  const lado = Math.sign((de.pos.x - alvo.x) * -mz + (de.pos.z - alvo.z) * mx) || 1;
+  const dir = _a.set(mx * 0.77 - mz * 0.64 * lado, 0.55, mz * 0.77 + mx * 0.64 * lado).normalize();
+  // distância pela LARGURA da tela: ~6 m de parede visíveis em volta do corte
   const meiaV = Math.tan(MathUtils.degToRad(30) / 2);
-  const D = Math.max(7.5, 3 / (meiaV * Math.min(1.4, camera.aspect)));
-  return { i, alvo, pos: alvo.clone().addScaledVector(dir, D), dir: dir.clone(), D };
+  const D = Math.max(9, 3 / (meiaV * Math.min(1.4, camera.aspect)));
+  return { i, alvo, pos: alvo.clone().addScaledVector(dir, D), dir: dir.clone(), D, n: { x: mx, z: mz } };
 }
 
-/** nada (telhado da garagem, varanda, pilar) entre a câmera e o Blocão em destaque — no meio e nas pontas? */
+/** nada (telhado da garagem, varanda, pilar) entre a câmera e o corte — no meio e nos cantos? */
 function vistaLivre(pose) {
-  const [nx, nz] = normalDe(muroDe(lista[pose.i].parede));
-  const n = { x: nx, z: nz };
   const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible));
-  const tx = -n.z;
-  const tz = n.x;
-  // da câmera pra cada canto (de dentro de um telhado pra fora o raio não acharia nada)
-  for (const [a, b] of [[0, 0], [1.2, 0.55], [-1.2, 0.55], [1.2, -0.55], [-1.2, -0.55]]) {
-    _c.set(pose.alvo.x + tx * a, pose.alvo.y + b, pose.alvo.z + tz * a);
+  const { n } = pose;
+  for (const [a, b] of [[0, 0], [1, 0.5], [-1, 0.5], [1, -0.5], [-1, -0.5]]) {
+    // um pouco à frente da parede (a própria parede não conta)
+    _c.set(pose.alvo.x - n.z * a + n.x * 0.3, pose.alvo.y + b, pose.alvo.z + n.x * a + n.z * 0.3);
     const d = _c.distanceTo(pose.pos);
     _raycast.set(pose.pos, _c.sub(pose.pos).divideScalar(d));
     _raycast.far = d;
@@ -1285,6 +1269,23 @@ function vistaLivre(pose) {
     if (hit) return false;
   }
   return true;
+}
+
+/** o corte: ~2 blocos × 3 fiadas saem da parede; os da volta perdem a tinta (o miolo aparece na borda) */
+function montarCorte(i) {
+  const c = lista[i];
+  const m = muroDe(c.parede);
+  const ao = (bl) => (m.eixo === "x" ? bl.x : bl.z);
+  const furo = new Set();
+  const borda = new Set();
+  lista.forEach((bl, k) => {
+    if (bl.parede !== c.parede) return;
+    const da = Math.abs(ao(bl) - ao(c));
+    const dy = Math.abs(bl.y - c.y);
+    if (da < 0.95 && dy < 0.55) furo.add(k);
+    else if (da < 1.9 && dy < 1.1) borda.add(k);
+  });
+  return { furo, borda };
 }
 
 /** parede externa onde o ponto está (pra abrir e mostrar o Blocão por dentro) */
@@ -1318,7 +1319,7 @@ function montarPontos() {
     { id: "silencio", p: V((jan.a + jan.b) / 2, CHAO + ((jan.f0 + jan.f1) / 2) * BA, A.z1 + 0.02), n: n(0, 0, 1), dist: 6 },
     { id: "rapida", p: V(A.x1 + 0.02, CHAO + 0.9, (A.z0 + A.z1) / 2 - 0.8), n: n(1, 0, 0), dist: 6 },
     { id: "leve", p: V(A.x1 + 0.15, CHAO + PE + LAJE / 2, A.z0 + 1.2), n: n(1, 0, 0), dist: 6.5 },
-    { id: "acabamento", p: V(R.x1 + 0.02, topo - 1.1, (R.z0 + R.z1) / 2 + 0.9), n: n(1, 0, 0), dist: 6, caixa: R },
+    { id: "acabamento", p: V(R.x1 + 0.02, topo - 1.1, (R.z0 + R.z1) / 2 + 0.9), n: n(1, 0, 0), dist: 6, caixa: R, semTinta: true },
     { id: "mofo", p: V(A.x0 + 1.0, CHAO + 0.25, A.z1 + 0.02), n: n(0, 0, 1), dist: 5 },
   ].map((q) => {
     // o mesmo ponto espelhado do outro lado da casa: girando 360°, as vantagens nunca somem da tela
@@ -1349,8 +1350,8 @@ function irPonto(id) {
   if (foco && foco.id === id) return true;
   for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
   const de = capturarPose();
-  // o Blocão daquele ponto sai da parede (cru: concreto + EPS + concreto) e a câmera enquadra ele de frente, de cima
-  // o mais perto do ponto que a câmera consiga ver inteiro (sem telhado de garagem/varanda na frente)
+  // abre um corte no meio da parede (o miolo do Blocão: concreto + EPS + concreto) e a câmera enquadra de frente;
+  // no lugar mais perto do ponto que a câmera consiga ver inteiro (sem telhado de garagem/varanda na frente)
   let iBloco = -1;
   let pose = null;
   if (q.parede !== undefined) {
@@ -1362,7 +1363,9 @@ function irPonto(id) {
     }
   }
   if (destaque && destaque.i !== iBloco) destaque = null;
-  if (iBloco >= 0) destaque = { i: iBloco, de: estadoDestaque(), para: 1, t0: agora() + 120 };
+  if (iBloco >= 0 && !q.semTinta) destaque = { i: iBloco, ...montarCorte(iBloco), de: estadoDestaque(), para: 1, t0: agora() + 120 };
+  // "Acabamento fácil": a casa inteira perde a tinta e mostra o Blocão; os outros pontos repõem a pintura
+  definirSemTinta(!!q.semTinta);
   const alvo = pose ? pose.alvo : q.p.clone();
   const pos = pose ? pose.pos : q.p.clone().addScaledVector(q.n, 9).setY(q.p.y + 5);
   const meio = de.pos.clone().lerp(pos, 0.5);
@@ -1390,7 +1393,8 @@ function voltarPonto() {
   foco = null;
   voo = null;
   for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
-  if (destaque) destaque = { i: destaque.i, de: estadoDestaque(), para: 0, t0: agora() };
+  if (destaque) destaque = { ...destaque, de: estadoDestaque(), para: 0, t0: agora() };
+  definirSemTinta(false);
   requestAnimationFrame(animar);
   animarOrbita();
   avisarPonto();
@@ -1608,7 +1612,16 @@ function aplicar() {
       _o.position.y += r * 1.2;
       s *= Math.max(0.0001, 1 - r);
     }
-    if (destaque && destaque.i === i && estadoDestaque() > 0.01) s = 0.0001; // quem aparece é o Blocão de verdade (guia)
+    if (destaque && destaque.furo.has(i)) { // corte: o bloco sai da parede pra fora e some
+      const r = estadoDestaque();
+      if (r > 0) {
+        const [nx, nz] = normalDe(muroDe(bl.parede));
+        _o.position.x += nx * r * 1.4;
+        _o.position.z += nz * r * 1.4;
+        _o.position.y += r * 0.3;
+        s *= Math.max(0.0001, 1 - r);
+      }
+    }
     _o.scale.set(bl.comp * s, s, s);
     _o.updateMatrix();
     blocosMesh.setMatrixAt(i, _o.matrix);
@@ -1660,7 +1673,7 @@ function aplicar() {
   const tinta = suave(faixa(p, 0.86, 0.94)) * (1 - kSem);
   if (tinta > 0.001) {
     for (let i = 0; i < lista.length; i++) {
-      const tirar = revelados.has(i) || (fora.size && estadoParede(lista[i].parede) > 0) || (destaque && destaque.i === i && estadoDestaque() > 0.02);
+      const tirar = revelados.has(i) || (fora.size && estadoParede(lista[i].parede) > 0) || (destaque && estadoDestaque() > 0.02 && (destaque.furo.has(i) || destaque.borda.has(i)));
       pinturaMesh.setMatrixAt(i, tirar ? ZERO : pinturaOrig[i]);
     }
     pinturaMesh.instanceMatrix.needsUpdate = true;
@@ -1942,12 +1955,7 @@ girar(dx, dy = 0, dtMs = 16) {
   pontosNaTela: () => pontosNaTela(),
   irPonto: (id) => irPonto(id),
   /** "Blocão aparente": true tira a pintura das paredes (mostra o Blocão cru), false pinta de novo */
-  semTinta(on) {
-    const de = semTinta.de + (semTinta.para - semTinta.de) * suave(Math.min(1, (agora() - semTinta.t0) / DUR_TINTA));
-    semTinta = { de, para: on ? 1 : 0, t0: agora() };
-    requestAnimationFrame(animar);
-    return !!on;
-  },
+  semTinta: (on) => definirSemTinta(on),
   voltarPonto: () => voltarPonto(),
   emFoco: () => (foco ? foco.id : null),
   aoPonto(fn) { ouvintePonto = fn; },
