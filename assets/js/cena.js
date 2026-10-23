@@ -240,7 +240,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261025i")
+    import("./bloco3d.js?v=20261025k")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);

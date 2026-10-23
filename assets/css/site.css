@@ -340,18 +340,27 @@ main { position: relative; z-index: 2; }
 .casa--pronta .casa__palco { cursor: pointer; }
 .casa__dica { margin: 0 0 10px; font-size: 0.9rem; font-weight: 650; color: var(--azul); opacity: 0; transition: opacity 0.35s; }
 .casa--pronta .casa__dica { opacity: 1; }
-.casa--dentro .casa__dica { display: none; }
-/* casa aberta: a vista de dentro fica livre (sai o título e as etapas; ficam "recolocar" e o orçamento) */
-.casa__txt .sobretitulo, .casa__txt h2, .casa__etapas { transition: opacity 0.35s; }
-.casa--dentro .casa__txt .sobretitulo, .casa--dentro .casa__txt h2, .casa--dentro .casa__etapas { opacity: 0; pointer-events: none; }
-.casa__recolocar { margin: 0 0 10px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--linha); background: rgba(251, 250, 247, 0.95);
-  font: inherit; font-size: 0.9rem; font-weight: 750; color: var(--grafite); cursor: pointer; }
+/* PASSEIO por dentro: a tela fica toda pro 3D (sai o texto, o contador e a nota) e os gestos vão todos pra casa
+   (touch-action: none — a página não rola enquanto a pessoa anda lá dentro; "Sair da casa" volta) */
+.casa__txt, .casa__contador, .casa__nota { transition: opacity 0.35s; }
+.casa--dentro .casa__txt, .casa--dentro .casa__contador, .casa--dentro .casa__nota { opacity: 0; pointer-events: none; }
+.casa--dentro .casa__palco { touch-action: none; cursor: crosshair; }
+.casa__passeio { position: absolute; z-index: 5; left: 50%; bottom: max(18px, 3vh); transform: translateX(-50%); width: min(560px, 100% - 24px);
+  display: grid; justify-items: center; gap: 8px; text-align: center; pointer-events: none; }
+.casa__passeio[hidden] { display: none; }
+.casa__passeio-dica { margin: 0; padding: 7px 14px; border-radius: 999px; background: rgba(30, 32, 35, 0.78); color: #fff; font-size: 0.82rem; font-weight: 600; line-height: 1.35;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.casa__passeio-botoes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; pointer-events: auto; }
+.casa__botao { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--linha); background: rgba(251, 250, 247, 0.96);
+  font: inherit; font-size: 0.92rem; font-weight: 750; color: var(--grafite); cursor: pointer; box-shadow: 0 8px 20px -12px rgba(30, 32, 35, 0.5); }
+.casa__botao:hover { border-color: var(--azul); color: var(--azul); }
+.casa__recolocar { background: var(--azul); border-color: var(--azul); color: #fff; }
+.casa__recolocar:hover { color: #fff; filter: brightness(1.08); }
 .casa__corte { position: absolute; z-index: 4; margin: 0; padding: 8px 12px; border-radius: 10px; background: rgba(30, 32, 35, 0.88); color: #fff;
   font-size: 0.8rem; line-height: 1.3; transform: translate(14px, -50%); pointer-events: none; animation: corte-entra 0.35s var(--ease); }
 .casa__corte b { display: block; font-size: 0.9rem; color: #9db5ff; }
 .casa__corte::before { content: ""; position: absolute; left: -14px; top: 50%; width: 14px; height: 2px; background: rgba(30, 32, 35, 0.88); }
 @keyframes corte-entra { from { opacity: 0; transform: translate(4px, -50%); } }
-.casa__recolocar:hover { border-color: var(--azul); color: var(--azul); }
 .casa--pronta .casa__cta { opacity: 1; transform: none; pointer-events: auto; }
 .casa__tipos { position: absolute; z-index: 3; left: max(16px, calc((100vw - 1200px) / 2)); bottom: calc(5vh + 54px); display: flex; gap: 4px; padding: 4px;
   border-radius: 999px; background: rgba(251, 250, 247, 0.9); border: 1px solid var(--linha); }
@@ -373,6 +382,10 @@ main { position: relative; z-index: 2; }
   .casa__etapas li { font-size: 0.98rem; }
   .casa__cta { margin-top: 8px; }
   .casa__contador { bottom: 14px; font-size: 0.85rem; padding: 6px 12px; }
+  /* passeio: a barra fica à esquerda do botão flutuante do WhatsApp */
+  .casa__passeio { left: 12px; right: 84px; width: auto; transform: none; bottom: 16px; justify-items: start; text-align: left; }
+  .casa__passeio-botoes { justify-content: flex-start; }
+  .casa__botao { min-height: 42px; padding: 0 14px; font-size: 0.86rem; }
   /* celular: escolha do tipo no alto (a maquete fica no meio, os textos embaixo) */
   .casa__tipos { left: 50%; transform: translateX(-50%); top: calc(var(--cabecalho) + 10px); bottom: auto; }
   .casa__tipos button { min-height: 36px; padding: 0 12px; font-size: 0.8rem; }
@@ -381,7 +394,7 @@ main { position: relative; z-index: 2; }
 /* sem 3D (aparelho muito fraco / sem WebGL / "estatica"): imagem pronta da casa e a lista de etapas, depois do "L" */
 .casa--sem3d { position: static; opacity: 1; visibility: visible; pointer-events: auto; padding: 40px 0 56px; display: flex; flex-direction: column; }
 .casa--sem3d .casa__tipos { order: -1; }
-.casa--sem3d .casa__ceu, .casa--sem3d .casa__palco, .casa--sem3d .casa__contador, .casa--sem3d .casa__dica, .casa--sem3d .casa__recolocar { display: none; }
+.casa--sem3d .casa__ceu, .casa--sem3d .casa__palco, .casa--sem3d .casa__contador, .casa--sem3d .casa__dica, .casa--sem3d .casa__passeio { display: none; }
 .casa--sem3d .casa__txt { position: static; width: min(1200px, 100% - 32px); margin: 0 auto; }
 .casa--sem3d .casa__etapas { height: auto; display: grid; gap: 6px; margin-bottom: 16px; }
 .casa--sem3d .casa__etapas li { position: static; opacity: 1; transform: none; }

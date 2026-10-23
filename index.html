@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261025i"></script>
+  <script src="assets/js/dispositivo.js?v=20261025k"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash");if(!sessionStorage.getItem("imperio_bv")&&!/[?&]video/.test(location.search))document.documentElement.classList.add("abre-video")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261025i">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261025k">
 
   <script type="application/ld+json">
   {
@@ -263,14 +263,20 @@
               <li data-etapa="4"><b>05</b> Platibanda, vidro e madeira</li>
               <li data-etapa="5"><b>06</b> Pintura e jardim: casa pronta</li>
             </ol>
-            <p class="casa__dica">Arraste pro lado pra girar a casa · toque numa parede pra ver por dentro.</p>
-            <button type="button" class="casa__recolocar" data-casa-recolocar hidden>↺ Recolocar as paredes</button>
+            <p class="casa__dica">Arraste pro lado pra girar · pinça pra aproximar · toque numa parede pra entrar na casa.</p>
             <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
           </div>
           <div class="casa__tipos" role="group" aria-label="Escolha o tipo de casa">
             <button type="button" data-casa-tipo="simples" aria-pressed="false">Casa simples</button>
             <button type="button" data-casa-tipo="media" aria-pressed="true">Casa média</button>
             <button type="button" data-casa-tipo="casarao" aria-pressed="false">Casarão</button>
+          </div>
+          <div class="casa__passeio" data-casa-passeio hidden>
+            <p class="casa__passeio-dica">Arraste pra olhar em volta · toque no chão pra andar · pinça pra chegar perto</p>
+            <div class="casa__passeio-botoes">
+              <button type="button" class="casa__botao" data-casa-andar hidden>↑ Andar de cima</button>
+              <button type="button" class="casa__botao casa__recolocar" data-casa-recolocar>↺ Sair da casa</button>
+            </div>
           </div>
           <p class="casa__corte" data-casa-corte hidden><b>Dentro do Blocão</b> concreto + EPS + concreto</p>
           <p class="casa__contador"><b data-casa-contador>0</b> Blocões assentados</p>
@@ -589,20 +595,20 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261025i"></script>
-  <script src="assets/js/observabilidade.js?v=20261025i"></script>
-  <script src="assets/js/boas-vindas.js?v=20261025i"></script>
-  <script src="assets/js/supabase-init.js?v=20261025i"></script>
-  <script src="assets/js/analytics.js?v=20261025i"></script>
-  <script src="assets/js/main.js?v=20261025i"></script>
-  <script src="assets/js/especificacoes.js?v=20261025i"></script>
-  <script src="assets/js/motion.js?v=20261025i"></script>
-  <script src="assets/js/cliente.js?v=20261025i"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261025i"></script>
-  <script src="assets/js/calculadora.js?v=20261025i"></script>
-  <script src="assets/js/conteudo.js?v=20261025i"></script>
-  <script src="assets/js/cena.js?v=20261025i"></script>
-  <script src="assets/js/casa.js?v=20261025i"></script>
-  <script src="assets/js/toque.js?v=20261025i"></script>
+  <script src="assets/js/config.js?v=20261025k"></script>
+  <script src="assets/js/observabilidade.js?v=20261025k"></script>
+  <script src="assets/js/boas-vindas.js?v=20261025k"></script>
+  <script src="assets/js/supabase-init.js?v=20261025k"></script>
+  <script src="assets/js/analytics.js?v=20261025k"></script>
+  <script src="assets/js/main.js?v=20261025k"></script>
+  <script src="assets/js/especificacoes.js?v=20261025k"></script>
+  <script src="assets/js/motion.js?v=20261025k"></script>
+  <script src="assets/js/cliente.js?v=20261025k"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261025k"></script>
+  <script src="assets/js/calculadora.js?v=20261025k"></script>
+  <script src="assets/js/conteudo.js?v=20261025k"></script>
+  <script src="assets/js/cena.js?v=20261025k"></script>
+  <script src="assets/js/casa.js?v=20261025k"></script>
+  <script src="assets/js/toque.js?v=20261025k"></script>
 </body>
 </html>

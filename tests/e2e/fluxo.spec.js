@@ -236,6 +236,7 @@ test("sem rolagem lateral no celular", async ({ page }) => {
 });
 
 test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no fim aparece o botão", async ({ page }) => {
+  test.setTimeout(90000); // monta 3 casas, entra e sai de uma (WebGL por software nos testes)
   await abrir(page);
   await page.evaluate(() => { const j = document.querySelector("#por-dentro"); scrollTo({ top: j.offsetTop, behavior: "instant" }); });
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--3d/, { timeout: 60000 });
@@ -286,12 +287,16 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   }
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
   await expect(page.locator("[data-casa-recolocar]")).toBeVisible();
+  // passeio por dentro: barra com dica + "Sair da casa"; os gestos vão todos pro 3D (a página não rola nem dá zoom)
+  await expect(page.locator("[data-casa-passeio]")).toBeVisible();
+  expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("none");
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.passeioInfo()), { timeout: 10000 }).not.toBeNull();
   // um tremidinho da rolagem (dedo/barra do navegador) não fecha a casa
   await page.evaluate(() => scrollBy(0, 4));
   await page.waitForTimeout(500);
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
   await page.click("[data-casa-recolocar]");
-  await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/, { timeout: 5000 });
+  await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/, { timeout: 10000 });
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);

@@ -335,6 +335,7 @@ function levantar(defs, yBase, andar, internas = []) {
             fiada: andar * FIADAS + f,
             ordem: (percorrido + Math.abs(meio - ini)) / total, // posição na volta da casa (0..1)
             parede,
+            interna,
           });
         });
         s = e;
@@ -383,8 +384,11 @@ let ouvinteInterior = null;
 const DUR_PAREDE = 700;
 let giroUser = 0;          // giro da maquete pelo dedo/mouse (rad, em volta da casa)
 let elevUser = 0;          // inclinação pelo mouse (rad)
-let giroDentro = 0;        // dentro da casa: quanto a câmera deslizou ao longo da abertura (m)
 let pRemocao = -1;         // ponto da rolagem quando a parede saiu (rolar de verdade recoloca)
+let zoomUser = 1;          // pinça por fora: aproxima/afasta a maquete (só o 3D — a página não tem zoom)
+let passeio = null;        // por dentro: { pos, yaw, pitch, fov, andar, anim } — andar, olhar em volta, trocar de andar
+const OLHO = 1.55;         // altura dos olhos (m)
+const DUR_PASSO = 650;
 const PRONTA = 0.88;       // a partir daqui dá pra tirar parede (a casa já está toda de pé)
 const limitarEntre = (x, a, b) => (x < a ? a : x > b ? b : x);
 const DUR_CAMERA = 1300;
@@ -422,6 +426,8 @@ function criarMateriais() {
     branco: new MeshStandardMaterial({ color: "#f4f2ed", roughness: 0.8 }),
     grafite: new MeshStandardMaterial({ color: "#2a2c2f", roughness: 0.55, metalness: 0.3 }),
     madeira: new MeshStandardMaterial({ map: tMad, roughness: 0.7 }),
+    // piso de madeira dos cômodos (tábuas mais miúdas que o ripado) — dá leitura de escala no passeio por dentro
+    piso: new MeshStandardMaterial({ map: (() => { const t = tMad.clone(); t.wrapS = t.wrapT = RepeatWrapping; t.repeat.set(3, 3); t.rotation = Math.PI / 2; t.needsUpdate = true; return t; })(), roughness: 0.6, color: "#d9c3a5" }),
     grama: new MeshStandardMaterial({ color: "#9aa77f", roughness: 1 }),
     pedra: new MeshStandardMaterial({ color: "#d8d3c8", roughness: 0.95 }),
     pedraEscura: new MeshStandardMaterial({ color: "#4a4743", roughness: 0.75, map: tCon }),
@@ -504,9 +510,18 @@ function montar(id) {
     pinturaMesh.setMatrixAt(i, _o.matrix);
     pinturaOrig[i] = _o.matrix.clone();
   });
+  // parede interna com tinta de outro tom (areia): por dentro dá pra ler os cômodos; por fora tudo branco
+  const corFora = new Color("#ffffff");
+  const corDentro = new Color("#efe2cc");
+  lista.forEach((bl, i) => pinturaMesh.setColorAt(i, bl.interna ? corDentro : corFora));
   pinturaMesh.visible = false;
   pinturaMesh.frustumCulled = false;
   obra.add(pinturaMesh);
+
+  // piso de madeira por dentro (térreo junto com as paredes; em cima, por cima da laje)
+  for (const [R, y, ent] of [[A, CHAO + 0.012, [0.12, 0.16]], ...(B ? [[B, Y2 + 0.012, [0.47, 0.5]]] : [])]) {
+    peca(new BoxGeometry(R.x1 - R.x0 - BE * 2, 0.02, R.z1 - R.z0 - BE * 2), M.piso, (R.x0 + R.x1) / 2, y, (R.z0 + R.z1) / 2, ent, "sobe").castShadow = false;
+  }
 
   const L = A.x1 - A.x0;
   const xm = (A.x0 + A.x1) / 2;
@@ -624,7 +639,7 @@ function posicionarCamera() {
   const altUtil = h - reserva - topo;
   const vUtil = 2 * Math.atan(Math.tan(vfov / 2) * (altUtil / h));
   const util = Math.min(vUtil, hfov * (largaTela ? 0.7 : 1));
-  const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p));
+  const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p)) * (interior ? 1 : zoomUser);
   // giro do dedo/mouse: só depois do voo do Blocão (senão ele não bate com o lugar dele na obra)
   const livre = suave(faixa(p, 0.12, 0.2));
   const ang = MathUtils.lerp(-0.6, 0.45, suave(p)) + giroUser * livre;
@@ -645,16 +660,15 @@ function posicionarCamera() {
     const para = interior.volta ? { pos: camera.position.clone(), alvo: centro, fov: 26, off: 1 } : interior.para;
     camera.position.lerpVectors(de.pos, para.pos, k);
     alvo = _alvoCam.lerpVectors(de.alvo, para.alvo, k);
-    if (!interior.volta && giroDentro && interior.muro) {
-      // dentro: o dedo desliza a câmera ao longo da abertura (passa de um cômodo pro outro, sempre olhando pra dentro)
-      const [tx, tz] = tangenteDe(interior.muro);
-      camera.position.x += tx * giroDentro * k;
-      camera.position.z += tz * giroDentro * k;
-      alvo.x += tx * giroDentro * k;
-      alvo.z += tz * giroDentro * k;
-    }
     fov = de.fov + (para.fov - de.fov) * k;
     off = de.off + (para.off - de.off) * k;
+    // chegou: começa o passeio (a câmera passa a ser da pessoa)
+    if (!interior.volta && k >= 1) {
+      if (!passeio) iniciarPasseio();
+      posPasseio(camera.position);
+      alvo = _alvoCam.set(Math.sin(passeio.yaw) * Math.cos(passeio.pitch), Math.sin(passeio.pitch), Math.cos(passeio.yaw) * Math.cos(passeio.pitch)).add(camera.position);
+      fov = passeio.fov;
+    }
   }
   camera.fov = fov;
   camera.near = interior ? 0.1 : 1;
@@ -721,7 +735,57 @@ function estadoParede(id) {
 function animando() {
   const t = agora();
   for (const a of fora.values()) if (t - a.t0 < DUR_PAREDE) return true;
+  if (passeio && passeio.anim) return true;
   return !!interior && t - interior.t0 < DUR_CAMERA;
+}
+
+/* ---------- passeio por dentro: olhar em volta, andar (toque no chão / pinça / teclas), trocar de andar ---------- */
+function iniciarPasseio() {
+  const pr = interior.para;
+  const d = _dir.copy(pr.alvo).sub(pr.pos);
+  passeio = { pos: pr.pos.clone(), yaw: Math.atan2(d.x, d.z), pitch: Math.atan2(d.y, Math.hypot(d.x, d.z)), fov: pr.fov, andar: interior.muro.andar, anim: null };
+}
+
+/** posição atual do passeio (no meio de um passo animado, a posição do momento) */
+function posPasseio(alvo) {
+  const a = passeio.anim;
+  if (!a) return alvo.copy(passeio.pos);
+  const k = suave((agora() - a.t0) / a.dur);
+  alvo.lerpVectors(a.de, a.para, k);
+  if (k >= 1) { passeio.pos.copy(a.para); passeio.anim = null; }
+  return alvo;
+}
+
+const pisoDe = (andar) => (andar ? CHAO + PE + LAJE : CHAO);
+const _passo = new Vector3();
+const _de = new Vector3();
+
+/** anda até (x, z) sem atravessar parede (para 90 cm antes, pra ver o cômodo) e sem sair pra longe da casa */
+function irPara(x, z, animado) {
+  posPasseio(_de);
+  _passo.set(x - _de.x, 0, z - _de.z);
+  let L = _passo.length();
+  if (L < 0.05) return;
+  _passo.normalize();
+  _raycast.set(_de, _passo);
+  _raycast.far = L + 0.5;
+  const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
+  blocosMesh.computeBoundingSphere();
+  const hit = _raycast.intersectObjects(alvos, false)[0];
+  _raycast.far = Infinity;
+  if (hit) L = Math.max(0, Math.min(L, hit.distance - 0.9));
+  const R = passeio.andar && projeto.B ? projeto.B : projeto.A;
+  const fx = limitarEntre(_de.x + _passo.x * L, R.x0 - 2.5, R.x1 + 2.5);
+  const fz = limitarEntre(_de.z + _passo.z * L, R.z0 - 2.5, R.z1 + 2.5);
+  const para = new Vector3(fx, pisoDe(passeio.andar) + OLHO, fz);
+  if (animado) passeio.anim = { de: _de.clone(), para, t0: agora(), dur: DUR_PASSO };
+  else { passeio.pos.copy(para); passeio.anim = null; }
+}
+
+function redesenharPasseio() {
+  pDesenhado = -1;
+  if (passeio && passeio.anim) requestAnimationFrame(animar);
+  else pedir();
 }
 
 /**
@@ -816,7 +880,7 @@ function removerParede(id) {
   fora.set(id, { de: estadoParede(id), para: 1, t0: agora() });
   atualizarRevelados();
   pRemocao = pAlvo;
-  giroDentro = 0;
+  passeio = null;
   interior = { de: capturarPose(), para: poseInterior(m), t0: agora(), volta: false, muro: m };
   if (ouvinteInterior) ouvinteInterior({ dentro: true, removidas: fora.size });
   requestAnimationFrame(animar);
@@ -826,6 +890,7 @@ function recolocarParedes() {
   if (!fora.size && !interior) return;
   for (const id of [...fora.keys()]) fora.set(id, { de: estadoParede(id), para: 0, t0: agora() });
   if (interior) interior = { de: capturarPose(), t0: agora(), volta: true };
+  passeio = null;
   requestAnimationFrame(animar);
 }
 
@@ -895,7 +960,7 @@ function aplicar() {
   // câmera dentro da casa: some o que ficar colado na lente (bonequinhos, pilares, árvores)
   if (interior) {
     for (const m of pecas) {
-      if (m.visible && m.userData.parede === undefined && (m.userData.jardim || m.position.distanceTo(camera.position) < 2.6)) m.visible = false;
+      if (m.visible && m.userData.parede === undefined && (m.userData.jardim || m.position.distanceTo(camera.position) < (passeio ? 1.2 : 2.6))) m.visible = false;
     }
   }
 
@@ -1055,6 +1120,19 @@ window.ImperioCasa3D = {
     if (!renderer || p < PRONTA) return false;
     const r = renderer.domElement.getBoundingClientRect();
     _ndcV.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+    if (interior) {
+      // por dentro: anda até onde tocou no chão (ou na direção, se tocou numa parede/no alto)
+      if (!passeio) return false;
+      camera.updateMatrixWorld();
+      _raycast.setFromCamera(_ndcV, camera);
+      const o = _raycast.ray.origin;
+      const d = _raycast.ray.direction;
+      const piso = pisoDe(passeio.andar);
+      const t = d.y < -0.02 ? (piso - o.y) / d.y : 3 / Math.max(0.2, Math.hypot(d.x, d.z));
+      irPara(o.x + d.x * t, o.z + d.z * t, true);
+      redesenharPasseio();
+      return true;
+    }
     camera.updateMatrixWorld();
     _raycast.setFromCamera(_ndcV, camera);
     const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
@@ -1076,24 +1154,49 @@ window.ImperioCasa3D = {
   internas() { return muros.filter((m) => m.interna).length; },
   giro() { return giroUser; },
   /** arrasto do dedo/mouse (px): gira a casa em volta; dentro dela, vira o olhar */
-  girar(dx, dy = 0) {
+girar(dx, dy = 0) {
     if (!renderer || p < 0.12) return;
     if (interior && !interior.volta) {
-      // desliza ao longo da abertura, sem passar das pontas da parede tirada
-      const m = interior.muro;
-      const meio = (m.ini + m.fim) / 2;
-      const lim = Math.abs(m.fim - m.ini) / 2;
-      const base = (interior.para.pos[m.eixo === "x" ? "x" : "z"]) - meio;
-      const s = Math.sign(m.fim - m.ini) || 1;
-      giroDentro = limitarEntre(giroDentro - dx * 0.02, (-lim - base * s) , (lim - base * s));
-    }
-    else {
+      // dentro: o dedo vira o olhar (pros lados e pra cima/baixo)
+      if (!passeio) return;
+      passeio.yaw -= dx * 0.005;
+      passeio.pitch = limitarEntre(passeio.pitch + dy * 0.004, -0.8, 0.7);
+    } else {
       giroUser -= dx * 0.008;
       elevUser = limitarEntre(elevUser + dy * 0.004, -0.3, 0.6);
     }
-    pDesenhado = -1;
-    pedir();
+    redesenharPasseio();
   },
+  /** pinça (fator > 1 = abrindo os dedos): por fora aproxima a maquete; por dentro anda pra frente/trás */
+  pinca(f) {
+    if (!renderer || p < 0.12 || !(f > 0)) return;
+    if (passeio) {
+      const m = (f - 1) * 3.2;
+      irPara(passeio.pos.x + Math.sin(passeio.yaw) * m, passeio.pos.z + Math.cos(passeio.yaw) * m, false);
+    } else if (!interior) zoomUser = limitarEntre(zoomUser / f, 0.4, 1.5);
+    redesenharPasseio();
+  },
+  /** teclado/botões: frente (+1/-1) e lado (+1/-1), 60 cm por passo */
+  passo(frente, lado = 0) {
+    if (!passeio) return;
+    const yaw = passeio.yaw;
+    const x = passeio.pos.x + (Math.sin(yaw) * frente + Math.cos(yaw) * -lado) * 0.6;
+    const z = passeio.pos.z + (Math.cos(yaw) * frente - Math.sin(yaw) * -lado) * 0.6;
+    irPara(x, z, true);
+    redesenharPasseio();
+  },
+  /** sobe/desce de andar (sobrado e casarão), no mesmo ponto da planta */
+  trocarAndar() {
+    if (!passeio || !projeto.B) return;
+    passeio.andar = passeio.andar ? 0 : 1;
+    const R = passeio.andar ? projeto.B : projeto.A;
+    posPasseio(_de);
+    const para = new Vector3(limitarEntre(_de.x, R.x0 + 0.8, R.x1 - 0.8), pisoDe(passeio.andar) + OLHO, limitarEntre(_de.z, R.z0 + 0.8, R.z1 - 0.8));
+    passeio.anim = { de: _de.clone(), para, t0: agora(), dur: 900 };
+    redesenharPasseio();
+  },
+  /** estado do passeio (pra os botões): null fora; { andar, andares } dentro */
+  passeioInfo() { return passeio ? { andar: passeio.andar, andares: projeto.B ? 2 : 1 } : null; },
   /**
    * Onde está o corte (a ponta da parede vizinha, com o EPS à mostra) NA TELA, quando a câmera já entrou:
    * { x, y } em px do navegador, ou null (câmera andando / casa fechada).
@@ -1117,7 +1220,11 @@ window.ImperioCasa3D = {
   /** troca a casa ("simples" | "media" | "casarao") mantendo o ponto da rolagem */
   tipo(id) {
     if (id === tipoAtual || !PROJETOS[id]) return;
+    const estavaDentro = !!interior || fora.size > 0;
     montar(id);
+    passeio = null;
+    zoomUser = 1;
+    if (estavaDentro && ouvinteInterior) ouvinteInterior({ dentro: false, removidas: 0 }); // casa nova: começa por fora
     if (window.__gravandoVideo) return;
     desenhar(false);
     clearTimeout(timerHD);
