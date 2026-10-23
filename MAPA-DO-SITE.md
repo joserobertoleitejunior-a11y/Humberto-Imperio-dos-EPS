@@ -50,8 +50,13 @@ Não é uma seção separada: o `#por-dentro` ficou mais longo (1060vh PC / 980v
 o "L" (mesmos 540vh de rolagem de antes, `data-jornada-l="540"`) e, em seguida, a casa. Quando o "L" termina (Blocão inteiro),
 as fichas e botões saem, a camada da casa esmaece por cima e o bloco da casa começa **exatamente onde o Blocão estava**
 (mesmo ponto, tamanho e ângulo — `ImperioCena.alvoFinal()`); ele vai pro canto da obra e vira o 1º bloco. Depois:
-**maquete de um sobrado em tamanho real** (9 × 7 m, ≈ 125 m²): 350 Blocões fiada por fiada → laje com varanda → andar de
-cima → platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim, árvores e bonequinhos de escala.
+**3 maquetes em tamanho real** (botões "Casa simples / Casa média / Casarão"; a rolagem monta a escolhida):
+- Casa simples: térrea 6,5 × 7,5 m, ≈ 49 m², varandinha — 173 Blocões, 5 etapas (sem 2º andar)
+- Casa média: sobrado 9 × 7 m, ≈ 125 m², varanda embaixo e em cima — 350 Blocões
+- Casarão: 15 × 10 m, ≈ 285 m², panos de vidro, varanda larga, porta pivotante, painel de pedra e piscina — 412 Blocões
+Fiada por fiada → laje/varanda → 2º andar → platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim e bonequinhos.
+HD: enquanto rola desenha leve; parado ~0,16 s refaz em alta resolução (PC/celular bom até 2–2,5×, com superamostragem).
+"estatica": imagem pronta de cada tipo (`assets/img/casa-simples|media|casarao.webp`), trocada pelos mesmos botões.
 O menu "A casa" leva pra `#casa` (âncora posicionada no começo da fase). `motion.js` publica `fim` (onde o "L" acaba) e
 `casa` (0..1 da fase); o vídeo usa `pj` (fração do "L") e `pc` (fração da casa) nas rolagens.
 - Tudo é função do progresso da rolagem (rolar pra cima desmonta); só desenha quando a rolagem muda.

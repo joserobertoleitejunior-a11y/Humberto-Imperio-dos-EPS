@@ -1,39 +1,36 @@
 /**
- * "Uma casa inteira de Blocão" — MAQUETE de um sobrado em tamanho real, montada com a ROLAGEM (scroll vertical).
+ * "Uma casa inteira de Blocão" — MAQUETES em tamanho real, montadas com a ROLAGEM (3ª fase do "Por dentro").
  *
- * Sobrado 9 × 7 m (≈ 125 m² nos 2 andares), varanda coberta no térreo e varanda com guarda-corpo de vidro em cima,
- * platibanda (telhado embutido), ripado de madeira, jardim, caminho de pedra e 2 bonequinhos de escala (como nas
- * maquetes de arquitetura). Tudo sobre uma base de maquete; a câmera calcula a distância pra base caber inteira na tela.
+ * 3 projetos (a pessoa escolhe): casa SIMPLES (térrea, ≈ 49 m²), casa MÉDIA (sobrado com varandas, ≈ 125 m²) e
+ * CASARÃO (sobrado grande com panos de vidro e piscina, ≈ 285 m²). Tudo sobre uma base de maquete, com bonequinhos
+ * de escala; a câmera calcula a distância pra maquete caber inteira na tela.
  *
- * Tudo é função do progresso p (0..1) da seção: rolar pra baixo assenta os blocos, rolar pra cima desmonta.
- * Nada anima sozinho, então só desenha quando p muda (0 % de GPU parado).
+ * Tudo é função do progresso p (0..1): rolar pra baixo assenta os blocos, rolar pra cima desmonta.
+ * Só desenha quando p muda. HD: enquanto rola, desenha leve; parado ~0,16 s, refaz em alta resolução.
  *
- *   0,00–0,12  O Blocão do "Por dentro" (mesma posição, tamanho e ângulo em que ele terminou o "L" — guiaTela())
- *              encolhe e voa até o canto da obra: ele é o 1º bloco da casa. O alicerce aparece embaixo.
- *   0,12–0,40  paredes do térreo: fiada por fiada, cada bloco cai no lugar (dando a volta na casa, como o pedreiro)
- *   0,40–0,47  laje + piso da varanda de cima (com pilares da varanda de baixo)
- *   0,47–0,74  paredes do andar de cima
- *   0,74–0,80  cobertura com platibanda
- *   0,80–0,86  vidros, caixilhos, porta, ripado, guarda-corpo e deck da varanda
- *   0,86–0,94  "face pronta pro acabamento": pintura cobre os blocos; jardim, caminho, árvores e bonequinhos
- *   0,90–1,00  luz quente acende por dentro
+ *   0,00–0,12  o Blocão do "Por dentro" (mesma posição, tamanho e ângulo — guiaTela()) encolhe e voa até o canto
+ *              da obra: ele é o 1º bloco. A base da maquete surge por baixo.
+ *   depois     paredes fiada por fiada (como o pedreiro, dando a volta), laje/varanda, 2º andar (se tiver),
+ *              cobertura com platibanda, vidros/caixilhos/porta/ripado, e de 0,86 a 0,94 a pintura + jardim.
  *
- * Medidas em metros. Bloco ILUSTRATIVO 1,00 × 0,50 × 0,15 (face real a confirmar com o Vinicius).
+ * Bloco ILUSTRATIVO 1,00 × 0,50 × 0,15 m (face real a confirmar com o Vinicius).
  * Celular antigo ("baixa"): sem antialias, sem reflexo de ambiente, texturas pequenas, resolução 1×.
  *
- * API (window.ImperioCasa3D): iniciar(canvas) → Promise · progresso(p) · redimensionar() · renderAgora() · blocos() · aoDesenhar(fn)
+ * API (window.ImperioCasa3D): iniciar(canvas) · progresso(p) · tipo(id) · etapas() · ficha() · guiaTela(a)
+ *                             redimensionar() · renderAgora() · blocos() · aoDesenhar(fn)
  */
 import {
-  ACESFilmicToneMapping, BoxGeometry, CanvasTexture, Color, DirectionalLight, HemisphereLight, IcosahedronGeometry,
+  ACESFilmicToneMapping, BoxGeometry, CanvasTexture, Color, DirectionalLight, Group, HemisphereLight, IcosahedronGeometry,
   InstancedMesh, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, PCFSoftShadowMap,
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer,
 } from "../vendor/three-imperio.min.js";
 
+// hd = resolução parada (nítida); leve = enquanto rola. min 1.5 no PC/celular bom = superamostragem (bordas lisas)
 const NIVEIS = {
-  alta: { ratio: 2, tex: 512, sombra: true, mapa: 2048, aa: true, ambiente: true },
-  media: { ratio: 1.5, tex: 256, sombra: false, mapa: 1024, aa: true, ambiente: true },
-  baixa: { ratio: 1, tex: 128, sombra: false, mapa: 512, aa: false, ambiente: false },
+  alta: { hd: 2.5, leve: 1.25, min: 1.5, tex: 1024, sombra: true, mapa: 2048, aa: true, ambiente: true },
+  media: { hd: 2, leve: 1, min: 1.5, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
+  baixa: { hd: 1, leve: 1, min: 1, tex: 128, sombra: false, mapa: 512, aa: false, ambiente: false },
 };
 
 const BL = 1.0;    // comprimento do bloco
@@ -41,6 +38,9 @@ const BA = 0.5;    // altura (1 fiada)
 const BE = 0.15;   // espessura (Blocão 15 cm)
 const FIADAS = 6;  // 3 m de piso a piso
 const JUNTA = 0.012;
+const PE = FIADAS * BA;
+const LAJE = 0.2;
+const CHAO = 0.05; // topo do alicerce
 
 /* ---------- utilidades ---------- */
 const limitar = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -58,10 +58,11 @@ function telaTex(tam, desenhar) {
   const t = new CanvasTexture(c);
   t.wrapS = t.wrapT = RepeatWrapping;
   t.colorSpace = SRGBColorSpace;
+  t.anisotropy = 4;
   return t;
 }
 
-/** Concreto: base cinza com manchas e poros (leve: são centenas de blocos). */
+/** Concreto: base cinza com manchas e poros. */
 function texConcreto(tam) {
   return telaTex(tam, (c, n) => {
     const r = aleatorio(7);
@@ -75,7 +76,7 @@ function texConcreto(tam) {
     for (let i = 0; i < n / 2; i++) {
       c.fillStyle = "rgba(70,68,64,.45)";
       c.beginPath();
-      c.arc(r() * n, r() * n, 0.5 + r() * 1.2, 0, 7);
+      c.arc(r() * n, r() * n, 0.5 + r() * (n / 400), 0, 7);
       c.fill();
     }
   });
@@ -123,40 +124,129 @@ function texSombra() {
   return new CanvasTexture(c);
 }
 
-/* ---------- projeto: sobrado 9 × 7 m ---------- */
-const CASA = { x0: -4.5, x1: 4.5, z0: -4, z1: 3 };  // paredes externas (frente = +z)
-const VARANDA = 2;                                   // profundidade das varandas (térreo e andar de cima)
-const PE = FIADAS * BA;                              // 3 m (6 fiadas)
-const LAJE = 0.2;
-const CHAO = 0.05;                                   // topo do alicerce
-const Y2 = CHAO + PE + LAJE;                         // base do andar de cima
-const BASE = { x: 15, z: 14, alt: 0.35 };            // base da maquete
+/* ------------------------------------------------------------------ */
+/* Projetos. Paredes: [eixo, coordenada fixa, início, fim, vãos]        */
+/* vão {a, b, f0, f1, porta} = trecho a..b vazio da fiada f0 até f1-1   */
+/* A = térreo, B = andar de cima (frente = +z)                          */
+/* ------------------------------------------------------------------ */
+function paredes(R, vaos) {
+  const { x0, x1, z0, z1 } = R;
+  return [
+    ["x", z1, x0, x1, vaos.frente || []],
+    ["z", x1 - BE / 2, z1 - BE, z0 + BE, vaos.direita || []],
+    ["x", z0, x1, x0, vaos.fundos || []],
+    ["z", x0 + BE / 2, z0 + BE, z1 - BE, vaos.esquerda || []],
+  ];
+}
 
-/**
- * Paredes: [eixo, coordenada fixa, início, fim, aberturas[{a, b, f0, f1, porta}]] — f0..f1 = fiadas vazias (vão).
- */
-const { x0, x1, z0, z1 } = CASA;
-const PAREDES_TERREO = [
-  ["x", z1, x0, x1, [{ a: -3.6, b: -0.6, f0: 1, f1: 5 }, { a: 1, b: 2.2, f0: 0, f1: 5, porta: true }]],
-  ["z", x1 - BE / 2, z1 - BE, z0 + BE, [{ a: -2.2, b: -0.4, f0: 2, f1: 5 }]],
-  ["x", z0, x1, x0, [{ a: -2, b: 1, f0: 2, f1: 5 }]],
-  ["z", x0 + BE / 2, z0 + BE, z1 - BE, [{ a: -1.6, b: 0.4, f0: 2, f1: 5 }]],
-];
-const PAREDES_CIMA = [
-  ["x", z1, x0, x1, [{ a: -3.6, b: 1.2, f0: 0, f1: 5 }, { a: 2.5, b: 3.7, f0: 2, f1: 5 }]],
-  ["z", x1 - BE / 2, z1 - BE, z0 + BE, [{ a: -2.2, b: -0.4, f0: 2, f1: 5 }]],
-  ["x", z0, x1, x0, [{ a: -1, b: 2, f0: 2, f1: 5 }]],
-  ["z", x0 + BE / 2, z0 + BE, z1 - BE, [{ a: -2, b: -0.4, f0: 2, f1: 5 }]],
-];
+const PROJETOS = {
+  simples: {
+    nome: "Casa simples",
+    ficha: "Casa térrea 6,5 × 7,5 m · 2 quartos · ≈ 49 m²",
+    A: { x0: -3.25, x1: 3.25, z0: -4, z1: 3.5 },
+    varanda: 1.6,
+    vaosA: {
+      frente: [{ a: -2.6, b: -0.8, f0: 2, f1: 5 }, { a: 0.5, b: 1.5, f0: 0, f1: 5, porta: true }],
+      direita: [{ a: -2.5, b: -1.3, f0: 2, f1: 5 }, { a: 0.8, b: 2, f0: 2, f1: 5 }],
+      fundos: [{ a: -1, b: 0.2, f0: 3, f1: 5 }],
+      esquerda: [{ a: -1.8, b: -0.6, f0: 2, f1: 5 }],
+    },
+    base: { x: 11, z: 13, cz: 0.8 },
+    centro: [0, 1.5, 0.8],
+    raio: 9.8,
+    jardim: {
+      caminho: { x: 1, n: 2 },
+      cerca: [[-2.2, 2.2], [2.8, 1.6]],
+      arvores: [[-4.4, -2.4, 0.85]],
+      gente: [[2.3, 2]],
+    },
+  },
+  media: {
+    nome: "Casa média",
+    ficha: "Sobrado 9 × 7 m · 2 andares · ≈ 125 m²",
+    A: { x0: -4.5, x1: 4.5, z0: -4, z1: 3 },
+    B: { x0: -4.5, x1: 4.5, z0: -4, z1: 3 },
+    varanda: 2,
+    vaosA: {
+      frente: [{ a: -3.6, b: -0.6, f0: 1, f1: 5 }, { a: 1, b: 2.2, f0: 0, f1: 5, porta: true }],
+      direita: [{ a: -2.2, b: -0.4, f0: 2, f1: 5 }],
+      fundos: [{ a: -2, b: 1, f0: 2, f1: 5 }],
+      esquerda: [{ a: -1.6, b: 0.4, f0: 2, f1: 5 }],
+    },
+    vaosB: {
+      frente: [{ a: -3.6, b: 1.2, f0: 0, f1: 5 }, { a: 2.5, b: 3.7, f0: 2, f1: 5 }],
+      direita: [{ a: -2.2, b: -0.4, f0: 2, f1: 5 }],
+      fundos: [{ a: -1, b: 2, f0: 2, f1: 5 }],
+      esquerda: [{ a: -2, b: -0.4, f0: 2, f1: 5 }],
+    },
+    ripado: { x: 2.2, n: 12 },
+    base: { x: 15, z: 14, cz: 0.6 },
+    centro: [0, 2.6, 0.6],
+    raio: 10.4,
+    jardim: {
+      caminho: { x: 1.6, n: 4 },
+      cerca: [[-3.6, 4.6], [4.9, 2.8]],
+      arvores: [[-6, -2.6, 1], [6.1, -1.2, 0.85], [-6.2, 3.6, 0.7]],
+      gente: [[3, 7.4], [-1.4, 4.1]],
+    },
+  },
+  casarao: {
+    nome: "Casarão",
+    ficha: "Casarão 15 × 10 m · 2 andares · piscina · ≈ 285 m²",
+    A: { x0: -7.5, x1: 7.5, z0: -5, z1: 5 },
+    B: { x0: -7.5, x1: 7.5, z0: -5, z1: 4 },
+    varanda: 2.4,
+    vaosA: {
+      frente: [{ a: -6.6, b: -1.2, f0: 0, f1: 6 }, { a: 0.2, b: 1.8, f0: 0, f1: 6, porta: true }, { a: 3.2, b: 6.6, f0: 1, f1: 5 }],
+      direita: [{ a: -3, b: 3, f0: 0, f1: 5 }],
+      fundos: [{ a: -4, b: 4, f0: 0, f1: 5 }],
+      esquerda: [{ a: -2, b: 2, f0: 2, f1: 5 }],
+    },
+    vaosB: {
+      frente: [{ a: -6.6, b: -0.8, f0: 0, f1: 5 }, { a: 0.8, b: 4, f0: 0, f1: 5 }],
+      direita: [{ a: -2.6, b: 2.6, f0: 0, f1: 6 }],
+      fundos: [{ a: -3, b: 3, f0: 2, f1: 5 }],
+      esquerda: [{ a: -2.4, b: 1.4, f0: 2, f1: 5 }],
+    },
+    ripado: { x: 4.6, n: 14 },
+    pedra: { x: 2.5, larg: 1.2 },
+    piscina: { x: 11.2, z: 0.4, lx: 3.2, lz: 7.6 },
+    base: { x: 30, z: 21, cz: 1 },
+    centro: [2.2, 3, 1],
+    raio: 16.4,
+    jardim: {
+      caminho: { x: 1, n: 4 },
+      cerca: [[-4.5, 6.2], [5.2, 4.6]],
+      arvores: [[-10, -3.5, 1.3], [-9.6, 4.5, 1], [13.6, -6.5, 1.1], [-3, -7.2, 0.9]],
+      gente: [[3.4, 9.3], [-3, 6.2], [9.4, 3.6]],
+    },
+  },
+};
+
+/** Linha do tempo de cada tipo (térrea é mais curta e não tem 2º andar). */
+function tempos(P) {
+  if (P.B) {
+    return {
+      paredes: [[0.12, 0.28], [0.47, 0.27]], laje: [0.4, 0.47], pilares: [0.41, 0.46], cobertura: [0.74, 0.79],
+      platibanda: [0.76, 0.8], vidros: 0.8, etapas: [[0, "O Blocão vai pro lugar"], [0.12, "Paredes do térreo, fiada por fiada"],
+        [0.4, "Laje e varanda"], [0.47, "Segundo andar"], [0.74, "Platibanda, vidro e madeira"], [0.86, "Pintura e jardim: casa pronta"]],
+    };
+  }
+  return {
+    paredes: [[0.12, 0.42]], laje: null, pilares: [0.52, 0.58], cobertura: [0.56, 0.64], platibanda: [0.6, 0.68], vidros: 0.7,
+    etapas: [[0, "O Blocão vai pro lugar"], [0.12, "Paredes, fiada por fiada"], [0.52, "Varanda e laje"],
+      [0.62, "Platibanda, janelas e porta"], [0.86, "Pintura e jardim: casa pronta"]],
+  };
+}
 
 /** Gera os blocos (amarração: fiadas ímpares começam com meio bloco) e os vãos. */
-function levantar(paredes, yBase, andar) {
+function levantar(defs, yBase, andar) {
   const blocos = [];
   const vaos = [];
   let percorrido = 0;
-  const comps = paredes.map(([, , i, f]) => Math.abs(f - i));
+  const comps = defs.map(([, , i, f]) => Math.abs(f - i));
   const total = comps.reduce((s, c) => s + c, 0);
-  paredes.forEach(([eixo, fixo, ini, fim, abert], w) => {
+  defs.forEach(([eixo, fixo, ini, fim, abert], w) => {
     const sentido = Math.sign(fim - ini);
     const comp = comps[w];
     for (let f = 0; f < FIADAS; f++) {
@@ -204,92 +294,122 @@ let renderer;
 let cena;
 let camera;
 let nivel;
+let mats;
+let geoBloco;
+let obra;                 // Group com a casa atual (trocar de tipo = refazer só ele)
+let projeto;
+let T;
 let blocosMesh;
 let pinturaMesh;
 let lista = [];
-const pecas = [];         // demais peças (lajes, vidros...) com a sua própria entrada no tempo
-let matVidro;
-let matPintura;
+let pecas = [];
 let p = 0;
 let pDesenhado = -1;
 let assentados = 0;
 let ouvinte = null;
-let guia;                 // o Blocão do site que vira o 1º bloco da casa
-let primeiro = 0;         // índice do 1º bloco (fiada 0, começo da volta)
+let guia;
+let primeiro = 0;
+let tipoAtual = "media";
+let alvoTela = null;      // { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" (px na tela)
 const _o = new Object3D();
 const _ini = new Object3D();
 const _fim = new Object3D();
 const _dir = new Vector3();
 const _raio = new Vector3();
-let alvoTela = null;       // { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" (px na tela)
-const centro = new Vector3(0, 2.6, 0.6);
-const RAIO = 10.4;         // esfera que envolve a maquete inteira (base + casa + árvores)
+const centro = new Vector3();
 
 function peca(geo, mat, x, y, z, entra, tipo = "desce") {
   const m = new Mesh(geo, mat);
   m.position.set(x, y, z);
   m.castShadow = m.receiveShadow = nivel.sombra;
   m.userData = { base: m.position.clone(), entra, tipo, alt: geo.parameters ? geo.parameters.height || 0 : 0 };
-  cena.add(m);
+  obra.add(m);
   pecas.push(m);
   return m;
 }
 
-function montar() {
+function criarMateriais() {
   const tCon = texConcreto(nivel.tex);
-  const tSan = texSanduiche(64);
-  const tMad = texMadeira(nivel.tex);
-
-  const branco = new MeshStandardMaterial({ color: "#f4f2ed", roughness: 0.8 });
-  const grafite = new MeshStandardMaterial({ color: "#2a2c2f", roughness: 0.55, metalness: 0.3 });
-  const madeira = new MeshStandardMaterial({ map: tMad, roughness: 0.7 });
-  const grama = new MeshStandardMaterial({ color: "#9aa77f", roughness: 1 });
-  const pedra = new MeshStandardMaterial({ color: "#d8d3c8", roughness: 0.95 });
-  matVidro = new MeshStandardMaterial({ color: "#2b3a44", roughness: 0.08, metalness: 0.25, transparent: true, opacity: 0.5, emissive: new Color("#ffb867"), emissiveIntensity: 0 });
-
-  // base da maquete: placa branca com filete grafite e gramado. Na troca o Blocão aparece SOZINHO na tela;
-  // a base surge por baixo quando ele começa a descer (0,02–0,1)
-  const base = peca(new BoxGeometry(BASE.x, BASE.alt, BASE.z), branco, 0, -BASE.alt / 2 - 0.02, 0.6, [0.02, 0.1], "sobe");
-  base.castShadow = false;
-  const filete = peca(new BoxGeometry(BASE.x + 0.02, 0.04, BASE.z + 0.02), grafite, 0, -BASE.alt - 0.02, 0.6, [0.02, 0.1], "sobe");
-  filete.castShadow = false;
-  const gram = peca(new BoxGeometry(BASE.x - 0.3, 0.04, BASE.z - 0.3), grama, 0, 0, 0.6, [0.03, 0.1], "sobe");
-  gram.castShadow = false;
-  if (!nivel.sombra) {
-    const sombra = peca(new PlaneGeometry(13, 12), new MeshBasicMaterial({ map: texSombra(), transparent: true, depthWrite: false }), 0.3, 0.025, -0.3, [0.06, 0.12], "sobe");
-    sombra.rotation.x = -Math.PI / 2;
-    sombra.castShadow = sombra.receiveShadow = false;
-  }
-
-  // blocos: 1 malha instanciada (concreto nas faces, sanduíche no topo e na base)
-  const t = levantar(PAREDES_TERREO, CHAO, 0);
-  const c = levantar(PAREDES_CIMA, Y2, 1);
-  lista = t.blocos.concat(c.blocos);
-  const geo = new BoxGeometry(BL - JUNTA, BA - JUNTA, BE);
-  const uv = geo.attributes.uv;
+  const tGuia = texConcreto(Math.min(1024, nivel.tex * 2));
+  const tSan = texSanduiche(128);
+  const tMad = texMadeira(Math.max(128, nivel.tex / 2));
+  mats = {
+    concreto: new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" }),
+    topo: new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" }),
+    guia: new MeshStandardMaterial({ map: tGuia, roughness: 0.9, color: "#d6d1c8" }),
+    pintura: new MeshStandardMaterial({ color: "#f2efe8", roughness: 0.85, transparent: true, opacity: 0 }),
+    branco: new MeshStandardMaterial({ color: "#f4f2ed", roughness: 0.8 }),
+    grafite: new MeshStandardMaterial({ color: "#2a2c2f", roughness: 0.55, metalness: 0.3 }),
+    madeira: new MeshStandardMaterial({ map: tMad, roughness: 0.7 }),
+    grama: new MeshStandardMaterial({ color: "#9aa77f", roughness: 1 }),
+    pedra: new MeshStandardMaterial({ color: "#d8d3c8", roughness: 0.95 }),
+    pedraEscura: new MeshStandardMaterial({ color: "#4a4743", roughness: 0.75, map: tCon }),
+    vidro: new MeshStandardMaterial({ color: "#2b3a44", roughness: 0.06, metalness: 0.25, transparent: true, opacity: 0.5, emissive: new Color("#ffb867"), emissiveIntensity: 0 }),
+    agua: new MeshStandardMaterial({ color: "#3d8fae", roughness: 0.05, metalness: 0.2, emissive: new Color("#1d5f7a"), emissiveIntensity: 0.25 }),
+    folha: new MeshStandardMaterial({ color: "#46623f", roughness: 0.9, flatShading: true }),
+    tronco: new MeshStandardMaterial({ color: "#5b4636", roughness: 1 }),
+    gente: new MeshStandardMaterial({ color: "#fbfaf7", roughness: 0.6 }),
+    sombra: new MeshBasicMaterial({ map: texSombra(), transparent: true, depthWrite: false }),
+  };
+  geoBloco = new BoxGeometry(BL - JUNTA, BA - JUNTA, BE);
+  const uv = geoBloco.attributes.uv;
   for (let i = 0; i < uv.count; i++) {
     const face = Math.floor(i / 4);
     if (face !== 2 && face !== 3) uv.setXY(i, uv.getX(i) * 2.2, uv.getY(i) * 1.1); // topo/base: o sanduíche fica inteiro
   }
-  const matCon = new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" });
-  const matTopo = new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" });
-  // ordem das faces: +x, -x, +y, -y, +z, -z → topo/base com o sanduíche
-  blocosMesh = new InstancedMesh(geo, [matCon, matCon, matTopo, matTopo, matCon, matCon], lista.length);
-  blocosMesh.castShadow = blocosMesh.receiveShadow = nivel.sombra;
-  blocosMesh.frustumCulled = false; // as instâncias se espalham pela casa toda (a esfera da geometria não as cobre)
-  cena.add(blocosMesh);
-
-  // o Blocão "do site": mesmo bloco, com textura mais fina (ele aparece grande na tela antes de ir pro lugar)
-  primeiro = lista.reduce((m, bl, i) => (bl.fiada === 0 && bl.ordem < lista[m].ordem ? i : m), 0);
-  const tGuia = texConcreto(Math.min(512, nivel.tex * 2));
-  const matGuia = new MeshStandardMaterial({ map: tGuia, roughness: 0.9, color: "#d6d1c8" });
-  guia = new Mesh(geo, [matGuia, matGuia, matTopo, matTopo, matGuia, matGuia]);
+  // o Blocão "do site" (vira o 1º bloco de qualquer casa): mesma peça, textura mais fina
+  guia = new Mesh(geoBloco, [mats.guia, mats.guia, mats.topo, mats.topo, mats.guia, mats.guia]);
   guia.castShadow = nivel.sombra;
   cena.add(guia);
+}
 
-  // pintura (acabamento): mesma posição dos blocos, um tico maior pra fechar as juntas
-  matPintura = new MeshStandardMaterial({ color: "#f2efe8", roughness: 0.85, transparent: true, opacity: 0 });
-  pinturaMesh = new InstancedMesh(new BoxGeometry(BL, BA, BE + 0.012), matPintura, lista.length);
+/** Desmonta a casa atual (libera geometrias; os materiais são compartilhados entre os tipos). */
+function limparObra() {
+  if (!obra) return;
+  obra.traverse((o) => { if (o.geometry && o.geometry !== geoBloco) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });
+  cena.remove(obra);
+}
+
+function montar(id) {
+  limparObra();
+  tipoAtual = PROJETOS[id] ? id : "media";
+  projeto = PROJETOS[tipoAtual];
+  T = tempos(projeto);
+  obra = new Group();
+  cena.add(obra);
+  pecas = [];
+  const P = projeto;
+  const { A, B } = P;
+  const M = mats;
+  centro.set(...P.centro);
+
+  // base da maquete (surge por baixo do Blocão quando ele começa a descer)
+  const { x: bx, z: bz, cz } = P.base;
+  for (const [g, mat, y, ent] of [
+    [new BoxGeometry(bx, 0.35, bz), M.branco, -0.195, [0.02, 0.1]],
+    [new BoxGeometry(bx + 0.02, 0.04, bz + 0.02), M.grafite, -0.37, [0.02, 0.1]],
+    [new BoxGeometry(bx - 0.3, 0.04, bz - 0.3), M.grama, 0, [0.03, 0.1]],
+  ]) {
+    const m = peca(g, mat, P.centro[0] * 0.4, y, cz, ent, "sobe");
+    m.castShadow = false;
+  }
+  if (!nivel.sombra) {
+    const s = peca(new PlaneGeometry((A.x1 - A.x0) * 1.5 + 2, (A.z1 - A.z0 + P.varanda) * 1.5 + 2), M.sombra, (A.x0 + A.x1) / 2 + 0.3, 0.025, (A.z0 + A.z1) / 2, [0.06, 0.12], "sobe");
+    s.rotation.x = -Math.PI / 2;
+    s.castShadow = s.receiveShadow = false;
+  }
+
+  // blocos: 1 malha instanciada (concreto nas faces, sanduíche no topo e na base) + pintura por cima
+  const t = levantar(paredes(A, P.vaosA), CHAO, 0);
+  const Y2 = CHAO + PE + LAJE;
+  const c = B ? levantar(paredes(B, P.vaosB), Y2, 1) : { blocos: [], vaos: [] };
+  lista = t.blocos.concat(c.blocos);
+  primeiro = lista.reduce((m, bl, i) => (bl.fiada === 0 && bl.ordem < lista[m].ordem ? i : m), 0);
+  blocosMesh = new InstancedMesh(geoBloco, [M.concreto, M.concreto, M.topo, M.topo, M.concreto, M.concreto], lista.length);
+  blocosMesh.castShadow = blocosMesh.receiveShadow = nivel.sombra;
+  blocosMesh.frustumCulled = false; // as instâncias se espalham pela casa toda
+  obra.add(blocosMesh);
+  pinturaMesh = new InstancedMesh(new BoxGeometry(BL, BA, BE + 0.012), M.pintura, lista.length);
   lista.forEach((bl, i) => {
     _o.position.set(bl.x, bl.y, bl.z);
     _o.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
@@ -299,26 +419,50 @@ function montar() {
   });
   pinturaMesh.visible = false;
   pinturaMesh.frustumCulled = false;
-  cena.add(pinturaMesh);
+  obra.add(pinturaMesh);
 
-  const L = x1 - x0;
-  const P = z1 - z0;
-  const zMeioV = (z0 + z1 + VARANDA) / 2;
-  // alicerce (radier) — a casa e a varanda
-  peca(new BoxGeometry(L + 0.4, 0.12, P + VARANDA + 0.4), pedra, 0, -0.01, zMeioV, [0, 0.06], "sobe");
-  // laje do 1º andar avançando sobre a varanda (vira o piso da varanda de cima)
-  peca(new BoxGeometry(L + 0.3, LAJE, P + VARANDA + 0.3), branco, 0, CHAO + PE + LAJE / 2, zMeioV, [0.4, 0.47]);
-  // pilares finos da varanda do térreo
-  [x0 + 0.2, x1 - 0.2].forEach((x, i) => peca(new BoxGeometry(0.16, PE, 0.16), grafite, x, CHAO + PE / 2, z1 + VARANDA - 0.15, [0.41 + i * 0.01, 0.46 + i * 0.01], "cresce"));
-  // cobertura com platibanda (telhado embutido) e beiral sobre a varanda de cima
-  const yTopo = Y2 + PE;
-  const zMeioT = (z0 + z1) / 2 + 0.3;
-  peca(new BoxGeometry(L + 0.6, 0.2, P + 0.9), branco, 0, yTopo + 0.1, zMeioT, [0.74, 0.79]);
-  [[L + 0.6, 0.55, 0.14, 0, z1 + 0.68], [L + 0.6, 0.55, 0.14, 0, z0 - 0.23], [0.14, 0.55, P + 0.9, x0 - 0.23, zMeioT], [0.14, 0.55, P + 0.9, x1 + 0.23, zMeioT]]
-    .forEach(([lx, ly, lz, x, z], i) => peca(new BoxGeometry(lx, ly, lz), branco, x, yTopo + 0.45, z, [0.76 + i * 0.008, 0.8 + i * 0.008]));
-  peca(new BoxGeometry(L + 0.62, 0.05, 0.05), grafite, 0, yTopo + 0.7, z1 + 0.76, [0.79, 0.81]);
+  const L = A.x1 - A.x0;
+  const xm = (A.x0 + A.x1) / 2;
+  const zFrente = A.z1 + P.varanda;               // frente da varanda
+  const zMeioV = (A.z0 + zFrente) / 2;
+  // alicerce (radier): a casa e a varanda
+  peca(new BoxGeometry(L + 0.4, 0.12, zFrente - A.z0 + 0.4), M.pedra, xm, -0.01, zMeioV, [0, 0.06], "sobe");
+  // pilares finos da varanda (3 se a casa for larga)
+  const xs = L > 12 ? [A.x0 + 0.2, xm, A.x1 - 0.2] : [A.x0 + 0.2, A.x1 - 0.2];
+  xs.forEach((x, i) => peca(new BoxGeometry(0.16, PE, 0.16), M.grafite, x, CHAO + PE / 2, zFrente - 0.15, [T.pilares[0] + i * 0.01, T.pilares[1] + i * 0.01], "cresce"));
+  // deck de madeira na varanda do térreo
+  peca(new BoxGeometry(L - 0.1, 0.06, P.varanda - 0.05), M.madeira, xm, CHAO + 0.03, A.z1 + P.varanda / 2, [T.vidros, T.vidros + 0.04], "sobe");
 
-  // vidros, porta e caixilhos nos vãos
+  let yTopo;
+  let R; // retângulo coberto pela cobertura
+  if (B) {
+    // laje do 1º andar avançando sobre a varanda (vira o piso da varanda de cima)
+    peca(new BoxGeometry(L + 0.3, LAJE, zFrente - A.z0 + 0.3), M.branco, xm, CHAO + PE + LAJE / 2, zMeioV, T.laje);
+    yTopo = Y2 + PE;
+    R = { x0: B.x0, x1: B.x1, z0: B.z0, z1: B.z1 + 0.6 };
+    // varanda de cima: guarda-corpo de vidro (frente e laterais) com corrimão grafite
+    peca(new BoxGeometry(L, 1.0, 0.02), M.vidro, xm, Y2 + 0.5, zFrente - 0.05, [0.82, 0.86], "cresce");
+    peca(new BoxGeometry(L + 0.02, 0.05, 0.06), M.grafite, xm, Y2 + 1.02, zFrente - 0.05, [0.83, 0.86], "cresce");
+    const fundoV = zFrente - B.z1;
+    [A.x0 + 0.02, A.x1 - 0.02].forEach((x) => {
+      const g = peca(new BoxGeometry(fundoV, 1.0, 0.02), M.vidro, x, Y2 + 0.5, B.z1 + fundoV / 2, [0.82, 0.86], "cresce");
+      g.rotation.y = Math.PI / 2;
+    });
+  } else {
+    yTopo = CHAO + PE;
+    R = { x0: A.x0, x1: A.x1, z0: A.z0, z1: zFrente }; // térrea: a laje cobre a varanda também
+  }
+  // cobertura com platibanda (telhado embutido)
+  const lx = R.x1 - R.x0 + 0.5;
+  const lz = R.z1 - R.z0 + 0.4;
+  const rx = (R.x0 + R.x1) / 2;
+  const rz = (R.z0 + R.z1) / 2;
+  peca(new BoxGeometry(lx, 0.2, lz), M.branco, rx, yTopo + 0.1, rz, T.cobertura);
+  [[lx, 0.55, 0.14, rx, R.z1 + 0.13], [lx, 0.55, 0.14, rx, R.z0 - 0.13], [0.14, 0.55, lz, R.x0 - 0.18, rz], [0.14, 0.55, lz, R.x1 + 0.18, rz]]
+    .forEach(([a, b, d, x, z], i) => peca(new BoxGeometry(a, b, d), M.branco, x, yTopo + 0.45, z, [T.platibanda[0] + i * 0.008, T.platibanda[1] + i * 0.004]));
+  peca(new BoxGeometry(lx + 0.02, 0.05, 0.05), M.grafite, rx, yTopo + 0.7, R.z1 + 0.21, [T.platibanda[1] - 0.02, T.platibanda[1] + 0.01]);
+
+  // vidros, portas e caixilhos nos vãos
   t.vaos.concat(c.vaos).forEach((v, k) => {
     const larg = v.b - v.a;
     const alt = v.y1 - v.y0;
@@ -326,51 +470,52 @@ function montar() {
     const x = v.eixo === "x" ? meio : v.fixo;
     const z = v.eixo === "x" ? v.fixo - Math.sign(v.fixo || 1) * (BE / 2) : meio;
     const rot = v.eixo === "z";
-    const ent = [0.8 + (k % 6) * 0.006, 0.84 + (k % 6) * 0.006];
+    const ent = [T.vidros + (k % 6) * 0.006, T.vidros + 0.04 + (k % 6) * 0.006];
     const g = v.porta ? new BoxGeometry(larg - 0.04, alt - 0.02, 0.06) : new BoxGeometry(larg - 0.06, alt - 0.06, 0.03);
-    const m = peca(g, v.porta ? madeira : matVidro, x, v.y0 + alt / 2, z, ent, "cresce");
+    const m = peca(g, v.porta ? M.madeira : M.vidro, x, v.y0 + alt / 2, z, ent, "cresce");
     if (rot) m.rotation.y = Math.PI / 2;
     if (v.porta) return;
     const f = 0.05;
-    [[larg, f, 0, alt / 2 - f / 2], [larg, f, 0, -alt / 2 + f / 2], [f, alt, -larg / 2 + f / 2, 0], [f, alt, larg / 2 - f / 2, 0]].forEach(([lx, ly, dx, dy]) => {
-      const cx = peca(new BoxGeometry(lx, ly, 0.07), grafite, rot ? x : x + dx, v.y0 + alt / 2 + dy, rot ? z + dx : z, ent, "cresce");
+    const quadro = [[larg, f, 0, alt / 2 - f / 2], [larg, f, 0, -alt / 2 + f / 2], [f, alt, -larg / 2 + f / 2, 0], [f, alt, larg / 2 - f / 2, 0]];
+    if (larg > 2.6) quadro.push([f, alt, 0, 0]); // pano grande: montante no meio
+    quadro.forEach(([qx, qy, dx, dy]) => {
+      const cx = peca(new BoxGeometry(qx, qy, 0.07), M.grafite, rot ? x : x + dx, v.y0 + alt / 2 + dy, rot ? z + dx : z, ent, "cresce");
       if (rot) cx.rotation.y = Math.PI / 2;
     });
   });
 
-  // varanda de cima: guarda-corpo de vidro (frente e laterais) com corrimão grafite
-  const zV = z1 + VARANDA;
-  peca(new BoxGeometry(L, 1.0, 0.02), matVidro, 0, Y2 + 0.5, zV - 0.05, [0.82, 0.86], "cresce");
-  peca(new BoxGeometry(L + 0.02, 0.05, 0.06), grafite, 0, Y2 + 1.02, zV - 0.05, [0.83, 0.86], "cresce");
-  [x0 + 0.02, x1 - 0.02].forEach((x) => {
-    const g = peca(new BoxGeometry(VARANDA, 1.0, 0.02), matVidro, x, Y2 + 0.5, z1 + VARANDA / 2, [0.82, 0.86], "cresce");
-    g.rotation.y = Math.PI / 2;
-  });
-  // deck de madeira na varanda do térreo e ripado vertical na fachada de cima (brise na janela)
-  peca(new BoxGeometry(L - 0.1, 0.06, VARANDA - 0.05), madeira, 0, CHAO + 0.03, z1 + VARANDA / 2, [0.8, 0.84], "sobe");
-  for (let i = 0; i < 12; i++) {
-    peca(new BoxGeometry(0.06, PE - 0.2, 0.08), madeira, 2.2 + i * 0.19, Y2 + PE / 2, z1 + 0.12, [0.81 + i * 0.003, 0.85 + i * 0.003], "cresce");
+  // ripado de madeira (brise) na fachada de cima e painel de pedra (casarão)
+  if (P.ripado && B) {
+    for (let i = 0; i < P.ripado.n; i++) {
+      peca(new BoxGeometry(0.06, PE - 0.2, 0.08), M.madeira, P.ripado.x + i * 0.19, Y2 + PE / 2, B.z1 + 0.12, [0.81 + i * 0.003, 0.85 + i * 0.003], "cresce");
+    }
+  }
+  if (P.pedra) peca(new BoxGeometry(P.pedra.larg, PE, 0.06), M.pedraEscura, P.pedra.x, CHAO + PE / 2, A.z1 + 0.04, [T.vidros + 0.02, T.vidros + 0.06], "cresce");
+
+  // piscina com deck (casarão)
+  if (P.piscina) {
+    const q = P.piscina;
+    peca(new BoxGeometry(q.lx + 2.2, 0.1, q.lz + 1.6), M.madeira, q.x, -0.0, q.z, [0.86, 0.9], "sobe");
+    peca(new BoxGeometry(q.lx, 0.05, q.lz), M.agua, q.x, 0.04, q.z, [0.88, 0.92], "sobe");
   }
 
-  // jardim: caminho de pedra até a calçada, cerca viva baixa, árvores e 2 bonequinhos de escala
-  for (let i = 0; i < 4; i++) peca(new BoxGeometry(1.1, 0.04, 0.6), pedra, 1.6, 0.04, zV + 0.6 + i * 0.85, [0.86 + i * 0.006, 0.9 + i * 0.006], "sobe");
-  const folha = new MeshStandardMaterial({ color: "#46623f", roughness: 0.9, flatShading: true });
-  const tronco = new MeshStandardMaterial({ color: "#5b4636", roughness: 1 });
-  peca(new BoxGeometry(4.6, 0.5, 0.5), folha, -3.6, 0.27, zV + 1.6, [0.87, 0.91], "cresce");
-  peca(new BoxGeometry(2.8, 0.5, 0.5), folha, 4.9, 0.27, zV + 1.6, [0.875, 0.915], "cresce");
-  [[-6, -2.6, 1], [6.1, -1.2, 0.85], [-6.2, 3.6, 0.7]].forEach(([x, z, s], i) => {
-    const ent = [0.88 + i * 0.012, 0.93 + i * 0.012];
-    peca(new BoxGeometry(0.16, 1.5 * s, 0.16), tronco, x, 0.75 * s, z, ent, "cresce");
-    const copa = peca(new IcosahedronGeometry(1, 1), folha, x, 2.3 * s, z, ent, "cresce");
+  // jardim: caminho de pedra, cerca viva, árvores e bonequinhos de escala
+  const J = P.jardim;
+  for (let i = 0; i < J.caminho.n; i++) peca(new BoxGeometry(1.1, 0.04, 0.6), M.pedra, J.caminho.x, 0.04, zFrente + 0.6 + i * 0.85, [0.86 + i * 0.006, 0.9 + i * 0.006], "sobe");
+  J.cerca.forEach(([x, larg], i) => peca(new BoxGeometry(larg, 0.5, 0.5), M.folha, x, 0.27, zFrente + 1.6, [0.87 + i * 0.005, 0.91 + i * 0.005], "cresce"));
+  J.arvores.forEach(([x, z, s], i) => {
+    const ent = [0.88 + i * 0.01, 0.93 + i * 0.01];
+    peca(new BoxGeometry(0.16, 1.5 * s, 0.16), M.tronco, x, 0.75 * s, z, ent, "cresce");
+    const copa = peca(new IcosahedronGeometry(1, 1), M.folha, x, 2.3 * s, z, ent, "cresce");
     copa.scale.set(1.2 * s, 1.5 * s, 1.2 * s);
     copa.userData.escala = copa.scale.clone();
   });
-  const gente = new MeshStandardMaterial({ color: "#fbfaf7", roughness: 0.6 });
-  [[3, zV + 2.4], [-1.4, z1 + 1.1]].forEach(([x, z], i) => {
+  J.gente.forEach(([x, z], i) => {
     const ent = [0.9 + i * 0.01, 0.94 + i * 0.01];
-    peca(new BoxGeometry(0.34, 1.35, 0.2), gente, x, 0.72, z, ent, "cresce");
-    peca(new IcosahedronGeometry(0.13, 1), gente, x, 1.6, z, ent, "cresce");
+    peca(new BoxGeometry(0.34, 1.35, 0.2), M.gente, x, 0.72, z, ent, "cresce");
+    peca(new IcosahedronGeometry(0.13, 1), M.gente, x, 1.6, z, ent, "cresce");
   });
+  pDesenhado = -1;
 }
 
 /* ---------- câmera: gira em volta da maquete; distância calculada pra caber inteira em qualquer tela ---------- */
@@ -383,23 +528,25 @@ function posicionarCamera() {
   const vfov = MathUtils.degToRad(camera.fov);
   const hfov = 2 * Math.atan(Math.tan(vfov / 2) * asp);
   // tela larga: a casa ocupa a parte direita (texto à esquerda) → ~70 % da largura.
-  // celular: os textos da casa ficam embaixo → a maquete usa só a faixa de cima (abaixo do cabeçalho)
+  // celular: escolha de tipo em cima e textos embaixo → a maquete usa a faixa do meio
   const reserva = largaTela ? 0 : Math.min(300, h * 0.38);
-  const altUtil = h - reserva - (largaTela ? 0 : 64);
+  const topo = largaTela ? 0 : 118;
+  const altUtil = h - reserva - topo;
   const vUtil = 2 * Math.atan(Math.tan(vfov / 2) * (altUtil / h));
   const util = Math.min(vUtil, hfov * (largaTela ? 0.7 : 1));
-  const dist = (RAIO / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.94, suave(p));
+  const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p));
   const ang = MathUtils.lerp(-0.6, 0.45, suave(p));
   const elev = MathUtils.lerp(0.5, 0.36, suave(p)); // começa mais de cima (vê os blocos assentando) e desce
   camera.position.set(centro.x + Math.sin(ang) * Math.cos(elev) * dist, centro.y + Math.sin(elev) * dist, centro.z + Math.cos(ang) * Math.cos(elev) * dist);
+  camera.far = dist * 3;
   camera.lookAt(centro);
   if (largaTela) camera.setViewOffset(w, h, -w * 0.16, 0, w, h);
-  else camera.setViewOffset(w, h, 0, (reserva - 64) / 2, w, h); // sobe a maquete pro meio da faixa de cima
+  else camera.setViewOffset(w, h, 0, (reserva - topo) / 2, w, h); // a maquete fica no meio da faixa livre
 }
 
 /**
- * O Blocão do site vira o 1º bloco da casa: começa grande, no meio da tela e no mesmo ângulo do bloco do
- * "Por dentro" (giro −0,55 / inclinação 0,3), e voa encolhendo até o canto da obra.
+ * O Blocão do site vira o 1º bloco da casa: começa EXATAMENTE onde ele terminou o "L" (mesmo ponto da tela,
+ * mesma largura em px, mesmo ângulo) e voa encolhendo, num arco, até o canto da obra.
  */
 function moverGuia() {
   const e = suave(faixa(p, 0, 0.12));
@@ -413,7 +560,6 @@ function moverGuia() {
   camera.getWorldDirection(_dir);
   let largura;
   if (alvoTela) {
-    // começa EXATAMENTE onde o Blocão estava: mesmo ponto da tela, mesma largura em px, mesmo ângulo
     _raio.set((alvoTela.cx / w) * 2 - 1, -(alvoTela.cy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
     _ini.position.copy(camera.position).addScaledVector(_raio, D / Math.max(0.2, _raio.dot(_dir)));
     largura = (alvoTela.larg * 2 * D * tan) / h;
@@ -431,7 +577,7 @@ function moverGuia() {
   _fim.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
   const v = e * e; // fica grande na tela um pouco mais e depois "mergulha" até a obra
   guia.position.lerpVectors(_ini.position, _fim.position, v);
-  guia.position.y += Math.sin(Math.PI * v) * 1.2; // um arco suave, como quem levanta e assenta o bloco
+  guia.position.y += Math.sin(Math.PI * v) * 1.2;
   guia.quaternion.slerpQuaternions(_ini.quaternion, _fim.quaternion, e);
   const s0 = largura / BL;
   const k = s0 + (1 - s0) * v;
@@ -440,15 +586,14 @@ function moverGuia() {
 
 function aplicar() {
   // blocos: cada um cai no lugar no seu tempo (fiada → volta da casa)
-  const t0 = [0.12, 0.47];
-  const vao = [0.28, 0.27];
   assentados = 0;
   for (let i = 0; i < lista.length; i++) {
     const bl = lista[i];
     const andar = bl.fiada >= FIADAS ? 1 : 0;
     const f = bl.fiada - andar * FIADAS;
-    const passo = vao[andar] / FIADAS;
-    const ini = t0[andar] + f * passo + bl.ordem * passo * 0.9;
+    const [t0, vao] = T.paredes[andar];
+    const passo = vao / FIADAS;
+    const ini = t0 + f * passo + bl.ordem * passo * 0.9;
     let e = limitar((p - ini) / 0.03);
     if (i === primeiro) e = p >= 0.12 ? 1 : 0; // o 1º é o próprio Blocão do site (o "guia" chega no lugar dele)
     if (e >= 1) assentados++;
@@ -462,7 +607,6 @@ function aplicar() {
   blocosMesh.instanceMatrix.needsUpdate = true;
   moverGuia();
 
-  // demais peças
   for (const m of pecas) {
     const { base, entra, tipo, escala, alt } = m.userData;
     const e = saida(faixa(p, entra[0], entra[1]));
@@ -483,13 +627,25 @@ function aplicar() {
   // acabamento: pintura cobre os blocos; luz quente acende
   const tinta = suave(faixa(p, 0.86, 0.94));
   pinturaMesh.visible = tinta > 0.001;
-  matPintura.opacity = tinta;
-  matPintura.transparent = tinta < 0.999;
-  matPintura.depthWrite = tinta > 0.5;
-  matVidro.emissiveIntensity = 0.55 * suave(faixa(p, 0.9, 1));
+  mats.pintura.opacity = tinta;
+  mats.pintura.transparent = tinta < 0.999;
+  mats.pintura.depthWrite = tinta > 0.5;
+  mats.vidro.emissiveIntensity = 0.55 * suave(faixa(p, 0.9, 1));
 }
 
-function desenhar() {
+/* ---------- HD: leve enquanto rola, nítido quando para ---------- */
+let ratioHD = 1;
+let ratioLeve = 1;
+let timerHD = 0;
+
+function usarRatio(r) {
+  if (renderer.getPixelRatio() === r) return;
+  renderer.setPixelRatio(r);
+  renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
+}
+
+function desenhar(hd) {
+  usarRatio(hd ? ratioHD : ratioLeve);
   posicionarCamera(); // antes: o Blocão-guia é posicionado em relação à câmera
   aplicar();
   renderer.render(cena, camera);
@@ -514,7 +670,10 @@ function pedir() {
   pedido = true;
   requestAnimationFrame(() => {
     pedido = false;
-    if (p !== pDesenhado) desenhar();
+    if (p === pDesenhado) return;
+    desenhar(false);
+    clearTimeout(timerHD);
+    if (ratioHD > ratioLeve) timerHD = setTimeout(() => desenhar(true), 160);
   });
 }
 
@@ -524,15 +683,33 @@ function respirar() {
   return new Promise((r) => (window.requestIdleCallback ? window.requestIdleCallback(() => r(), { timeout: 300 }) : setTimeout(r, 16)));
 }
 
+/** Tudo visível uma vez: compila os materiais e envia texturas/geometrias agora (sem engasgo no meio da rolagem). */
+async function aquecer() {
+  const pAntes = p;
+  p = 0.5;
+  pecas.forEach((m) => { m.visible = true; });
+  pinturaMesh.visible = true;
+  mats.pintura.opacity = 0.5;
+  posicionarCamera();
+  if (renderer.compileAsync && renderer.extensions.has("KHR_parallel_shader_compile") && !window.__gravandoVideo) await renderer.compileAsync(cena, camera);
+  else renderer.compile(cena, camera);
+  await respirar();
+  renderer.render(cena, camera);
+  p = pAntes;
+}
+
 /**
- * Preparação em etapas curtas (cada uma cabe num intervalo ocioso), em vez de um bloco único de ~1 s:
- * 1) renderer  2) reflexo de ambiente (só PC/celular bom)  3) texturas + peças  4) compila os materiais
- * em paralelo (compileAsync)  5) "aquece" a placa de vídeo com tudo visível (texturas enviadas).
+ * Preparação em etapas curtas (cada uma num intervalo ocioso), em vez de um bloco único:
+ * renderer → reflexo de ambiente (só PC/celular bom) → texturas + casa → materiais compilados → placa "aquecida".
  */
 async function iniciar(canvas) {
   nivel = NIVEIS[document.documentElement.getAttribute("data-qualidade")] || NIVEIS.media;
+  const nativo = window.devicePixelRatio || 1;
+  ratioHD = Math.min(nivel.hd, Math.max(nivel.min, nativo));
+  ratioLeve = Math.min(ratioHD, Math.max(1, Math.min(nativo, nivel.leve)));
+  if (window.__gravandoVideo) ratioLeve = ratioHD;
   renderer = new WebGLRenderer({ canvas, antialias: nivel.aa, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: !!window.__gravandoVideo });
-  renderer.setPixelRatio(Math.min(nivel.ratio, Math.max(1, window.devicePixelRatio || 1)));
+  renderer.setPixelRatio(ratioLeve);
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = SRGBColorSpace;
@@ -540,7 +717,6 @@ async function iniciar(canvas) {
   cena = new Scene();
   camera = new PerspectiveCamera(26, 1, 1, 200); // lente "fechada": perspectiva suave de maquete fotografada
   await respirar();
-  // reflexo de ambiente (vidro bonito) — pulado no celular antigo: gerar o mapa trava aparelho fraco
   if (nivel.ambiente) {
     const pm = new PMREMGenerator(renderer);
     cena.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -549,39 +725,44 @@ async function iniciar(canvas) {
   }
   cena.add(new HemisphereLight("#fff6e8", "#7d8a66", nivel.ambiente ? 0.9 : 1.6));
   const sol = new DirectionalLight("#ffe7c4", 2.4);
-  sol.position.set(9, 14, 8);
+  sol.position.set(14, 22, 12);
   if (nivel.sombra) {
     sol.castShadow = true;
     sol.shadow.mapSize.set(nivel.mapa, nivel.mapa);
-    Object.assign(sol.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 50 });
+    Object.assign(sol.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, near: 1, far: 70 });
     sol.shadow.bias = -0.0004;
     sol.shadow.normalBias = 0.03;
   }
   cena.add(sol);
-  montar();
+  criarMateriais();
+  montar(tipoAtual);
   redimensionar();
   await respirar();
-  // tudo visível pra compilar e enviar TUDO agora (senão a 1ª aparição do vidro/pintura/madeira no meio da
-  // rolagem engasgava ~0,2–0,3 s no celular antigo)
-  pecas.forEach((m) => { m.visible = true; });
-  pinturaMesh.visible = true;
-  matPintura.opacity = 0.5;
-  posicionarCamera();
-  if (renderer.compileAsync && renderer.extensions.has("KHR_parallel_shader_compile") && !window.__gravandoVideo) await renderer.compileAsync(cena, camera);
-  else renderer.compile(cena, camera);
-  await respirar();
-  renderer.render(cena, camera);
+  await aquecer();
   window.addEventListener("resize", () => { redimensionar(); pedir(); }, { passive: true });
-  desenhar();
+  desenhar(true);
 }
 
 window.ImperioCasa3D = {
   iniciar,
-  /** p = 0..1 da seção (só desenha se mudou) */
+  /** p = 0..1 da fase da casa (só desenha se mudou) */
   progresso(novo) { p = limitar(novo); pedir(); },
+  /** troca a casa ("simples" | "media" | "casarao") mantendo o ponto da rolagem */
+  tipo(id) {
+    if (id === tipoAtual || !PROJETOS[id]) return;
+    montar(id);
+    if (window.__gravandoVideo) return;
+    desenhar(false);
+    clearTimeout(timerHD);
+    timerHD = setTimeout(() => desenhar(true), 160);
+  },
+  tipoAtual: () => tipoAtual,
+  /** etapas do tipo atual: [[p, texto], ...] */
+  etapas: () => T.etapas,
+  ficha: () => projeto.ficha,
   redimensionar() { redimensionar(); pedir(); },
   /** vídeo quadro a quadro */
-  renderAgora() { desenhar(); },
+  renderAgora() { desenhar(true); },
   blocos() { return { assentados, total: lista.length }; },
   /** de onde o bloco da casa sai: { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" */
   guiaTela(a) {

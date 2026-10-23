@@ -195,6 +195,19 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect.poll(() => page.evaluate(() => { const b = window.ImperioCasa3D.blocos(); return b.assentados === b.total; }), { timeout: 15000 }).toBe(true);
   await expect(page.locator(".casa__cta")).toBeVisible();
   await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");
+  // os 3 tipos: casa simples (térrea, 5 etapas), casa média e casarão — cada um com o seu total de blocos
+  const totais = {};
+  for (const tipo of ["simples", "media", "casarao"]) {
+    await page.click(`[data-casa-tipo="${tipo}"]`);
+    await expect(page.locator(`[data-casa-tipo="${tipo}"]`)).toHaveAttribute("aria-pressed", "true");
+    totais[tipo] = await page.evaluate(() => window.ImperioCasa3D.blocos().total);
+  }
+  expect(totais.simples).toBeLessThan(totais.media);
+  expect(totais.media).toBeLessThan(totais.casarao);
+  await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(6);
+  await page.click('[data-casa-tipo="simples"]');
+  await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(5);
+  await expect(page.locator("[data-casa-ficha]")).toContainText("49 m²");
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);

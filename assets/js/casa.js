@@ -19,6 +19,8 @@
   var palco = null;
   var etapas = [];
   var contador = null;
+  var ficha = null;
+  var botoesTipo = [];
   var C3 = null;
   var carregando = false;
   var ultimaEtapa = -1;
@@ -27,8 +29,9 @@
   var ultimaOp = -1;
   var ancoraFim = -1;
 
-  // limites de cada etapa (iguais ao roteiro do casa3d.js)
+  // limites de cada etapa (o casa3d.js manda os do tipo escolhido; estes são os da casa média)
   var LIMITES = [0, 0.12, 0.4, 0.47, 0.74, 0.86];
+  var ultimoP = 0;
   var TROCA = 0.035; // trecho em que a camada da casa esmaece por cima do Blocão (o bloco da casa fica parado no mesmo ponto)
 
   function limitar(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
@@ -43,6 +46,7 @@
   }
 
   function pintar(p) {
+    ultimoP = p;
     var e = 0;
     for (var i = 0; i < LIMITES.length; i++) if (p >= LIMITES[i]) e = i;
     if (e !== ultimaEtapa) {
@@ -51,6 +55,27 @@
     }
     camada.style.setProperty("--ouro", (limitar((p - 0.86) / 0.14)).toFixed(3));
     camada.classList.toggle("casa--pronta", p > 0.93);
+  }
+
+  /** Etapas e ficha do tipo atual (simples tem 5 etapas: não tem 2º andar). */
+  function montarEtapas() {
+    var lista = camada.querySelector(".casa__etapas");
+    var dados = C3.etapas();
+    LIMITES = dados.map(function (d) { return d[0]; });
+    lista.innerHTML = dados.map(function (d, i) {
+      return '<li data-etapa="' + i + '"><b>' + String(i + 1).padStart(2, "0") + "</b> " + d[1] + "</li>";
+    }).join("");
+    etapas = Array.prototype.slice.call(lista.querySelectorAll("[data-etapa]"));
+    if (ficha) ficha.textContent = C3.ficha();
+    ultimaEtapa = -1;
+    pintar(ultimoP);
+  }
+
+  function escolherTipo(id) {
+    botoesTipo.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-casa-tipo") === id)); });
+    if (!C3) return;
+    C3.tipo(id);
+    montarEtapas();
   }
 
   function aoDesenhar(info) {
@@ -92,11 +117,14 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261023d")
+    import("./casa3d.js?v=20261024a")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
         C3.aoDesenhar(aoDesenhar);
+        var marcado = botoesTipo.filter(function (b) { return b.getAttribute("aria-pressed") === "true"; })[0];
+        if (marcado) C3.tipo(marcado.getAttribute("data-casa-tipo"));
+        montarEtapas();
         camada.classList.add("casa--3d");
         ultimoQ = -1;
         atualizar(window.ImperioMotion && window.ImperioMotion.jornada());
@@ -106,6 +134,19 @@
         canvas.remove();
         semCasa();
       });
+  }
+
+  /** Nível "estatica": os botões trocam a imagem pronta de cada casa. */
+  function ligarImagens() {
+    var img = camada.querySelector(".casa__estatica");
+    var FICHAS = { simples: "Casa térrea 6,5 × 7,5 m · 2 quartos · ≈ 49 m²", media: "Sobrado 9 × 7 m · 2 andares · ≈ 125 m²", casarao: "Casarão 15 × 10 m · 2 andares · piscina · ≈ 285 m²" };
+    botoesTipo.forEach(function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-casa-tipo");
+        img.src = "assets/img/casa-" + id + ".webp";
+        if (ficha) ficha.textContent = FICHAS[id];
+      });
+    });
   }
 
   /** Sem 3D fora do nível "estatica": a fase da casa sai e o "Por dentro" volta a ter só o "L". */
@@ -123,7 +164,12 @@
     palco = camada.querySelector("[data-casa-palco]");
     etapas = Array.prototype.slice.call(camada.querySelectorAll("[data-etapa]"));
     contador = camada.querySelector("[data-casa-contador]");
-    if (parado) { camada.classList.add("casa--sem3d"); return; }
+    ficha = camada.querySelector("[data-casa-ficha]");
+    botoesTipo = Array.prototype.slice.call(camada.querySelectorAll("[data-casa-tipo]"));
+    botoesTipo.forEach(function (b) {
+      b.addEventListener("click", function () { escolherTipo(b.getAttribute("data-casa-tipo")); });
+    });
+    if (parado) { camada.classList.add("casa--sem3d"); ligarImagens(); return; }
     if (!temWebGL()) { semCasa(); return; }
     pintar(0);
     // prepara a casa num momento ocioso (não no meio da rolagem): celular antigo não engasga
@@ -147,6 +193,8 @@
   });
 
   window.ImperioCasa = {
+    /** troca o tipo de casa (vídeo e testes) */
+    tipo: function (id) { escolherTipo(id); },
     pronto: function () { return parado || !camada || camada.hidden || camada.classList.contains("casa--sem3d") || !!C3; },
     /** vídeo quadro a quadro: lê a rolagem e desenha já */
     atualizarAgora: function () {
