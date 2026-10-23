@@ -63,6 +63,8 @@
       etapas.forEach(function (li, k) { li.classList.toggle("ativa", k === e); });
     }
     camada.style.setProperty("--ouro", (limitar((p - 0.86) / 0.14)).toFixed(3));
+    var kc = limitar((p - 0.9) / 0.08);
+    camada.style.setProperty("--paisagem", (kc * kc * (3 - 2 * kc)).toFixed(3)); // céu da paisagem (CSS, leve)
     camada.classList.toggle("casa--pronta", p > 0.88); // igual ao PRONTA do casa3d.js (dá pra tirar parede)
     camada.classList.toggle("casa--maquete", p > 0.97); // casa completa: o dedo na maquete não rola a página
   }
@@ -88,7 +90,107 @@
     montarEtapas();
   }
 
+  /* ---------- pontos estratégicos: etiqueta (fora do 3D) + linha até o ponto da casa; clicou = zoom + vantagem ---------- */
+  var pontosEl = null;
+  var linhasEl = null;
+  var etiquetas = {};
+  var voandoPonto = false;
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function ligarPontos() {
+    pontosEl = camada.querySelector("[data-casa-pontos]");
+    if (!pontosEl) return;
+    linhasEl = pontosEl.querySelector(".casa__linhas");
+    C3.pontosNaTela().forEach(function (q, i) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "casa__ponto";
+      btn.innerHTML = '<span class="casa__ponto-n">' + (i + 1) + "</span><span>" + q.titulo + "</span>";
+      btn.addEventListener("click", function (ev) { ev.stopPropagation(); C3.irPonto(q.id); });
+      var dot = document.createElement("span");
+      dot.className = "casa__ponto-dot";
+      dot.setAttribute("aria-hidden", "true");
+      dot.addEventListener("click", function () { C3.irPonto(q.id); });
+      var linha = document.createElementNS(SVGNS, "path");
+      linhasEl.appendChild(linha);
+      pontosEl.appendChild(dot);
+      pontosEl.appendChild(btn);
+      etiquetas[q.id] = { btn: btn, dot: dot, linha: linha };
+    });
+    var card = camada.querySelector("[data-casa-vantagem]");
+    C3.aoPonto(function (e) {
+      voandoPonto = !e.ativo && !!e.voando;
+      camada.classList.toggle("casa--foco", !!e.ativo);
+      if (card) {
+        card.hidden = !e.ativo;
+        if (e.ativo) {
+          card.querySelector("[data-vantagem-titulo]").textContent = e.titulo;
+          card.querySelector("[data-vantagem-texto]").textContent = e.texto;
+          card.classList.remove("entra");
+          void card.offsetWidth;
+          card.classList.add("entra");
+        }
+      }
+      atualizarPontos();
+    });
+  }
+
+  function esconder(e) {
+    e.btn.style.opacity = 0;
+    e.btn.style.pointerEvents = "none";
+    e.dot.style.opacity = 0;
+    e.linha.setAttribute("d", "");
+  }
+
+  /** etiquetas em colunas nas margens (celular: dos 2 lados; PC: à direita), sem sobrepor, e a linha até o ponto */
+  function atualizarPontos() {
+    if (!pontosEl || !C3) return;
+    var mostrar = camada.classList.contains("casa--maquete") && !C3.emFoco() && !voandoPonto && !camada.classList.contains("casa--tour");
+    pontosEl.classList.toggle("on", mostrar);
+    if (!mostrar) return;
+    var r = camada.getBoundingClientRect();
+    var W = r.width;
+    var H = r.height;
+    var larga = W > H * 1.15;
+    var tipos = camada.querySelector(".casa__tipos").getBoundingClientRect();
+    var txt = camada.querySelector(".casa__txt").getBoundingClientRect();
+    var topo = larga ? H * 0.16 : tipos.bottom - r.top + 34;
+    var base = larga ? H * 0.8 : txt.top - r.top - 24;
+    var cols = { e: [], d: [] };
+    C3.pontosNaTela().forEach(function (q) {
+      var e = etiquetas[q.id];
+      if (!e) return;
+      if (!q.visivel) { esconder(e); return; }
+      q.px = q.x - r.left;
+      q.py = q.y - r.top;
+      (larga || q.px > W / 2 ? cols.d : cols.e).push(q);
+    });
+    ["e", "d"].forEach(function (lado) {
+      var c = cols[lado].sort(function (a, b) { return a.py - b.py; });
+      if (!c.length) return;
+      var ys = c.map(function (q) { return Math.min(base, Math.max(topo, q.py)); });
+      for (var i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + 42);
+      var sobra = ys[ys.length - 1] - base;
+      if (sobra > 0) ys = ys.map(function (y) { return Math.max(topo, y - sobra); });
+      c.forEach(function (q, k) {
+        var e = etiquetas[q.id];
+        var bw = e.btn.offsetWidth;
+        var bh = e.btn.offsetHeight;
+        var x = lado === "e" ? 10 : W - 10 - bw;
+        var y = ys[k];
+        e.btn.style.transform = "translate(" + x.toFixed(1) + "px," + (y - bh / 2).toFixed(1) + "px)";
+        e.btn.style.opacity = 1;
+        e.btn.style.pointerEvents = "auto";
+        e.dot.style.transform = "translate(" + q.px.toFixed(1) + "px," + q.py.toFixed(1) + "px)";
+        e.dot.style.opacity = 1;
+        var ax = lado === "e" ? x + bw : x;
+        var cx = lado === "e" ? ax + 14 : ax - 14;
+        e.linha.setAttribute("d", "M" + ax.toFixed(1) + " " + y.toFixed(1) + " H" + cx.toFixed(1) + " L" + q.px.toFixed(1) + " " + q.py.toFixed(1));
+      });
+    });
+  }
+
   function aoDesenhar(info) {
+    atualizarPontos();
     if (contador && info.assentados !== ultimoCont) {
       ultimoCont = info.assentados;
       contador.textContent = info.assentados;
@@ -127,7 +229,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025z")
+    import("./casa3d.js?v=20261026c")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -138,7 +240,7 @@
         var botaoAndar = camada.querySelector("[data-casa-andar]");
         var estavaDentro = false;
         C3.aoInterior(function (e) {
-          var dentro = (e.removidas > 0 || e.dentro) && !C3.emTour(); // no tour a casa abre, mas quem pilota é o tour
+          var dentro = !!e.dentro && !C3.emTour(); // parede tirada por um ponto estratégico não é "entrar na casa"
           camada.classList.toggle("casa--dentro", dentro);
           if (passeioEl) passeioEl.hidden = !dentro;
           atualizarAndar();
@@ -163,6 +265,7 @@
         }
         ligarToque();
         ligarTour();
+        ligarPontos();
         if (botaoAndar) botaoAndar.addEventListener("click", function () { C3.trocarAndar(); atualizarAndar(); if (corte) corte.hidden = true; });
         var rec = camada.querySelector("[data-casa-recolocar]");
         if (rec) rec.addEventListener("click", function () { C3.recolocar(); });

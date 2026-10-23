@@ -25,14 +25,14 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261025z";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261026c";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
   // resolução FIXA (sem trocar entre rolar/parar — a troca realocava a imagem na GPU e travava)
-  alta: { hd: 2, leve: 2, min: 1, tex: 2048, sombra: true, mapa: 2048, aa: true, ambiente: true },
-  media: { hd: 2, leve: 2, min: 1, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
-  baixa: { hd: 1.5, leve: 1.5, min: 1, tex: 256, sombra: false, mapa: 1024, aa: true, ambiente: true },
+  alta: { hd: 2, leve: 2, min: 1, tex: 1024, sombra: true, mapa: 2048, aa: true, ambiente: true },
+  media: { hd: 1.5, leve: 1.5, min: 1, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
+  baixa: { hd: 1.25, leve: 1.25, min: 1, tex: 256, sombra: false, mapa: 1024, aa: true, ambiente: false },
 };
 
 const R90 = Math.PI / 2;
@@ -523,6 +523,9 @@ let passeio = null;        // por dentro: a câmera parada num ponto { pos, alvo
 let voo = null;            // voo de câmera em andamento (toque, troca de andar, tour): caminho suave por pontos
 let tour = null;           // tour automático pela casa { legendas, legenda, ini }
 let ouvinteTour = null;
+let foco = null;           // ponto estratégico em foco: { id, pos, alvo, fov } (câmera perto da casa)
+let pontos = [];           // pontos estratégicos da casa atual (vantagens do Blocão)
+let ouvintePonto = null;
 let extrasProntos = false; // móveis e paisagem: montados num momento ocioso (não pesa na abertura do site)
 const OLHO = 1.5;          // altura da câmera por dentro (m acima do piso)
 let giroVel = 0;           // inércia do giro por fora (rad/s)
@@ -797,6 +800,8 @@ function montar(id) {
   passeio = null;
   voo = null;
   tour = null;
+  foco = null;
+  montarPontos();
   prepararExtrasOcioso();
   J.gente.forEach(([x, z], i) => {
     const ent = [0.9 + i * 0.01, 0.94 + i * 0.01];
@@ -822,7 +827,9 @@ function posicionarCamera() {
   const altUtil = h - reserva - topo;
   const vUtil = 2 * Math.atan(Math.tan(vfov / 2) * (altUtil / h));
   const util = Math.min(vUtil, hfov * (largaTela ? 0.7 : 1));
-  const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p)) * (interior ? 1 : zoomUser);
+  // casa pronta: afasta um pouco pra sobrar margem pras etiquetas dos pontos (elas não ficam na frente do 3D)
+  const respiro = 1 + suave(faixa(p, 0.93, 1)) * (largaTela ? 0.16 : 0.34);
+  const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p)) * (interior ? 1 : zoomUser) * respiro;
   // giro do dedo/mouse: só depois do voo do Blocão (senão ele não bate com o lugar dele na obra)
   const livre = suave(faixa(p, 0.12, 0.2));
   const ang = MathUtils.lerp(-0.6, 0.45, suave(p)) + giroUser * livre;
@@ -862,6 +869,12 @@ function posicionarCamera() {
       fov = passeio.fov;
       rolagemCam = 0;
     }
+  }
+  // ponto em foco: a câmera fica perto da casa, olhando o ponto
+  if (foco && !voo) {
+    camera.position.copy(foco.pos);
+    alvo = _alvoCam.copy(foco.alvo);
+    fov = foco.fov;
   }
   // voo de câmera (toque por dentro, troca de andar, tour): manda em tudo enquanto dura
   if (voo) {
@@ -1158,6 +1171,110 @@ function pararTour() {
   }));
 }
 
+/* ---------- PONTOS ESTRATÉGICOS: cada um mostra uma vantagem de construir com o Blocão ---------- */
+const VANTAGENS = {
+  fresca: ["Casa mais fresca", "O miolo de EPS segura o calor do sol: a casa fica mais fresca no verão e menos fria no inverno."],
+  silencio: ["Mais silêncio", "O EPS abafa o barulho da rua: quartos e home office bem mais silenciosos."],
+  rapida: ["Obra rápida", "Bloco grande e leve: a parede sobe em poucos dias, com menos gente na obra."],
+  leve: ["Bem mais leve", "Menos peso sobre a laje e a fundação: a estrutura fica mais econômica."],
+  acabamento: ["Acabamento fácil", "Parede reta e lisa: menos massa, menos sujeira e menos desperdício."],
+  mofo: ["Sem mofo", "O EPS não absorve água: parede sem mofo e sem infiltração."],
+};
+
+/** pontos nas faces que aparecem de frente pra câmera (frente e lado direito), calculados pela planta de cada casa */
+function montarPontos() {
+  const P = projeto;
+  const { A } = P;
+  const R = P.B || A;
+  const Y2 = CHAO + PE + LAJE;
+  const topo = P.B ? Y2 + PE : CHAO + PE;
+  const jan = (P.vaosA.frente || []).find((v) => !v.porta) || { a: A.x0 + 1, b: A.x0 + 2, f0: 2, f1: 5 };
+  const V = (x, y, z) => new Vector3(x, y, z);
+  const n = (x, y, z) => V(x, y, z).normalize();
+  pontos = [
+    { id: "fresca", p: V(A.x1 - 0.05, CHAO + 1.4, A.z1 - 0.05), n: n(1, 0, 1), dist: 5.2, parede: 0 },
+    { id: "silencio", p: V((jan.a + jan.b) / 2, CHAO + ((jan.f0 + jan.f1) / 2) * BA, A.z1 + 0.02), n: n(0, 0, 1), dist: 6 },
+    { id: "rapida", p: V(A.x1 + 0.02, CHAO + 0.9, (A.z0 + A.z1) / 2 - 0.8), n: n(1, 0, 0), dist: 6 },
+    { id: "leve", p: V(A.x1 + 0.15, CHAO + PE + LAJE / 2, A.z0 + 1.2), n: n(1, 0, 0), dist: 6.5 },
+    { id: "acabamento", p: V(R.x1 + 0.02, topo - 1.1, (R.z0 + R.z1) / 2 + 0.9), n: n(1, 0, 0), dist: 6 },
+    { id: "mofo", p: V(A.x0 + 1.0, CHAO + 0.25, A.z1 + 0.02), n: n(0, 0, 1), dist: 5 },
+  ].map((q) => ({ ...q, titulo: VANTAGENS[q.id][0], texto: VANTAGENS[q.id][1] }));
+}
+
+function avisarPonto() {
+  if (!ouvintePonto) return;
+  const q = foco && pontos.find((x) => x.id === foco.id);
+  ouvintePonto(q ? { ativo: true, id: q.id, titulo: q.titulo, texto: q.texto } : { ativo: false, voando: !!voo });
+}
+
+/** clicou num ponto: a câmera voa até perto dele (sem entrar na casa) e mostra a vantagem */
+function irPonto(id) {
+  const q = pontos.find((x) => x.id === id);
+  if (!q || !renderer || p < PRONTA || tour || interior) return false;
+  if (foco && foco.id === id) return true;
+  for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
+  const de = capturarPose();
+  // zoom moderado: a câmera vem NA MESMA DIREÇÃO em que a pessoa já olha (puxada um pouco pra frente do ponto),
+  // até ~45 % da distância — fica perto da casa, de cima, sem entrar em varanda nem em janela
+  const dir = _a.copy(de.pos).sub(q.p).normalize().multiplyScalar(0.7).addScaledVector(q.n, 0.3).normalize();
+  const D = Math.max(7, de.pos.distanceTo(q.p) * 0.45);
+  const pos = q.p.clone().addScaledVector(dir, D);
+  pos.y = Math.max(pos.y, q.p.y + 2.2);
+  const alvo = q.p.clone();
+  const meio = de.pos.clone().lerp(pos, 0.5);
+  meio.y = Math.max(de.pos.y, pos.y) + 0.6;
+  const meioA = de.alvo.clone().lerp(alvo, 0.6);
+  foco = null;
+  pRemocao = pAlvo;
+  iniciarVoo(criarVoo([de.pos, meio, pos], [de.alvo, meioA, alvo], [0, 9, 9], {
+    fov: [de.fov, 28], off: [de.off, de.off],
+    aoFim: () => {
+      foco = { id, pos, alvo, fov: 28 };
+      if (q.parede !== undefined) { // casa fresca: a parede desliza e mostra o Blocão por dentro (concreto + EPS + concreto)
+        fora.set(q.parede, { de: 0, para: 1, t0: agora() });
+        atualizarRevelados();
+        requestAnimationFrame(animar);
+      }
+      avisarPonto();
+    },
+  }));
+  requestAnimationFrame(animar);
+  avisarPonto();
+  return true;
+}
+
+/** volta pra vista da maquete inteira */
+function voltarPonto() {
+  if (!foco || voo) return;
+  const de = capturarPose();
+  foco = null;
+  posicionarCamera();
+  const para = capturarPose();
+  for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
+  const meio = de.pos.clone().lerp(para.pos, 0.5);
+  meio.y = Math.max(de.pos.y, para.pos.y) + 0.6;
+  iniciarVoo(criarVoo([de.pos, meio, para.pos], [de.alvo, de.alvo.clone().lerp(para.alvo, 0.5), para.alvo], [0, 10, 10], {
+    fov: [de.fov, para.fov], off: [de.off, para.off], aoFim: () => avisarPonto(),
+  }));
+  requestAnimationFrame(animar);
+  avisarPonto();
+}
+
+const _tela = new Vector3();
+const _olho = new Vector3();
+/** onde cada ponto está na tela (px da janela) e se está virado pra câmera */
+function pontosNaTela() {
+  if (!renderer || !pontos.length) return [];
+  const r = renderer.domElement.getBoundingClientRect();
+  camera.updateMatrixWorld();
+  return pontos.map((q) => {
+    _olho.copy(camera.position).sub(q.p).normalize();
+    _tela.copy(q.p).project(camera);
+    const frente = q.n.dot(_olho) > 0.2 && _tela.z < 1;
+    return { id: q.id, titulo: q.titulo, x: r.left + ((_tela.x + 1) / 2) * r.width, y: r.top + ((1 - _tela.y) / 2) * r.height, visivel: frente };
+  });
+}
+
 /** giro de fora com inércia (o dedo solta e a maquete ainda gira um pouco, desacelerando) */
 let tGiro = 0;
 function quadroGiro(t) {
@@ -1178,9 +1295,12 @@ function garantirExtras() {
   extrasProntos = true;
   const P = projeto;
   const Y2 = CHAO + PE + LAJE;
-  mobilia = fundirPorMaterial(mobiliar(P, [CHAO + 0.022, Y2 + 0.022], BE, [CHAO + PE, P.B ? Y2 + PE : CHAO + PE]));
-  mobilia.visible = false;
-  obra.add(mobilia);
+  // móveis só no vídeo (o tour entra na casa); no site a casa é vista de fora, pelos pontos estratégicos
+  if (window.__gravandoVideo) {
+    mobilia = fundirPorMaterial(mobiliar(P, [CHAO + 0.022, Y2 + 0.022], BE, [CHAO + PE, P.B ? Y2 + PE : CHAO + PE]));
+    mobilia.visible = false;
+    obra.add(mobilia);
+  }
   paisagem = cenario(P.base, P.A.z1 + P.varanda, P.centro[0] * 0.4);
   paisagem.visible = false;
   obra.add(paisagem);
@@ -1529,6 +1649,7 @@ window.ImperioCasa3D = {
     // rolar DE VERDADE (não um tremidinho do dedo ou da barra do navegador) recoloca as paredes e tira a câmera
     if (Math.abs(novo - pRemocao) > 0.03) {
       if (tour) pararTour();
+      else if (foco) voltarPonto();
       else if (fora.size || interior) recolocarParedes();
     }
     // sem mola: no vídeo (quadro a quadro), em saltos grandes (menu "A casa") e durante o voo do Blocão do site
@@ -1566,21 +1687,9 @@ window.ImperioCasa3D = {
       voarAte(_b.copy(passeio.pos).addScaledVector(d, 3));
       return true;
     }
-    camera.updateMatrixWorld();
-    _raycast.setFromCamera(_ndcV, camera);
-    const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
-    blocosMesh.computeBoundingSphere(); // as instâncias mudaram de lugar desde a última vez
-    // a 1ª parede EXTERNA no caminho do toque (as internas aparecem quando a câmera entra)
-    const hit = _raycast.intersectObjects(alvos, false).find((h) => {
-      const idH = h.object === blocosMesh ? lista[h.instanceId].parede : h.object.userData.parede;
-      const m = muroDe(idH);
-      return m && !m.interna;
-    });
-    if (!hit) return false;
-    const id = hit.object === blocosMesh ? lista[hit.instanceId].parede : hit.object.userData.parede;
-    if (id === undefined || estadoParede(id) > 0.5) return false;
-    removerParede(id);
-    return true;
+    // por fora: com um ponto em foco, tocar na casa volta pra vista inteira (não entra mais na casa)
+    if (foco) { voltarPonto(); return true; }
+    return false;
   },
   recolocar() { recolocarParedes(); },
   /** testes: paredes internas da casa atual e o giro do dedo */
@@ -1655,6 +1764,12 @@ girar(dx, dy = 0, dtMs = 16) {
   },
   /** fn({ ativo, legenda }) durante o tour */
   aoTour(fn) { ouvinteTour = fn; },
+  /** pontos estratégicos: posição na tela, ir até um, voltar, ouvir */
+  pontosNaTela: () => pontosNaTela(),
+  irPonto: (id) => irPonto(id),
+  voltarPonto: () => voltarPonto(),
+  emFoco: () => (foco ? foco.id : null),
+  aoPonto(fn) { ouvintePonto = fn; },
   /** estado do passeio (pra os botões e testes): null fora; { andar, andares, voando } dentro */
   passeioInfo() { return passeio ? { andar: passeio.andar, andares: projeto.B ? 2 : 1, voando: !!voo } : null; },
   /**

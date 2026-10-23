@@ -72,19 +72,22 @@ botão de andar, sobe/desce voando. O site continua aparecendo (título, botão,
 rolar de verdade sai da casa. "↺ Sair da casa" (ou Esc) volta. Motor: `criarVoo`/`posVoo` (Catmull-Rom com
 aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
 
-**Sem botões na casa** (pedido do cliente): a casa é só CLICÁVEL e ARRASTÁVEL. Por fora: arrastar gira a maquete,
-tocar numa parede desmonta e a câmera entra voando. Por dentro: tocar no chão voa até lá, tocar numa parede desmonta
-(mostra o Blocão por dentro), arrastar pro lado gira a vista em volta do ponto mostrado (a câmera encosta antes de
-qualquer parede); rolar a página de verdade remonta a casa e a câmera sai.
+**Pontos estratégicos** (casa pronta, sem entrar na casa): 6 pontos na frente e na lateral da maquete — Casa mais
+fresca, Mais silêncio, Obra rápida, Bem mais leve, Acabamento fácil, Sem mofo. Cada um tem uma etiqueta (HTML) nas
+margens, fora do 3D, e uma linha tracejada (svg) até uma bolinha pulsando no ponto da casa. Clicou (etiqueta ou
+bolinha): a câmera dá um zoom moderado até perto daquele ponto (na mesma direção em que a pessoa já olha, sem entrar
+em varanda nem janela) e o cartão no lugar do texto conta a vantagem; em "Casa mais fresca" a parede da frente
+desliza e mostra o Blocão por dentro. Tocar na casa ou rolar a página volta pra vista inteira. Arrastar gira a maquete.
+Pontos em `montarPontos()` (calculados pela planta de cada casa); textos em `VANTAGENS` (`casa3d.js`).
 
-**Tour pela casa** (sem botão no site; usado no VÍDEO — `ImperioCasa3D.tour()`): sobrevoo automático com legendas de cinema — chega
+**Tour pela casa** (só no VÍDEO — `ImperioCasa3D.tour()`; no site a casa é vista de fora, pelos pontos): sobrevoo automático com legendas de cinema — chega
 de longe, a parede da frente sai (o corte mostra o Blocão), voos rasantes pela sala, cozinha e quartos, close no
 "Dentro do Blocão", sobe a escada (sobrado e casarão), corredor, varanda com a paisagem, garagem, e volta pra vista
 de fora. O cliente só assiste ("■ Parar o tour" ou rolar a página para). Roteiro em `PROJETOS.*.tour`
 ([x, y, z, olharX, olharY, olharZ, m/s, legenda]).
 
-**Paisagem no fundo** (casa pronta, 90–98% da obra): céu, gramado até o horizonte, morros, árvores, casas vizinhas e
-rua surgem atrás da maquete (o fundo da seção vira o lugar da casa); por dentro é o que se vê pelas janelas.
+**Paisagem no fundo** (casa pronta, 90–98% da obra): céu (degradê em CSS, `--paisagem`), gramado até o horizonte,
+morros, 40 árvores, casas vizinhas e rua surgem atrás da maquete (o fundo da seção vira o lugar da casa); por dentro é o que se vê pelas janelas.
 Desempenho: o Blocão abre com texturas leves (256) e troca pelas nítidas em momentos ociosos; o EPS é um ladrilho
 repetido 4× (16× menos pérolas pra desenhar — era o que travava ~2 s a abertura); a casa só é preparada com a página
 parada (5 s depois de abrir ou no meio do "L"), em etapas curtas. Móveis e paisagem são montados num momento ocioso e FUNDIDOS por material (`fundirPorMaterial`: centenas

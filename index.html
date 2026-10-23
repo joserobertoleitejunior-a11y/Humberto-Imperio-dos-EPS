@@ -21,10 +21,10 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261025z"></script>
+  <script src="assets/js/dispositivo.js?v=20261026c"></script>
   <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
   <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash");if(!sessionStorage.getItem("imperio_bv")&&!/[?&]video/.test(location.search))document.documentElement.classList.add("abre-video")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261025z">
+  <link rel="stylesheet" href="assets/css/site.css?v=20261026c">
 
   <script type="application/ld+json">
   {
@@ -263,7 +263,12 @@
               <li data-etapa="4"><b>05</b> Platibanda, vidro e madeira</li>
               <li data-etapa="5"><b>06</b> Pintura e jardim: casa pronta</li>
             </ol>
-            <p class="casa__dica">Arraste a maquete pra girar · toque numa parede pra desmontar e entrar voando.</p>
+            <p class="casa__dica">Toque nos pontos da casa pra ver as vantagens do Blocão · arraste pra girar.</p>
+            <div class="casa__vantagem" data-casa-vantagem hidden aria-live="polite">
+              <p class="casa__vantagem-titulo" data-vantagem-titulo></p>
+              <p class="casa__vantagem-texto" data-vantagem-texto></p>
+              <p class="casa__vantagem-dica">Toque na casa pra ver ela inteira de novo.</p>
+            </div>
             <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
           </div>
           <div class="casa__tipos" role="group" aria-label="Escolha o tipo de casa">
@@ -271,6 +276,7 @@
             <button type="button" data-casa-tipo="media" aria-pressed="true">Casa média</button>
             <button type="button" data-casa-tipo="casarao" aria-pressed="false">Casarão</button>
           </div>
+          <div class="casa__pontos" data-casa-pontos aria-label="Vantagens de construir com o Blocão"><svg class="casa__linhas" aria-hidden="true"></svg></div>
           <div class="casa__passeio" data-casa-passeio hidden>
             <p class="casa__passeio-dica">Toque num ponto pra voar até lá · toque numa parede pra desmontar · arraste pra girar</p>
           </div>
@@ -545,7 +551,7 @@
 
   <!-- ===== BOAS-VINDAS: vídeo "Por que comprar o Blocão" + 2 caminhos (1x por sessão, depois da splash) -->
   <div class="bv" id="boas-vindas" hidden role="dialog" aria-modal="true" aria-label="Como você quer começar?">
-    <video class="bv__video" src="video/blocao.mp4?v=20261025z" poster="video/blocao-capa.jpg?v=20261025z" muted playsinline loop preload="none"></video>
+    <video class="bv__video" src="video/blocao.mp4?v=20261026c" poster="video/blocao-capa.jpg?v=20261026c" muted playsinline loop preload="none"></video>
     <div class="bv__veu"></div>
     <button class="bv__som" type="button" data-bv-som aria-label="Ligar o som do vídeo">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="bv__onda" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
@@ -595,20 +601,20 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261025z"></script>
-  <script src="assets/js/observabilidade.js?v=20261025z"></script>
-  <script src="assets/js/boas-vindas.js?v=20261025z"></script>
-  <script src="assets/js/supabase-init.js?v=20261025z"></script>
-  <script src="assets/js/analytics.js?v=20261025z"></script>
-  <script src="assets/js/main.js?v=20261025z"></script>
-  <script src="assets/js/especificacoes.js?v=20261025z"></script>
-  <script src="assets/js/motion.js?v=20261025z"></script>
-  <script src="assets/js/cliente.js?v=20261025z"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261025z"></script>
-  <script src="assets/js/calculadora.js?v=20261025z"></script>
-  <script src="assets/js/conteudo.js?v=20261025z"></script>
-  <script src="assets/js/cena.js?v=20261025z"></script>
-  <script src="assets/js/casa.js?v=20261025z"></script>
-  <script src="assets/js/toque.js?v=20261025z"></script>
+  <script src="assets/js/config.js?v=20261026c"></script>
+  <script src="assets/js/observabilidade.js?v=20261026c"></script>
+  <script src="assets/js/boas-vindas.js?v=20261026c"></script>
+  <script src="assets/js/supabase-init.js?v=20261026c"></script>
+  <script src="assets/js/analytics.js?v=20261026c"></script>
+  <script src="assets/js/main.js?v=20261026c"></script>
+  <script src="assets/js/especificacoes.js?v=20261026c"></script>
+  <script src="assets/js/motion.js?v=20261026c"></script>
+  <script src="assets/js/cliente.js?v=20261026c"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261026c"></script>
+  <script src="assets/js/calculadora.js?v=20261026c"></script>
+  <script src="assets/js/conteudo.js?v=20261026c"></script>
+  <script src="assets/js/cena.js?v=20261026c"></script>
+  <script src="assets/js/casa.js?v=20261026c"></script>
+  <script src="assets/js/toque.js?v=20261026c"></script>
 </body>
 </html>

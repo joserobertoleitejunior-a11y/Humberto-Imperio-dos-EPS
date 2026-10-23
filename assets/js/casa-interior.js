@@ -8,7 +8,7 @@
  * Convenção dos móveis: origem no chão, no meio da peça; a FRENTE olha pra +z local; rot = giro em y (rad).
  */
 import {
-  BoxGeometry, CanvasTexture, Color, Group, IcosahedronGeometry, InstancedMesh, Mesh, MeshBasicMaterial, MeshStandardMaterial,
+  BoxGeometry, CanvasTexture, Color, Group, IcosahedronGeometry, InstancedMesh, Mesh, MeshStandardMaterial,
   Object3D, PlaneGeometry, SRGBColorSpace,
 } from "../vendor/three-imperio.min.js";
 
@@ -472,13 +472,7 @@ export function fundirPorMaterial(g) {
 export function cenario(base, frente, cxCasa) {
   materiais();
   const g = new Group();
-  // céu: esfera grande por dentro (degradê), atrás de tudo
-  const matCeu = new MeshBasicMaterial({ map: texCeu(), side: 1, depthWrite: false, transparent: true, opacity: 0 });
-  const ceu = new Mesh(new IcosahedronGeometry(380, 3), matCeu);
-  ceu.position.set(cxCasa, 0, base.cz);
-  ceu.renderOrder = -10;
-  ceu.userData.manter = true;
-  g.add(ceu);
+  // céu: degradê em CSS atrás do canvas (.casa__ceu) — uma esfera 3D do tamanho da tela pesava no celular
   // gramado até o horizonte (um pouco abaixo da grama da maquete)
   const matChao = M.gramado.clone();
   matChao.transparent = true;
@@ -511,7 +505,7 @@ export function cenario(base, frente, cxCasa) {
   // árvores espalhadas (instanciadas: 2 desenhos só), fora da base e longe da rua
   const sorte = ((s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; })(7);
   const pos = [];
-  while (pos.length < 70) {
+  while (pos.length < 40) {
     const a = sorte() * Math.PI * 2;
     const r = Math.max(base.x, base.z) * 0.55 + 3 + sorte() * 45;
     const x = cxCasa + Math.cos(a) * r;
@@ -553,7 +547,6 @@ export function cenario(base, frente, cxCasa) {
   g.traverse((m) => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = false; } });
   /** k = 0..1: céu e gramado aparecem, o resto brota do chão */
   g.userData.surgir = (k) => {
-    matCeu.opacity = k;
     matChao.opacity = k;
     fundido.scale.y = Math.max(0.001, k);
     fundido.visible = k > 0.01;

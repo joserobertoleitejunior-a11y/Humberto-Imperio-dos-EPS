@@ -326,8 +326,37 @@ main { position: relative; z-index: 2; }
 .controles, .jornada__janela { opacity: var(--sai, 1); }
 .fase-casa .controles, .fase-casa .jornada__janela, .fase-casa .jornada__h { pointer-events: none; }
 .fase-casa .jornada__toque, .fase-casa .jornada__rotulos { display: none; }
-.casa__ceu { position: absolute; inset: 0; background: linear-gradient(180deg, #dfe6ea 0%, #eef0ec 46%, var(--cal) 78%); }
+.casa__ceu { position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, #dfe6ea 0%, #eef0ec 46%, var(--cal) 78%); }
 .casa__ceu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #f6d9b4 0%, #f7e6cf 45%, var(--cal) 80%); opacity: var(--ouro); }
+/* casa pronta: céu azul da paisagem atrás do 3D (degradê em CSS — leve) */
+.casa__ceu::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, #5f9fd6 0%, #a9cfe9 45%, #e6eff2 70%, #f3efe4 100%); opacity: var(--paisagem, 0); }
+/* pontos estratégicos: etiquetas nas margens (fora do 3D), linha em svg até o ponto da casa, bolinha pulsando */
+.casa__pontos { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity 0.35s; }
+.casa__pontos.on { opacity: 1; }
+.casa__linhas { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.casa__linhas path { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 4 3; filter: drop-shadow(0 0 1px rgba(20, 22, 26, 0.6)); }
+.casa__ponto { position: absolute; left: 0; top: 0; display: inline-flex; align-items: center; gap: 6px; max-width: 132px; padding: 6px 10px 6px 6px; border: 0; border-radius: 999px;
+  background: rgba(251, 250, 247, 0.96); color: var(--grafite); font: inherit; font-size: 0.78rem; font-weight: 750; line-height: 1.15; text-align: left; cursor: pointer;
+  box-shadow: 0 6px 18px -10px rgba(20, 22, 26, 0.6); opacity: 0; will-change: transform; }
+.casa__ponto:hover { color: var(--azul); }
+.casa__ponto-n { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--azul); color: #fff; font-size: 0.72rem; }
+@media (max-width: 759px) {
+  .casa__ponto { max-width: 112px; padding: 4px 8px 4px 4px; font-size: 0.7rem; gap: 5px; }
+  .casa__ponto-n { width: 18px; height: 18px; font-size: 0.66rem; }
+}
+.casa__ponto-dot { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--azul); border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(31, 75, 216, 0.35);
+  opacity: 0; pointer-events: auto; cursor: pointer; will-change: transform; }
+.casa__ponto-dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.9); animation: ponto-pulsa 1.8s ease-out infinite; }
+@keyframes ponto-pulsa { from { transform: scale(0.6); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.casa__pontos:not(.on) .casa__ponto, .casa__pontos:not(.on) .casa__ponto-dot { pointer-events: none !important; }
+/* cartão da vantagem (no lugar do texto, nunca na frente da casa) */
+.casa__vantagem { margin: 0 0 10px; padding: 14px 16px; border-radius: 14px; background: rgba(251, 250, 247, 0.97); border: 1px solid var(--linha); box-shadow: 0 10px 26px -16px rgba(20, 22, 26, 0.5); }
+.casa__vantagem[hidden] { display: none; }
+.casa__vantagem.entra { animation: legenda-entra 0.45s var(--ease); }
+.casa__vantagem-titulo { margin: 0 0 4px; font-weight: 900; font-size: 1.15rem; color: var(--azul); }
+.casa__vantagem-texto { margin: 0 0 6px; font-size: 0.98rem; line-height: 1.45; color: var(--texto); }
+.casa__vantagem-dica { margin: 0; font-size: 0.8rem; color: var(--texto-suave); }
+.casa--foco .casa__txt .sobretitulo, .casa--foco .casa__txt h2, .casa--foco .casa__etapas, .casa--foco .casa__dica { display: none; }
 .casa__palco { position: absolute; inset: 0; }
 .casa__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .casa__estatica { display: none; }
