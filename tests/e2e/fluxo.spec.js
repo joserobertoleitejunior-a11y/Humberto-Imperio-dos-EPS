@@ -11,7 +11,7 @@ async function abrir(page, url = "/") {
 }
 
 test("1ª visita: abre DIRETO na tela do vídeo (sem splash antes), com os 2 botões na hora; sem vídeo fica a capa", async ({ page }) => {
-  await page.route("**/video/blocao.mp4", (rota) => rota.abort());
+  await page.route("**/video/blocao.mp4*", (rota) => rota.abort());
   await page.goto("/");
   await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 2000 });
   await expect(page.locator("#splash")).toBeHidden();
