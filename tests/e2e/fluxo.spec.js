@@ -250,6 +250,8 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.blocos().assentados), { timeout: 15000 }).toBeGreaterThan(0);
   await rolar(1);
   await expect.poll(() => page.evaluate(() => { const b = window.ImperioCasa3D.blocos(); return b.assentados === b.total; }), { timeout: 15000 }).toBe(true);
+  const caixaP = await page.locator("[data-casa-palco]").boundingBox();
+  const caixaPalco = () => ({ x: caixaP.x + caixaP.width * 0.6, y: caixaP.y + caixaP.height * 0.55 });
   await expect(page.locator(".casa__cta")).toBeVisible();
   await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");
   // os 3 tipos: casa simples (térrea, 5 etapas), casa média e casarão — cada um com o seu total de blocos
@@ -265,6 +267,17 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.click('[data-casa-tipo="simples"]');
   await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(5);
   await expect(page.locator("[data-casa-ficha]")).toContainText("49 m²");
+  // paredes internas (também de Blocão) em todas as casas
+  expect(await page.evaluate(() => window.ImperioCasa3D.internas())).toBeGreaterThan(0);
+  // arrastar pro lado gira a casa (e não tira parede)
+  const antesGiro = await page.evaluate(() => window.ImperioCasa3D.giro());
+  const cx = caixaPalco();
+  await page.mouse.move(cx.x, cx.y);
+  await page.mouse.down();
+  await page.mouse.move(cx.x - 160, cx.y, { steps: 8 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.ImperioCasa3D.giro())).not.toBe(antesGiro);
+  await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
   // paredes móveis: tocar numa parede tira ela e a câmera entra (etiqueta do corte + botão de recolocar)
   const caixa = await page.locator("[data-casa-palco]").boundingBox();
   for (const [fx, fy] of [[0.5, 0.5], [0.6, 0.6], [0.4, 0.55], [0.66, 0.62], [0.5, 0.65], [0.35, 0.5]]) {
@@ -273,6 +286,10 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   }
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
   await expect(page.locator("[data-casa-recolocar]")).toBeVisible();
+  // um tremidinho da rolagem (dedo/barra do navegador) não fecha a casa
+  await page.evaluate(() => scrollBy(0, 4));
+  await page.waitForTimeout(500);
+  await expect(page.locator("[data-casa]")).toHaveClass(/casa--dentro/);
   await page.click("[data-casa-recolocar]");
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/, { timeout: 5000 });
   // voltar pro "L": as fichas reaparecem

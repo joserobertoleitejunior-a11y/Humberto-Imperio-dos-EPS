@@ -51,15 +51,23 @@ o "L" (mesmos 540vh de rolagem de antes, `data-jornada-l="540"`) e, em seguida, 
 as fichas e botões saem, a camada da casa esmaece por cima e o bloco da casa começa **exatamente onde o Blocão estava**
 (mesmo ponto, tamanho e ângulo — `ImperioCena.alvoFinal()`); ele vai pro canto da obra e vira o 1º bloco. Depois:
 **3 maquetes em tamanho real** (botões "Casa simples / Casa média / Casarão"; a rolagem monta a escolhida):
-- Casa simples: térrea 6,5 × 7,5 m, ≈ 49 m², varandinha — 173 Blocões, 5 etapas (sem 2º andar)
-- Casa média: sobrado 9 × 7 m, ≈ 125 m², varanda embaixo e em cima — 350 Blocões
-- Casarão: 15 × 10 m, ≈ 285 m², panos de vidro, varanda larga, porta pivotante, painel de pedra e piscina — 412 Blocões
+- Casa simples: térrea 6,5 × 7,5 m, ≈ 49 m², varandinha — 239 Blocões, 5 etapas (sem 2º andar)
+- Casa média: sobrado 9 × 7 m, ≈ 125 m², varanda embaixo e em cima — 554 Blocões
+- Casarão: 15 × 10 m, ≈ 285 m², panos de vidro, varanda larga, porta pivotante, painel de pedra e piscina — 670 Blocões
 Fiada por fiada → laje/varanda → 2º andar → platibanda → vidros, ripado, porta, guarda-corpo → pintura, jardim e bonequinhos.
 HD: enquanto rola desenha leve; parado ~0,16 s refaz em alta resolução (PC/celular bom até 2–2,5×, com superamostragem).
 "estatica": imagem pronta de cada tipo (`assets/img/casa-simples|media|casarao.webp`), trocada pelos mesmos botões.
-**Paredes móveis**: com a casa pronta, tocar numa parede tira ela (desliza pra fora e some) e a câmera entra pela
-abertura até o canto cortado — as pontas dos Blocões vizinhos mostram o miolo (concreto + EPS + concreto) com a etiqueta
-"Dentro do Blocão". No celular em pé a câmera recua e olha mais pro canto. "↺ Recolocar as paredes" ou rolar a página põe tudo de volta.
+**Paredes internas** (também de Blocão, com vão de porta): `internasA`/`internasB` de cada projeto em `casa3d.js`
+— simples: sala/cozinha + 2 quartos; média: cozinha/lavanderia + lavabo, em cima 3 quartos e corredor; casarão:
+escritório, sala integrada e cozinha, em cima suítes nos cantos e sala íntima. Não saem com o toque (só as externas).
+
+**Girar com o dedo** (sempre, depois do voo do Blocão): arrastar pro lado gira a casa; na vertical a página rola
+normal. No mouse, arrastar também inclina. Dentro da casa, arrastar desliza a câmera ao longo da abertura (cômodo a cômodo).
+
+**Paredes móveis**: com a casa de pé (a partir de 88% da obra), tocar numa parede externa tira ela (desliza pra fora e
+some) e a câmera entra pela abertura de frente pra uma parede interna cortada — a ponta dela mostra o miolo do Blocão
+(concreto + EPS + concreto) com a etiqueta "Dentro do Blocão". "↺ Recolocar as paredes" ou rolar de verdade (mais de 3%
+da obra; um tremido do dedo não conta) põe tudo de volta.
 
 **Sem pulo ao parar a rolagem**: no celular a barra de endereço aparece/some quando a rolagem para e mudava a altura
 da tela. `dispositivo.js` guarda uma altura estável (`ImperioTela.altura()` e `--vh`, que só mudam ao girar o aparelho ou

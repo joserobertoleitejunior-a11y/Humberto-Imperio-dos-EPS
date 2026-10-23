@@ -335,6 +335,8 @@ main { position: relative; z-index: 2; }
 .casa__etapas li.ativa { opacity: 1; transform: none; }
 .casa__cta { opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 0.35s, transform 0.35s var(--ease); }
 .casa__palco { touch-action: pan-y; }
+.casa__palco { cursor: grab; }
+.casa--girando .casa__palco { cursor: grabbing; }
 .casa--pronta .casa__palco { cursor: pointer; }
 .casa__dica { margin: 0 0 10px; font-size: 0.9rem; font-weight: 650; color: var(--azul); opacity: 0; transition: opacity 0.35s; }
 .casa--pronta .casa__dica { opacity: 1; }

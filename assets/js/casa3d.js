@@ -175,6 +175,11 @@ const PROJETOS = {
       fundos: [{ a: -1, b: 0.2, f0: 3, f1: 5 }],
       esquerda: [{ a: -1.8, b: -0.6, f0: 2, f1: 5 }],
     },
+    // paredes internas (também de Blocão): sala/cozinha na frente, 2 quartos no fundo
+    internasA: [
+      ["x", -0.3, -3.1, 3.1, [{ a: -2.2, b: -1.4, f0: 0, f1: 4 }, { a: 1.3, b: 2.1, f0: 0, f1: 4 }]],
+      ["z", 0.5, -3.85, -0.375, []],
+    ],
     base: { x: 11, z: 13, cz: 0.8 },
     centro: [0, 1.5, 0.8],
     raio: 9.8,
@@ -197,6 +202,17 @@ const PROJETOS = {
       fundos: [{ a: -2, b: 1, f0: 2, f1: 5 }],
       esquerda: [{ a: -1.6, b: 0.4, f0: 2, f1: 5 }],
     },
+    // térreo: cozinha/lavanderia no fundo + parede que separa a sala do lavabo
+    internasA: [
+      ["x", -2.5, -4.35, 4.35, [{ a: -3.2, b: -2.4, f0: 0, f1: 4 }, { a: 2.4, b: 3.2, f0: 0, f1: 4 }]],
+      ["z", 1.6, -2.425, 1, []],
+    ],
+    // em cima: 3 quartos no fundo e o corredor na frente (saída pra varanda)
+    internasB: [
+      ["x", 1, -4.35, 4.35, [{ a: -3.2, b: -2.4, f0: 0, f1: 4 }, { a: 0, b: 0.8, f0: 0, f1: 4 }, { a: 3, b: 3.8, f0: 0, f1: 4 }]],
+      ["z", -1.5, -3.85, 0.925, []],
+      ["z", 2.3, -3.85, 0.925, []],
+    ],
     vaosB: {
       frente: [{ a: -3.6, b: 1.2, f0: 0, f1: 5 }, { a: 2.5, b: 3.7, f0: 2, f1: 5 }],
       direita: [{ a: -2.2, b: -0.4, f0: 2, f1: 5 }],
@@ -226,6 +242,18 @@ const PROJETOS = {
       fundos: [{ a: -4, b: 4, f0: 0, f1: 5 }],
       esquerda: [{ a: -2, b: 2, f0: 2, f1: 5 }],
     },
+    // térreo: escritório à esquerda, cozinha à direita, sala integrada no meio
+    internasA: [
+      ["z", -4.5, -4.85, 1.5, []],
+      ["x", 2.6, -7.35, -4.425, [{ a: -6.4, b: -5.6, f0: 0, f1: 4 }]],
+      ["z", 4.6, -4.85, 1, []],
+    ],
+    // em cima: suítes nos cantos, sala íntima no meio, corredor na frente
+    internasB: [
+      ["z", -4, -4.85, 1.525, []],
+      ["z", 4, -4.85, 1.525, []],
+      ["x", 1.6, -7.35, 4.075, [{ a: -6, b: -5.2, f0: 0, f1: 4 }, { a: -1, b: -0.2, f0: 0, f1: 4 }]],
+    ],
     vaosB: {
       frente: [{ a: -6.6, b: -0.8, f0: 0, f1: 5 }, { a: 0.8, b: 4, f0: 0, f1: 5 }],
       direita: [{ a: -2.6, b: 2.6, f0: 0, f1: 6 }],
@@ -264,18 +292,20 @@ function tempos(P) {
 }
 
 /** Gera os blocos (amarração: fiadas ímpares começam com meio bloco) e os vãos. */
-function levantar(defs, yBase, andar) {
+function levantar(defs, yBase, andar, internas = []) {
   const blocos = [];
   const vaos = [];
   const muros = [];
   let percorrido = 0;
-  const comps = defs.map(([, , i, f]) => Math.abs(f - i));
+  // externas primeiro (a volta da casa), depois as internas (ficam no meio: sem recuo pra dentro, sem janela)
+  const todas = defs.map((d) => [...d, false]).concat(internas.map((d) => [...d, true]));
+  const comps = todas.map(([, , i, f]) => Math.abs(f - i));
   const total = comps.reduce((s, c) => s + c, 0);
-  defs.forEach(([eixo, fixo, ini, fim, abert], w) => {
+  todas.forEach(([eixo, fixo, ini, fim, abert, interna], w) => {
     const sentido = Math.sign(fim - ini);
     const comp = comps[w];
-    const parede = andar * 4 + w;
-    muros.push({ id: parede, eixo, fixo, ini, fim, andar, y0: yBase, fora: Math.sign(fixo || 1) });
+    const parede = andar * 20 + w;
+    muros.push({ id: parede, eixo, fixo, ini, fim, andar, y0: yBase, fora: Math.sign(fixo || 1), interna });
     for (let f = 0; f < FIADAS; f++) {
       let s = 0;
       let primeiro = f % 2 ? BL / 2 : BL;
@@ -298,7 +328,7 @@ function levantar(defs, yBase, andar) {
           const meio = (a + b) / 2;
           blocos.push({
             x: eixo === "x" ? meio : fixo,
-            z: eixo === "x" ? fixo - Math.sign(fixo || 1) * (BE / 2) : meio,
+            z: eixo === "x" ? (interna ? fixo : fixo - Math.sign(fixo || 1) * (BE / 2)) : meio,
             y: yBase + f * BA + BA / 2,
             comp: b - a,
             girado: eixo === "z",
@@ -311,7 +341,7 @@ function levantar(defs, yBase, andar) {
         primeiro = BL;
       }
     }
-    abert.forEach((v) => vaos.push({ eixo, fixo, a: v.a, b: v.b, y0: yBase + v.f0 * BA, y1: yBase + v.f1 * BA, porta: !!v.porta, parede }));
+    if (!interna) abert.forEach((v) => vaos.push({ eixo, fixo, a: v.a, b: v.b, y0: yBase + v.f0 * BA, y1: yBase + v.f1 * BA, porta: !!v.porta, parede }));
     percorrido += comp;
   });
   return { blocos, vaos, muros };
@@ -351,6 +381,12 @@ let revelados = new Set(); // blocos vizinhos do corte: sem pintura (mostram o B
 let interior = null;       // { de: {pos, alvo, fov, off}, para: {...}, t0, volta }
 let ouvinteInterior = null;
 const DUR_PAREDE = 700;
+let giroUser = 0;          // giro da maquete pelo dedo/mouse (rad, em volta da casa)
+let elevUser = 0;          // inclinação pelo mouse (rad)
+let giroDentro = 0;        // dentro da casa: quanto a câmera deslizou ao longo da abertura (m)
+let pRemocao = -1;         // ponto da rolagem quando a parede saiu (rolar de verdade recoloca)
+const PRONTA = 0.88;       // a partir daqui dá pra tirar parede (a casa já está toda de pé)
+const limitarEntre = (x, a, b) => (x < a ? a : x > b ? b : x);
 const DUR_CAMERA = 1300;
 const _raycast = new Raycaster();
 const _ndcV = new Vector2();
@@ -445,9 +481,9 @@ function montar(id) {
   }
 
   // blocos: 1 malha instanciada (concreto nas faces, sanduíche no topo e na base) + pintura por cima
-  const t = levantar(paredes(A, P.vaosA), CHAO, 0);
+  const t = levantar(paredes(A, P.vaosA), CHAO, 0, P.internasA);
   const Y2 = CHAO + PE + LAJE;
-  const c = B ? levantar(paredes(B, P.vaosB), Y2, 1) : { blocos: [], vaos: [] };
+  const c = B ? levantar(paredes(B, P.vaosB), Y2, 1, P.internasB) : { blocos: [], vaos: [], muros: [] };
   lista = t.blocos.concat(c.blocos);
   muros = t.muros.concat(c.muros);
   fora.clear();
@@ -540,7 +576,7 @@ function montar(id) {
   // ripado de madeira (brise) na fachada de cima e painel de pedra (casarão)
   if (P.ripado && B) {
     for (let i = 0; i < P.ripado.n; i++) {
-      peca(new BoxGeometry(0.06, PE - 0.2, 0.08), M.madeira, P.ripado.x + i * 0.19, Y2 + PE / 2, B.z1 + 0.12, [0.81 + i * 0.003, 0.85 + i * 0.003], "cresce").userData.parede = 4;
+      peca(new BoxGeometry(0.06, PE - 0.2, 0.08), M.madeira, P.ripado.x + i * 0.19, Y2 + PE / 2, B.z1 + 0.12, [0.81 + i * 0.003, 0.85 + i * 0.003], "cresce").userData.parede = 20;
     }
   }
   if (P.pedra) peca(new BoxGeometry(P.pedra.larg, PE, 0.06), M.pedraEscura, P.pedra.x, CHAO + PE / 2, A.z1 + 0.04, [T.vidros + 0.02, T.vidros + 0.06], "cresce").userData.parede = 0;
@@ -589,8 +625,10 @@ function posicionarCamera() {
   const vUtil = 2 * Math.atan(Math.tan(vfov / 2) * (altUtil / h));
   const util = Math.min(vUtil, hfov * (largaTela ? 0.7 : 1));
   const dist = (projeto.raio / Math.sin(util / 2)) * MathUtils.lerp(1.0, 0.97, suave(p));
-  const ang = MathUtils.lerp(-0.6, 0.45, suave(p));
-  const elev = MathUtils.lerp(0.5, 0.36, suave(p)); // começa mais de cima (vê os blocos assentando) e desce
+  // giro do dedo/mouse: só depois do voo do Blocão (senão ele não bate com o lugar dele na obra)
+  const livre = suave(faixa(p, 0.12, 0.2));
+  const ang = MathUtils.lerp(-0.6, 0.45, suave(p)) + giroUser * livre;
+  const elev = limitarEntre(MathUtils.lerp(0.5, 0.36, suave(p)) + elevUser * livre, 0.08, 1.1); // começa mais de cima e desce
   camAng = ang;
   camElev = elev;
   camera.position.set(centro.x + Math.sin(ang) * Math.cos(elev) * dist, centro.y + Math.sin(elev) * dist, centro.z + Math.cos(ang) * Math.cos(elev) * dist);
@@ -607,6 +645,14 @@ function posicionarCamera() {
     const para = interior.volta ? { pos: camera.position.clone(), alvo: centro, fov: 26, off: 1 } : interior.para;
     camera.position.lerpVectors(de.pos, para.pos, k);
     alvo = _alvoCam.lerpVectors(de.alvo, para.alvo, k);
+    if (!interior.volta && giroDentro && interior.muro) {
+      // dentro: o dedo desliza a câmera ao longo da abertura (passa de um cômodo pro outro, sempre olhando pra dentro)
+      const [tx, tz] = tangenteDe(interior.muro);
+      camera.position.x += tx * giroDentro * k;
+      camera.position.z += tz * giroDentro * k;
+      alvo.x += tx * giroDentro * k;
+      alvo.z += tz * giroDentro * k;
+    }
     fov = de.fov + (para.fov - de.fov) * k;
     off = de.off + (para.off - de.off) * k;
   }
@@ -690,7 +736,7 @@ function atualizarRevelados() {
     const lo = m.eixo === "x" ? Math.min(m.fixo, m.fixo - m.fora * BE) : m.fixo - BE / 2;
     const hi = m.eixo === "x" ? Math.max(m.fixo, m.fixo - m.fora * BE) : m.fixo + BE / 2;
     lista.forEach((bl, i) => {
-      if (bl.parede === id || Math.floor(bl.parede / 4) !== m.andar) return;
+      if (bl.parede === id || Math.floor(bl.parede / 20) !== m.andar) return;
       if ((m.eixo === "x") !== bl.girado) return; // só as paredes perpendiculares encostam no corte
       const c = m.eixo === "x" ? bl.z : bl.x;
       const e0 = c - bl.comp / 2;
@@ -700,28 +746,48 @@ function atualizarRevelados() {
   }
 }
 
-/** pose da câmera "entrando" pela abertura: de fora, perto de uma ponta, olhando pra dentro na diagonal */
+/**
+ * Onde as paredes INTERNAS encostam na parede tirada (no mesmo andar): ali o corte mostra o miolo do Blocão
+ * (concreto + EPS + concreto) bem de frente pra quem olha pela abertura. Ordenados do meio da parede pra fora.
+ */
+function cortesInternos(m) {
+  const face = m.eixo === "x" ? m.fixo - m.fora * BE : m.fixo - m.fora * (BE / 2); // face de dentro da parede tirada
+  const meio = (m.ini + m.fim) / 2;
+  return muros
+    .filter((w) => w.interna && w.andar === m.andar && w.eixo !== m.eixo && Math.min(Math.abs(w.ini - face), Math.abs(w.fim - face)) < 0.2)
+    .map((w) => (m.eixo === "x" ? { x: w.fixo, z: face } : { x: face, z: w.fixo }))
+    .sort((a, b) => Math.abs((m.eixo === "x" ? a.x : a.z) - meio) - Math.abs((m.eixo === "x" ? b.x : b.z) - meio));
+}
+
+/**
+ * Pose da câmera "entrando" pela abertura: de frente pra uma parede interna cortada (o EPS dentro do Blocão grande
+ * na tela) e o olhar atravessando os cômodos na diagonal. Sem parede interna ali: pelo meio da abertura.
+ */
 function poseInterior(m) {
   const [nx, nz] = normalDe(m);
   const [tx, tz] = tangenteDe(m);
-  const L = Math.abs(m.fim - m.ini);
   const meio = (m.ini + m.fim) / 2;
+  const empe = camera.aspect < 1; // celular em pé: recua um pouco mais e abre o ângulo
+  const c = cortesInternos(m)[0];
+  if (c) {
+    const lado = Math.sign(meio - (m.eixo === "x" ? c.x : c.z)) || 1; // fica do lado do cômodo maior
+    const de = empe ? 1.25 : 1.6;
+    return {
+      pos: new Vector3(c.x + tx * lado * de + nx * (empe ? 1.6 : 1.3), m.y0 + 1.55, c.z + tz * lado * de + nz * (empe ? 1.6 : 1.3)),
+      alvo: new Vector3(c.x - tx * lado * 0.9 - nx * 2.6, m.y0 + 1.1, c.z - tz * lado * 0.9 - nz * 2.6),
+      fov: empe ? 76 : 64,
+      off: 0,
+      corte: new Vector3(c.x, m.y0 + 1.6, c.z),
+    };
+  }
   const cx = m.eixo === "x" ? meio : m.fixo;
   const cz = m.eixo === "x" ? m.fixo : meio;
-  // perto da PONTA da abertura (onde a parede vizinha foi "cortada"): o corte com o EPS aparece grande na tela,
-  // e o olhar atravessa a casa na diagonal
-  const jx = m.eixo === "x" ? m.ini : m.fixo;
-  const jz = m.eixo === "x" ? m.fixo : m.ini;
-  // celular em pé (tela estreita): olha mais pro canto e recua um pouco, senão o corte fica fora da tela
-  const empe = camera.aspect < 1;
-  const ir = empe ? Math.min(0.9, L * 0.15) : Math.min(2.4, L * 0.3);
-  const recuo = empe ? 2.6 : 1.9;
-  const dentro = empe ? 1.6 : 2.2;
   return {
-    pos: new Vector3(jx - tx * (empe ? 0.6 : 0.35) + nx * recuo, m.y0 + 1.5, jz - tz * (empe ? 0.6 : 0.35) + nz * recuo),
-    alvo: new Vector3(jx + tx * ir - nx * dentro, m.y0 + 1.15, jz + tz * ir - nz * dentro),
-    fov: empe ? 72 : 62,
+    pos: new Vector3(cx + nx * (empe ? 2.2 : 1.6), m.y0 + 1.55, cz + nz * (empe ? 2.2 : 1.6)),
+    alvo: new Vector3(cx - nx * 4, m.y0 + 1.1, cz - nz * 4),
+    fov: empe ? 78 : 64,
     off: 0,
+    corte: null,
   };
 }
 
@@ -749,6 +815,8 @@ function removerParede(id) {
   if (!m || estadoParede(id) > 0.99) return;
   fora.set(id, { de: estadoParede(id), para: 1, t0: agora() });
   atualizarRevelados();
+  pRemocao = pAlvo;
+  giroDentro = 0;
   interior = { de: capturarPose(), para: poseInterior(m), t0: agora(), volta: false, muro: m };
   if (ouvinteInterior) ouvinteInterior({ dentro: true, removidas: fora.size });
   requestAnimationFrame(animar);
@@ -974,7 +1042,8 @@ window.ImperioCasa3D = {
   /** p = 0..1 da fase da casa (só desenha se mudou). Rolar de novo recoloca as paredes e a câmera volta. */
   progresso(novo) {
     novo = limitar(novo);
-    if ((fora.size || interior) && Math.abs(novo - pAlvo) > 0.0005) recolocarParedes();
+    // rolar DE VERDADE (não um tremidinho do dedo ou da barra do navegador) recoloca as paredes e tira a câmera
+    if ((fora.size || interior) && Math.abs(novo - pRemocao) > 0.03) recolocarParedes();
     // sem mola: no vídeo (quadro a quadro), em saltos grandes (menu "A casa") e durante o voo do Blocão do site
     // (0–0,13: a cena do bloco lê voo() a cada rolagem e o bloco tem que bater com a câmera da casa)
     if (window.__gravandoVideo || Math.abs(novo - p) > 0.3 || Math.min(novo, p) < 0.13) p = novo;
@@ -983,13 +1052,19 @@ window.ImperioCasa3D = {
   },
   /** toque/clique na tela (px do navegador): com a casa pronta, tira a parede tocada. Devolve true se tirou. */
   tocar(x, y) {
-    if (!renderer || p < 0.95) return false;
+    if (!renderer || p < PRONTA) return false;
     const r = renderer.domElement.getBoundingClientRect();
     _ndcV.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
     camera.updateMatrixWorld();
     _raycast.setFromCamera(_ndcV, camera);
     const alvos = [blocosMesh].concat(pecas.filter((m) => m.visible && m.userData.parede !== undefined));
-    const hit = _raycast.intersectObjects(alvos, false)[0];
+    blocosMesh.computeBoundingSphere(); // as instâncias mudaram de lugar desde a última vez
+    // a 1ª parede EXTERNA no caminho do toque (as internas aparecem quando a câmera entra)
+    const hit = _raycast.intersectObjects(alvos, false).find((h) => {
+      const idH = h.object === blocosMesh ? lista[h.instanceId].parede : h.object.userData.parede;
+      const m = muroDe(idH);
+      return m && !m.interna;
+    });
     if (!hit) return false;
     const id = hit.object === blocosMesh ? lista[hit.instanceId].parede : hit.object.userData.parede;
     if (id === undefined || estadoParede(id) > 0.5) return false;
@@ -997,6 +1072,28 @@ window.ImperioCasa3D = {
     return true;
   },
   recolocar() { recolocarParedes(); },
+  /** testes: paredes internas da casa atual e o giro do dedo */
+  internas() { return muros.filter((m) => m.interna).length; },
+  giro() { return giroUser; },
+  /** arrasto do dedo/mouse (px): gira a casa em volta; dentro dela, vira o olhar */
+  girar(dx, dy = 0) {
+    if (!renderer || p < 0.12) return;
+    if (interior && !interior.volta) {
+      // desliza ao longo da abertura, sem passar das pontas da parede tirada
+      const m = interior.muro;
+      const meio = (m.ini + m.fim) / 2;
+      const lim = Math.abs(m.fim - m.ini) / 2;
+      const base = (interior.para.pos[m.eixo === "x" ? "x" : "z"]) - meio;
+      const s = Math.sign(m.fim - m.ini) || 1;
+      giroDentro = limitarEntre(giroDentro - dx * 0.02, (-lim - base * s) , (lim - base * s));
+    }
+    else {
+      giroUser -= dx * 0.008;
+      elevUser = limitarEntre(elevUser + dy * 0.004, -0.3, 0.6);
+    }
+    pDesenhado = -1;
+    pedir();
+  },
   /**
    * Onde está o corte (a ponta da parede vizinha, com o EPS à mostra) NA TELA, quando a câmera já entrou:
    * { x, y } em px do navegador, ou null (câmera andando / casa fechada).
@@ -1004,10 +1101,13 @@ window.ImperioCasa3D = {
   pontoCorte() {
     if (!interior || interior.volta || agora() - interior.t0 < DUR_CAMERA || !interior.muro) return null;
     const m = interior.muro;
-    const jx = m.eixo === "x" ? m.ini : m.fixo;
-    const jz = m.eixo === "x" ? m.fixo : m.ini;
-    const [nx, nz] = normalDe(m);
-    _proj.set(jx - nx * BE * 1.5, m.y0 + 1.6, jz - nz * BE * 1.5).project(camera);
+    if (interior.para && interior.para.corte) _proj.copy(interior.para.corte);
+    else {
+      // sem parede interna no corte: a ponta da parede vizinha (canto da abertura)
+      const [nx, nz] = normalDe(m);
+      _proj.set((m.eixo === "x" ? m.ini : m.fixo) - nx * BE * 1.5, m.y0 + 1.6, (m.eixo === "x" ? m.fixo : m.ini) - nz * BE * 1.5);
+    }
+    _proj.project(camera);
     if (_proj.z > 1) return null;
     const r = renderer.domElement.getBoundingClientRect();
     return { x: r.left + ((_proj.x + 1) / 2) * r.width, y: r.top + ((1 - _proj.y) / 2) * r.height };

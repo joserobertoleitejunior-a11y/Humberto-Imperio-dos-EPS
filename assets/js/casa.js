@@ -7,6 +7,7 @@
  * - Prepara o 3D ~3 s depois de abrir (página parada) ou quando o "Por dentro" chega perto; no vídeo, já na abertura.
  * - "estatica": imagem pronta da casa + etapas em lista, depois do "L". Sem WebGL: a fase da casa sai (seção volta ao "L").
  * Casa pronta: tocar numa parede tira ela e a câmera entra pela abertura (corte mostra o EPS dentro do Blocão).
+ * Sempre (depois do voo do Blocão): arrastar o dedo pro lado gira a casa; dentro dela, vira o olhar.
  * Publica window.ImperioCasa = { pronto(), atualizarAgora() } (usado pela gravação do vídeo).
  */
 (function () {
@@ -58,7 +59,7 @@
       etapas.forEach(function (li, k) { li.classList.toggle("ativa", k === e); });
     }
     camada.style.setProperty("--ouro", (limitar((p - 0.86) / 0.14)).toFixed(3));
-    camada.classList.toggle("casa--pronta", p > 0.93);
+    camada.classList.toggle("casa--pronta", p > 0.88); // igual ao PRONTA do casa3d.js (dá pra tirar parede)
   }
 
   /** Etapas e ficha do tipo atual (simples tem 5 etapas: não tem 2º andar). */
@@ -121,14 +122,13 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261025g")
+    import("./casa3d.js?v=20261025i")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
         C3.aoDesenhar(aoDesenhar);
         // paredes móveis: com a casa pronta, tocar numa parede tira ela e a câmera entra pela abertura
-        var corte = camada.querySelector("[data-casa-corte]");
-        var timerCorte = 0;
+        corte = camada.querySelector("[data-casa-corte]");
         C3.aoInterior(function (e) {
           camada.classList.toggle("casa--dentro", e.removidas > 0 || e.dentro);
           var b = camada.querySelector("[data-casa-recolocar]");
@@ -136,17 +136,9 @@
           // etiqueta "Dentro do Blocão" presa no corte da parede, quando a câmera termina de entrar
           clearTimeout(timerCorte);
           if (corte) corte.hidden = true;
-          if (corte && e.dentro) timerCorte = setTimeout(function () {
-            var pt = C3.pontoCorte();
-            if (!pt) return;
-            var r = camada.getBoundingClientRect();
-            if (pt.x < r.left || pt.x > r.right) return; // corte fora da tela: sem etiqueta apontando pro nada
-            corte.style.left = Math.round(Math.min(r.width - 150, Math.max(12, pt.x - r.left))) + "px";
-            corte.style.top = Math.round(Math.max(90, pt.y - r.top)) + "px";
-            corte.hidden = false;
-          }, 1400);
+          if (corte && e.dentro) timerCorte = setTimeout(posicionarCorte, 1400);
         });
-        palco.addEventListener("click", function (ev) { C3.tocar(ev.clientX, ev.clientY); });
+        ligarToque();
         var rec = camada.querySelector("[data-casa-recolocar]");
         if (rec) rec.addEventListener("click", function () { C3.recolocar(); });
         var marcado = botoesTipo.filter(function (b) { return b.getAttribute("aria-pressed") === "true"; })[0];
@@ -161,6 +153,53 @@
         canvas.remove();
         semCasa();
       });
+  }
+
+  var corte = null;
+  var timerCorte = 0;
+  /** etiqueta "Dentro do Blocão" presa no corte (some se o corte sai da tela) */
+  function posicionarCorte() {
+    if (!corte || !C3) return;
+    var pt = C3.pontoCorte();
+    var r = camada.getBoundingClientRect();
+    if (!pt || pt.x < r.left + 8 || pt.x > r.right - 8 || pt.y < r.top + 80 || pt.y > r.bottom - 120) { corte.hidden = true; return; }
+    corte.style.left = Math.round(Math.min(r.width - 150, Math.max(12, pt.x - r.left))) + "px";
+    corte.style.top = Math.round(pt.y - r.top) + "px";
+    corte.hidden = false;
+  }
+
+  /**
+   * Dedo/mouse na maquete: arrastar pro lado GIRA a casa (dentro dela, vira o olhar); arrastar na vertical continua
+   * rolando a página (touch-action: pan-y); toque parado tira a parede tocada. No mouse, arrastar também inclina.
+   */
+  function ligarToque() {
+    var x0 = 0, y0 = 0, xa = 0, ya = 0, ativo = false, girando = false, vertical = false, tipoPt = "";
+    palco.addEventListener("pointerdown", function (e) {
+      ativo = true; girando = false; vertical = false; tipoPt = e.pointerType;
+      x0 = xa = e.clientX; y0 = ya = e.clientY;
+      if (e.pointerType === "mouse") palco.setPointerCapture(e.pointerId);
+    });
+    palco.addEventListener("pointermove", function (e) {
+      if (!ativo) return;
+      var dx = e.clientX - x0, dy = e.clientY - y0;
+      if (!girando && !vertical && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        if (tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true; else vertical = true;
+        if (girando) camada.classList.add("casa--girando");
+      }
+      if (girando) {
+        C3.girar(e.clientX - xa, tipoPt === "mouse" ? e.clientY - ya : 0);
+        if (camada.classList.contains("casa--dentro")) requestAnimationFrame(posicionarCorte); // a etiqueta acompanha
+      }
+      xa = e.clientX; ya = e.clientY;
+    });
+    function soltar(e, cancelado) {
+      if (!ativo) return;
+      ativo = false;
+      camada.classList.remove("casa--girando");
+      if (!cancelado && !girando && !vertical && Math.abs(e.clientX - x0) < 10 && Math.abs(e.clientY - y0) < 10) C3.tocar(e.clientX, e.clientY);
+    }
+    palco.addEventListener("pointerup", function (e) { soltar(e, false); });
+    palco.addEventListener("pointercancel", function (e) { soltar(e, true); }); // o navegador assumiu a rolagem
   }
 
   /** Nível "estatica": os botões trocam a imagem pronta de cada casa. */
