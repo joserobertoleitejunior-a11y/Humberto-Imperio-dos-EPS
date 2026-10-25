@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261102b";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103a";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -148,6 +148,113 @@ function texSombra() {
   g.fillStyle = gr;
   g.fillRect(0, 0, 64, 64);
   return new CanvasTexture(c);
+}
+
+/* ---------- texturas realistas: fotos CC0 da Poly Haven (1K, WebP) em assets/img/texturas ---------- */
+// lado real de cada foto (m): a textura repete nesse tamanho — UV em metros (uvMetros)
+const TEX_REAIS = { concreto: 3, reboco: 2, madeira: 1.7, porcelanato: 1.5, telha: 2.5, grama: 2, calcada: 1.8 };
+const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
+let texReais = null;  // null · "carregando" · "prontas" (aparelho fraco fica nas texturas de canvas)
+let ladoMat = new Map(); // material → lado da foto (m); vazio = sem texturas realistas (UV de sempre)
+
+/** UV da caixa em metros ÷ lado da foto: a textura fica no tamanho real, qualquer que seja a peça */
+function uvMetros(geo, lado) {
+  const { width: w, height: h, depth: d } = geo.parameters;
+  const uv = geo.attributes.uv;
+  const faces = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; // +x, -x, +y, -y, +z, -z
+  for (let i = 0; i < uv.count; i++) {
+    const [a, b] = faces[Math.floor(i / 4)];
+    uv.setXY(i, (uv.getX(i) * a) / lado, (uv.getY(i) * b) / lado);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
+/**
+ * Peças instanciadas (blocos e pintura): todas têm o mesmo UV — a foto se repetiria igual em cada bloco.
+ * Aqui o UV anda junto com a posição do bloco na parede: a textura corre contínua de um bloco pro outro.
+ * k = unidades de UV por metro na geometria.
+ */
+function uvPorPosicao(m, k) {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <uv_vertex>", `#include <uv_vertex>
+#ifdef USE_INSTANCING
+  vec3 eixoU = cross(vec3(0.0, 1.0, 0.0), normal);
+  eixoU = length(eixoU) > 0.5 ? normalize(mat3(instanceMatrix) * eixoU) : vec3(1.0, 0.0, 0.0);
+  vec3 desl = vec3(dot(instanceMatrix[3].xyz, eixoU), instanceMatrix[3].y, 0.0) * ${k.toFixed(4)};
+  #ifdef USE_MAP
+    vMapUv += (mapTransform * desl).xy;
+  #endif
+  #ifdef USE_NORMALMAP
+    vNormalMapUv += (normalMapTransform * desl).xy;
+  #endif
+  #ifdef USE_ROUGHNESSMAP
+    vRoughnessMapUv += (roughnessMapTransform * desl).xy;
+  #endif
+#endif`);
+  };
+  m.customProgramCacheKey = () => `uvPos${k}`;
+}
+
+function texFoto(img, cor, rep = 1) {
+  const t = new CanvasTexture(img);
+  t.wrapS = t.wrapT = RepeatWrapping;
+  t.repeat.set(rep, rep);
+  t.anisotropy = 8;
+  if (cor) t.colorSpace = SRGBColorSpace;
+  return t;
+}
+
+/** baixa as 7 fotos (cor, relevo e rugosidade) e troca nos materiais num momento parado. Sem a foto: fica o canvas. */
+function carregarTexturasReais() {
+  if (texReais || !ladoMat.size) return;
+  texReais = "carregando";
+  const base = new URL("../img/texturas/", import.meta.url);
+  const ver = new URL(import.meta.url).search;
+  const imagem = (nome) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = new URL(nome + ".webp" + ver, base).href;
+    return img.decode().then(() => img);
+  };
+  Promise.all(Object.keys(TEX_REAIS).map((n) => Promise.all(["cor", "normal", "rugosidade"].map((k) => imagem(`${n}-${k}`))).then((imgs) => [n, imgs])))
+    .then((lista) => {
+      const fotos = Object.fromEntries(lista);
+      const aplicar = () => {
+        if (voo || agora() - ultimaRolagem < 400) { setTimeout(aplicar, 300); return; } // recompila os materiais: só parado
+        aplicarTexturasReais(fotos);
+      };
+      aplicar();
+    })
+    .catch(() => { texReais = null; ladoMat = new Map(); });
+}
+
+function aplicarTexturasReais(f) {
+  const usar = (m, n, opc = {}) => {
+    const [cor, normal, rug] = f[n];
+    const rep = opc.rep || 1;
+    m.map = texFoto(cor, true, rep);
+    m.normalMap = texFoto(normal, false, rep);
+    m.roughnessMap = texFoto(rug, false, rep);
+    m.roughness = opc.rugosidade ?? 1;
+    if (opc.relevo) m.normalScale.set(opc.relevo, opc.relevo);
+    m.color.set(opc.cor || "#ffffff");
+    m.needsUpdate = true;
+  };
+  // Blocão por fora: a frente do bloco tem UV 2,2 por metro — a repetição devolve o tamanho real da foto
+  usar(mats.concreto, "concreto", { rep: 1 / (BLOCO_UV * TEX_REAIS.concreto), cor: "#f1ede6", relevo: 0.6 });
+  uvPorPosicao(mats.concreto, BLOCO_UV);
+  usar(mats.laje, "concreto", { cor: "#f4f2ec", relevo: 0.4 });
+  usar(mats.pintura, "reboco", { cor: "#fdfbf6", relevo: 0.45 });
+  uvPorPosicao(mats.pintura, 1 / TEX_REAIS.reboco);
+  usar(mats.piso, "madeira", { rugosidade: 0.9 });
+  usar(mats.porcelanato, "porcelanato", { rugosidade: 0.55, relevo: 0.5 });
+  usar(mats.telha, "telha", { cor: "#f0e2d6", relevo: 0.8 });
+  usar(mats.grama, "grama", { cor: "#c3cca9" }); // puxa pro verde-sálvia da maquete
+  usar(mats.pedra, "calcada", { cor: "#f2efe9", relevo: 0.7 });
+  texReais = "prontas";
+  pDesenhado = -1;
+  pedir();
 }
 
 /* ------------------------------------------------------------------ */
@@ -562,6 +669,8 @@ const _raio = new Vector3();
 const centro = new Vector3();
 
 function peca(geo, mat, x, y, z, entra, tipo = "desce") {
+  const lado = ladoMat.get(Array.isArray(mat) ? mat[2] : mat); // caixa com foto: UV em metros (tamanho real)
+  if (lado && geo.type === "BoxGeometry") uvMetros(geo, lado);
   const m = new Mesh(geo, mat);
   m.position.set(x, y, z);
   m.castShadow = m.receiveShadow = nivel.sombra;
@@ -579,7 +688,7 @@ function lajeFurada(R, f, y, h, mat, entra, tipo) {
   partes.forEach(([a, b, c, d]) => {
     if (b - a < 0.01 || d - c < 0.01) return;
     const m = peca(new BoxGeometry(b - a, h, d - c), mat, (a + b) / 2, y, (c + d) / 2, entra, tipo);
-    if (mat === mats.piso) { m.castShadow = false; m.userData.piso = true; } // o toque por dentro "pousa" no piso
+    if (mat === mats.piso || mat === mats.porcelanato) { m.castShadow = false; m.userData.piso = true; } // o toque por dentro "pousa" no piso
   });
 }
 
@@ -597,6 +706,7 @@ function criarMateriais() {
   const tGuia = texConcreto(Math.min(1024, nivel.tex * 2));
   const tSan = texSanduiche(128);
   const tMad = texMadeira(Math.max(128, nivel.tex / 2));
+  const real = nivel !== NIVEIS.baixa; // aparelho fraco: só as texturas de canvas
   mats = {
     concreto: new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" }),
     topo: new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" }),
@@ -607,7 +717,8 @@ function criarMateriais() {
     grafite: new MeshStandardMaterial({ color: "#2a2c2f", roughness: 0.55, metalness: 0.3 }),
     madeira: new MeshStandardMaterial({ map: tMad, roughness: 0.7 }),
     // piso de madeira dos cômodos (tábuas mais miúdas que o ripado) — dá leitura de escala no passeio por dentro
-    piso: new MeshStandardMaterial({ map: (() => { const t = tMad.clone(); t.wrapS = t.wrapT = RepeatWrapping; t.repeat.set(3, 3); t.rotation = Math.PI / 2; t.needsUpdate = true; return t; })(), roughness: 0.6, color: "#d9c3a5" }),
+    // (com UV em metros — texturas realistas — a repetição do canvas cai pra 1, até a foto chegar)
+    piso: new MeshStandardMaterial({ map: (() => { const t = tMad.clone(); const r = real ? 1 : 3; t.wrapS = t.wrapT = RepeatWrapping; t.repeat.set(r, r); t.rotation = Math.PI / 2; t.needsUpdate = true; return t; })(), roughness: 0.6, color: "#d9c3a5" }),
     grama: new MeshStandardMaterial({ color: "#9aa77f", roughness: 1 }),
     pedra: new MeshStandardMaterial({ color: "#d8d3c8", roughness: 0.95 }),
     pedraEscura: new MeshStandardMaterial({ color: "#4a4743", roughness: 0.75, map: tCon }),
@@ -618,6 +729,14 @@ function criarMateriais() {
     gente: new MeshStandardMaterial({ color: "#fbfaf7", roughness: 0.6 }),
     sombra: new MeshBasicMaterial({ map: texSombra(), transparent: true, depthWrite: false }),
   };
+  // térreo de porcelanato, laje de concreto e telhado de telha: até a foto chegar, iguais ao que eram
+  mats.porcelanato = mats.piso.clone();
+  mats.laje = mats.branco.clone();
+  mats.telha = mats.branco.clone();
+  ladoMat = new Map(real ? [
+    [mats.piso, TEX_REAIS.madeira], [mats.porcelanato, TEX_REAIS.porcelanato], [mats.laje, TEX_REAIS.concreto],
+    [mats.telha, TEX_REAIS.telha], [mats.grama, TEX_REAIS.grama], [mats.pedra, TEX_REAIS.calcada],
+  ] : []);
   geoBloco = new BoxGeometry(BL - JUNTA, BA - JUNTA, BE);
   const uv = geoBloco.attributes.uv;
   for (let i = 0; i < uv.count; i++) {
@@ -681,7 +800,9 @@ function montar(id) {
   blocosMesh.castShadow = blocosMesh.receiveShadow = nivel.sombra;
   blocosMesh.frustumCulled = false; // as instâncias se espalham pela casa toda
   obra.add(blocosMesh);
-  pinturaMesh = new InstancedMesh(new BoxGeometry(BL, BA, BE + 0.012), M.pintura, lista.length);
+  const geoPintura = new BoxGeometry(BL, BA, BE + 0.012);
+  if (ladoMat.size) uvMetros(geoPintura, TEX_REAIS.reboco);
+  pinturaMesh = new InstancedMesh(geoPintura, M.pintura, lista.length);
   lista.forEach((bl, i) => {
     _o.position.set(bl.x, bl.y, bl.z);
     _o.rotation.set(0, bl.girado ? Math.PI / 2 : 0, 0);
@@ -698,9 +819,9 @@ function montar(id) {
   pinturaMesh.frustumCulled = false;
   obra.add(pinturaMesh);
 
-  // piso de madeira por dentro (térreo junto com as paredes; em cima, por cima da laje)
-  for (const [R, y, ent, furo] of [[A, CHAO + 0.012, [0.12, 0.16], null], ...(B ? [[B, Y2 + 0.012, [0.47, 0.5], P.furo]] : [])]) {
-    lajeFurada({ x0: R.x0 + BE, x1: R.x1 - BE, z0: R.z0 + BE, z1: R.z1 - BE }, furo, y, 0.02, M.piso, ent, "sobe");
+  // piso por dentro: porcelanato no térreo (junto com as paredes) e madeira em cima (por cima da laje)
+  for (const [R, y, ent, furo, mat] of [[A, CHAO + 0.012, [0.12, 0.16], null, M.porcelanato], ...(B ? [[B, Y2 + 0.012, [0.47, 0.5], P.furo, M.piso]] : [])]) {
+    lajeFurada({ x0: R.x0 + BE, x1: R.x1 - BE, z0: R.z0 + BE, z1: R.z1 - BE }, furo, y, 0.02, mat, ent, "sobe");
   }
 
   const L = A.x1 - A.x0;
@@ -719,7 +840,7 @@ function montar(id) {
   let R; // retângulo coberto pela cobertura
   if (B) {
     // laje do 1º andar avançando sobre a varanda (vira o piso da varanda de cima)
-    lajeFurada({ x0: xm - (L + 0.3) / 2, x1: xm + (L + 0.3) / 2, z0: zMeioV - (zFrente - A.z0 + 0.3) / 2, z1: zMeioV + (zFrente - A.z0 + 0.3) / 2 }, P.furo, CHAO + PE + LAJE / 2, LAJE, M.branco, T.laje, "desce");
+    lajeFurada({ x0: xm - (L + 0.3) / 2, x1: xm + (L + 0.3) / 2, z0: zMeioV - (zFrente - A.z0 + 0.3) / 2, z1: zMeioV + (zFrente - A.z0 + 0.3) / 2 }, P.furo, CHAO + PE + LAJE / 2, LAJE, M.laje, T.laje, "desce");
     yTopo = Y2 + PE;
     R = { x0: B.x0, x1: B.x1, z0: B.z0, z1: B.z1 + 0.6 };
     // varanda de cima: guarda-corpo de vidro (frente e laterais) com corrimão grafite
@@ -734,12 +855,12 @@ function montar(id) {
     yTopo = CHAO + PE;
     R = { x0: A.x0, x1: A.x1, z0: A.z0, z1: zFrente }; // térrea: a laje cobre a varanda também
   }
-  // cobertura com platibanda (telhado embutido)
+  // cobertura com platibanda (telhado embutido, de telha cerâmica por cima)
   const lx = R.x1 - R.x0 + 0.5;
   const lz = R.z1 - R.z0 + 0.4;
   const rx = (R.x0 + R.x1) / 2;
   const rz = (R.z0 + R.z1) / 2;
-  peca(new BoxGeometry(lx, 0.2, lz), M.branco, rx, yTopo + 0.1, rz, T.cobertura);
+  peca(new BoxGeometry(lx, 0.2, lz), [M.branco, M.branco, M.telha, M.branco, M.branco, M.branco], rx, yTopo + 0.1, rz, T.cobertura);
   [[lx, 0.55, 0.14, rx, R.z1 + 0.13], [lx, 0.55, 0.14, rx, R.z0 - 0.13], [0.14, 0.55, lz, R.x0 - 0.18, rz], [0.14, 0.55, lz, R.x1 + 0.18, rz]]
     .forEach(([a, b, d, x, z], i) => peca(new BoxGeometry(a, b, d), M.branco, x, yTopo + 0.45, z, [T.platibanda[0] + i * 0.008, T.platibanda[1] + i * 0.004]));
   peca(new BoxGeometry(lx + 0.02, 0.05, 0.05), M.grafite, rx, yTopo + 0.7, R.z1 + 0.21, [T.platibanda[1] - 0.02, T.platibanda[1] + 0.01]);
@@ -2254,6 +2375,7 @@ window.ImperioCasa3D = {
   progresso(novo) {
     novo = limitar(novo);
     if (novo !== pAlvo) ultimaRolagem = agora();
+    if (novo > 0 && !texReais) carregarTexturasReais(); // a obra começou: as fotos das texturas descem agora
     // rolar DE VERDADE (não um tremidinho do dedo ou da barra do navegador) recoloca as paredes e tira a câmera
     if (Math.abs(novo - pRemocao) > 0.03) {
       if (tour) pararTour();

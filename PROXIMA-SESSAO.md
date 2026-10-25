@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261102b`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103a`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -47,25 +47,35 @@ Perguntar qual ele prefere. O atalho já está ligado: sem ele o drone atravessa
 
 Script de medição: rolar até `#por-dentro`, esperar `ImperioCasa3D.emTourPontos()` virar true e medir até virar false.
 
-## Próximo pedido: texturas realistas
+## Texturas realistas — FEITO (1ª versão)
 
-O cliente quer a maquete com aparência realista. Hoje as texturas são desenhadas por código (canvas) em `casa3d.js`: `texConcreto`, `texMadeira`, `texPonta` e `texSanduiche`. A grama e os móveis ficam em `casa-interior.js`.
+- **Fotos:** CC0 da Poly Haven, 1K, convertidas para WebP em `assets/img/texturas/`. São 21 arquivos (≈ 0,9 MB), três por superfície: `-cor`, `-normal` e `-rugosidade`.
 
-Plano:
-- Usar texturas CC0 de Poly Haven ou ambientCG, em 1K. De cada uma: cor, NormalGL e Roughness.
-- Converter para WebP e salvar em `assets/img/texturas/`.
-- Superfícies:
-  - concreto (Blocão por fora e laje);
-  - reboco pintado (paredes);
-  - piso de madeira e porcelanato;
-  - telha cerâmica;
-  - grama;
-  - calçada.
-- Carregar só depois que a obra começar.
-- Aparelho fraco (`data-qualidade="baixa"`) continua com as texturas de canvas.
-- O corte do Blocão (concreto | EPS | concreto) continua desenhado por código.
+| Superfície | Arquivo | Foto original | Lado real |
+|---|---|---|---|
+| Blocão por fora e laje | `concreto` | concrete_floor_worn_001, clareada | 3 m |
+| Paredes pintadas | `reboco` | painted_plaster_wall, clareada | 2 m |
+| Piso de cima e escada | `madeira` | laminate_floor_02 | 1,7 m |
+| Térreo (piso novo) | `porcelanato` | marble_01 | 1,5 m |
+| Cobertura dentro da platibanda | `telha` | clay_roof_tiles_02 | 2,5 m |
+| Base da maquete | `grama` | leafy_grass, puxada pro verde | 2 m |
+| Alicerce, caminho e entrada do carro | `calcada` | concrete_pavement | 1,8 m |
 
-O cliente já baixou as texturas e pode enviá-las no chat. O ambiente novo da sessão libera polyhaven/ambientcg na rede.
+- **Código** (`casa3d.js`, bloco "texturas realistas"):
+  - `TEX_REAIS` guarda o lado real de cada foto.
+  - `uvMetros()` põe a foto no tamanho real em qualquer peça.
+  - `uvPorPosicao()` deixa a foto contínua de um bloco para o outro nos blocos e na pintura instanciados.
+  - `carregarTexturasReais()` baixa as fotos quando a obra começa (`progresso > 0`).
+  - `aplicarTexturasReais()` troca as fotos nos materiais, só com a tela parada.
+- **Materiais novos:** `mats.porcelanato`, `mats.laje` e `mats.telha`. Até as fotos chegarem, ficam com a aparência antiga.
+- **Aparelho fraco** (`data-qualidade="baixa"`): nada muda, ficam as texturas de canvas.
+- **Corte do Blocão** (concreto | EPS | concreto, faces `ponta`/`topo`) e **bloco-guia:** continuam desenhados por código.
+- **Ajuste fino com o cliente:** os tons ficam em `aplicarTexturasReais()` (campo `cor`) e a força do relevo no campo `relevo`. Exemplos: telha mais ou menos laranja, grama mais escura.
+- **Ainda dá pra melhorar:** os móveis e o gramado em degradê em volta da casa (`casa-interior.js`) ainda são cor lisa.
+
+**Testes:**
+- Os E2E precisam de `CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --workers=1`: o navegador fixado pelo projeto não existe no ambiente novo.
+- Dois testes falham **antes e depois** das texturas: o número do WhatsApp na calculadora e a imagem estática do "aparelho fraco". Investigar à parte.
 
 ## Outros pendentes
 
