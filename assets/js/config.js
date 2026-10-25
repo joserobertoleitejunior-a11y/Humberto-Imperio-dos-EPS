@@ -84,7 +84,7 @@ window.IMPERIO_CONFIG = {
    * Obra rápida · Bem mais leve · Casa mais fresca / Mais silêncio · Sem mofo · Acabamento fácil.
    * Arte atual: gerada no Gemini (recortada do print, cantos limpos). Vazio = os quadros são desenhados pelo site.
    */
-  quadrosVantagens: "assets/img/quadros-vantagens.webp?v=20261103b",
+  quadrosVantagens: "assets/img/quadros-vantagens.webp?v=20261103c",
 
   // Supabase (banco do painel). A anon key NÃO é segredo — a proteção é o
   // RLS (ver supabase/schema.sql). Vazio = site funciona só com WhatsApp

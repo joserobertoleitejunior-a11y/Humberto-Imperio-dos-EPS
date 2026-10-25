@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103b`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103c`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -30,6 +30,15 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 5. **Tour sem quadros (0 em vez de 6)**
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
+
+## Tour: a parede só abre depois de ler o quadro (feito)
+
+- Em cada quadro, o drone passa por 3 pontos (`ver[0..2]` em `montarPlacas`):
+  1. chega no quadro;
+  2. desliza devagar com a parede **fechada** por `TOUR_LER` (2 s), o tempo de ler;
+  3. só então a parede abre (ou a casa perde a tinta, no quadro "Acabamento") e o drone recua devagar mostrando o miolo, por `TOUR_VER` (1,8 s).
+- A parede fecha quando o drone sai do quadro (`tourAcoes.mostra`).
+- Isso aumentou o tour em cerca de 1,8 s por quadro (6 quadros, perto de +11 s). Entra na decisão de duração abaixo: dá para baixar `TOUR_VER`.
 
 ## Decisão pendente com o cliente: duração do tour
 
