@@ -665,7 +665,8 @@ html.com-parada { scroll-snap-type: y proximity; }
 [data-qualidade="estatica"] .jornada__janela { position: static; overflow: visible; -webkit-mask-image: none; mask-image: none; }
 [data-qualidade="estatica"] .jornada__v { position: static; padding-top: 0; transform: none !important; opacity: 1 !important; visibility: visible !important; }
 [data-qualidade="estatica"] .jornada__texto { margin-bottom: 1.2em; }
-[data-qualidade="estatica"] .jornada__estatico { display: block; width: auto; max-width: min(640px, 100% - 32px); height: auto; max-height: 52vh; object-fit: contain; margin: 10px auto 24px; }
+/* largura fixa (proporção pelos atributos 900 × 600): o espaço fica reservado antes da imagem carregar (sem pulo) */
+[data-qualidade="estatica"] .jornada__estatico { display: block; width: min(640px, 100% - 32px); height: auto; max-height: 52vh; object-fit: contain; margin: 10px auto 24px; }
 [data-qualidade="estatica"] .jornada__rotulos { display: none; }
 [data-qualidade="estatica"] .controles { position: static; transform: none; width: auto; justify-items: center; margin: 0 auto 16px; }
 [data-qualidade="estatica"] .jornada__h { position: static; opacity: 1 !important; visibility: visible !important; transform: none !important; flex-wrap: wrap; justify-content: center; margin-top: 8px; }

@@ -120,6 +120,9 @@ reservado sem uso.)
 `html.com-parada { scroll-snap-type: y proximity }`) — o próprio navegador segura a inércia do dedo; posicionado em
 `posicionarAncora` (compensa o `scroll-padding-top`). 2) Reforço em JS: > 1,2 px/ms com gesto da pessoa, a página
 fica sem rolagem por 0,3 s e volta pra maquete. Links do menu passam direto; subir é livre.
+**Casa padrão = CASARÃO** (obra e tour pra todo mundo; `tipoAtual` em `casa3d.js` + `aria-pressed` no `index.html`;
+no "estatica" a imagem pronta também é a do casarão). Rolagem rápida que para na maquete começa o tour NA HORA
+(`mostrarTour` em `casa.js`), mesmo pra quem já viu.
 **Trocar de casa recomeça o tour:** com a maquete pronta na tela, clicar em outra casa encerra o tour atual (sem a
 chamada do fim) e, 0,9 s depois, começa o tour da casa nova. Os botões de tipo ficam visíveis durante o tour.
 

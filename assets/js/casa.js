@@ -38,7 +38,7 @@
   var ultimaOp = -1;
   var ancoraFim = -1;
 
-  // limites de cada etapa (o casa3d.js manda os do tipo escolhido; estes são os da casa média)
+  // limites de cada etapa (o casa3d.js manda os do tipo escolhido assim que o 3D carrega)
   var LIMITES = [0, 0.12, 0.4, 0.47, 0.74, 0.86];
   var ultimoP = 0;
   var TROCA = 0.035; // trecho em que a camada da casa esmaece por cima do Blocão (o bloco da casa fica parado no mesmo ponto)
@@ -164,8 +164,16 @@
 
   /**
    * Rolagem RÁPIDA pra baixo (embalo do dedo ou da roda) não passa reto da maquete: o embalo para no ponto em que a
-   * casa fica pronta — aí o tour começa. Rolagem normal segue livre; links do menu (#contato…) passam direto.
+   * casa fica pronta e o tour começa NA HORA (mesmo pra quem já viu). Rolagem normal segue livre; links do menu
+   * (#contato…) passam direto.
    */
+  function mostrarTour(tentativas) {
+    if (!C3 || C3.emTour()) return;
+    // a obra ainda chegando no ponto (a casa assenta com uma "mola" de ~0,1 s): tenta de novo logo em seguida
+    if (!camada.classList.contains("casa--maquete") || !C3.tourPontos()) {
+      if (tentativas > 0) setTimeout(function () { mostrarTour(tentativas - 1); }, 100);
+    }
+  }
   function ligarParadaNaMaquete() {
     // 1) nativo: ponto de encaixe (scroll-snap-stop: always) na maquete pronta — o navegador para a inércia ali
     if (jornadaEl && window.CSS && CSS.supports && CSS.supports("scroll-snap-stop", "always")) {
@@ -209,6 +217,7 @@
         segurando = false;
         yAnt = window.scrollY;
       }, 600);
+      mostrarTour(15);
     }
     function yMaquete() {
       var j = window.ImperioMotion && window.ImperioMotion.jornada();
@@ -217,6 +226,8 @@
       var q = TROCA + 0.985 * (1 - TROCA); // casa pronta (maquete completa: p > 0,97)
       return j.topoSecao + (j.fim + q * (1 - j.fim)) * total;
     }
+    var rapida = 0;     // última vez que a pessoa rolou rápido pra baixo
+    var timerFim = 0;
     window.addEventListener("scroll", function () {
       var y = window.scrollY;
       var t = performance.now();
@@ -224,8 +235,15 @@
       var v = (y - de) / Math.max(1, t - tAnt); // px/ms
       yAnt = y;
       tAnt = t;
+      // a rolagem terminou parada no ponto da maquete (o encaixe nativo segurou o embalo): mostra o tour já
+      clearTimeout(timerFim);
+      timerFim = setTimeout(function () {
+        var yM = yMaquete();
+        if (yM !== null && Math.abs(window.scrollY - yM) <= 6 && performance.now() - rapida < 2500) mostrarTour(15);
+      }, 160);
       if (segurando || !C3 || v < 1.2) return;
       if (t - gesto > 2500 || t - navegando < 2500) return; // só o embalo da pessoa (não o menu nem o código)
+      rapida = t;
       var yM = yMaquete();
       if (yM !== null && de < yM - 2 && y > yM + 2) pararEm(Math.round(yM));
     }, { passive: true });
@@ -278,7 +296,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261104d")
+    import("./casa3d.js?v=20261104e")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;

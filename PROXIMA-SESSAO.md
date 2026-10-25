@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104d`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104e`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -30,6 +30,18 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 5. **Tour sem quadros (0 em vez de 6)**
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
+
+## Casarão para todos + tour na hora + testes todos verdes (feito)
+
+- **Casa padrão é o casarão:** obra e tour para todo mundo.
+  - `tipoAtual = "casarao"` no `casa3d.js`; no `index.html`, `aria-pressed`, ficha, `aria-label` e a imagem do modo sem 3D.
+  - Simples e média continuam nos botões, e clicar nelas recomeça o tour.
+  - O tour do casarão dura 37,2 s (relógio controlado).
+- **Rolagem rápida que termina parada na maquete:** o tour começa na hora (`mostrarTour` em `casa.js`), mesmo para quem já viu.
+  - Detecta assim: a rolagem para a ≤ 6 px do ponto da maquete, logo depois de um embalo rápido.
+- **Os 2 testes que falhavam desde antes agora passam** (15 de 15):
+  - a imagem do modo sem 3D tem largura fixa no CSS: o espaço fica reservado antes de carregar, e antes ela tinha tamanho 0 até carregar;
+  - o teste da calculadora espera a janela do WhatsApp navegar (`waitForURL`). O site sempre gerou o link certo.
 
 ## Tour sem abrir parede + casa clicável + parada na maquete (feito)
 
@@ -142,7 +154,7 @@ Script de medição: rolar até `#por-dentro`, esperar `ImperioCasa3D.emTourPont
 
 **Testes:**
 - Os E2E precisam de `CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --workers=1`: o navegador fixado pelo projeto não existe no ambiente novo.
-- Dois testes falham **antes e depois** das texturas: o número do WhatsApp na calculadora e a imagem estática do "aparelho fraco". Investigar à parte.
+- Os 15 testes E2E passam (os 2 que falhavam foram corrigidos; ver acima).
 
 ## Outros pendentes
 

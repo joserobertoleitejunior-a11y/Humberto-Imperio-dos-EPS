@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104d";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104d";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104e";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104e";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -501,7 +501,7 @@ let assentados = 0;
 let ouvinte = null;
 let guia;
 let primeiro = 0;
-let tipoAtual = "media";
+let tipoAtual = "casarao"; // o casarão é a casa de todo mundo (obra e tour); simples e média nos botões
 let alvoTela = null;      // { cx, cy, larg, giro, inclinar } do Blocão no fim do "L" (px na tela)
 let blocoDoSite = false;  // true = o PRÓPRIO Blocão do site (bloco3d) faz o voo; a cópia daqui não aparece
 let camAng = 0;
@@ -666,7 +666,7 @@ function limparObra() {
 
 function montar(id) {
   limparObra();
-  tipoAtual = PROJETOS[id] ? id : "media";
+  tipoAtual = PROJETOS[id] ? id : "casarao";
   projeto = PROJETOS[tipoAtual];
   T = tempos(projeto);
   obra = new Group();

@@ -38,6 +38,7 @@ test("calculadora monta a mensagem e abre o WhatsApp", async ({ page, context })
   await page.fill("[name=altura]", "2,8");
   await expect(page.locator("[data-calc-area]")).toHaveText("102,16", { timeout: 8000 });
   const [popup] = await Promise.all([context.waitForEvent("page"), page.click("[data-calc-enviar]")]);
+  await popup.waitForURL(/wa\.me/); // a janela nova nasce em branco e navega em seguida
   const url = decodeURIComponent(popup.url());
   expect(url).toContain("5515991212917");
   expect(url).toContain("102,16 m²");
