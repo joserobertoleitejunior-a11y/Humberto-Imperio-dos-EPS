@@ -25,7 +25,10 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103a";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103b";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261103b";
+
+const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -148,113 +151,6 @@ function texSombra() {
   g.fillStyle = gr;
   g.fillRect(0, 0, 64, 64);
   return new CanvasTexture(c);
-}
-
-/* ---------- texturas realistas: fotos CC0 da Poly Haven (1K, WebP) em assets/img/texturas ---------- */
-// lado real de cada foto (m): a textura repete nesse tamanho — UV em metros (uvMetros)
-const TEX_REAIS = { concreto: 3, reboco: 2, madeira: 1.7, porcelanato: 1.5, telha: 2.5, grama: 2, calcada: 1.8 };
-const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
-let texReais = null;  // null · "carregando" · "prontas" (aparelho fraco fica nas texturas de canvas)
-let ladoMat = new Map(); // material → lado da foto (m); vazio = sem texturas realistas (UV de sempre)
-
-/** UV da caixa em metros ÷ lado da foto: a textura fica no tamanho real, qualquer que seja a peça */
-function uvMetros(geo, lado) {
-  const { width: w, height: h, depth: d } = geo.parameters;
-  const uv = geo.attributes.uv;
-  const faces = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; // +x, -x, +y, -y, +z, -z
-  for (let i = 0; i < uv.count; i++) {
-    const [a, b] = faces[Math.floor(i / 4)];
-    uv.setXY(i, (uv.getX(i) * a) / lado, (uv.getY(i) * b) / lado);
-  }
-  uv.needsUpdate = true;
-  return geo;
-}
-
-/**
- * Peças instanciadas (blocos e pintura): todas têm o mesmo UV — a foto se repetiria igual em cada bloco.
- * Aqui o UV anda junto com a posição do bloco na parede: a textura corre contínua de um bloco pro outro.
- * k = unidades de UV por metro na geometria.
- */
-function uvPorPosicao(m, k) {
-  m.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader.replace("#include <uv_vertex>", `#include <uv_vertex>
-#ifdef USE_INSTANCING
-  vec3 eixoU = cross(vec3(0.0, 1.0, 0.0), normal);
-  eixoU = length(eixoU) > 0.5 ? normalize(mat3(instanceMatrix) * eixoU) : vec3(1.0, 0.0, 0.0);
-  vec3 desl = vec3(dot(instanceMatrix[3].xyz, eixoU), instanceMatrix[3].y, 0.0) * ${k.toFixed(4)};
-  #ifdef USE_MAP
-    vMapUv += (mapTransform * desl).xy;
-  #endif
-  #ifdef USE_NORMALMAP
-    vNormalMapUv += (normalMapTransform * desl).xy;
-  #endif
-  #ifdef USE_ROUGHNESSMAP
-    vRoughnessMapUv += (roughnessMapTransform * desl).xy;
-  #endif
-#endif`);
-  };
-  m.customProgramCacheKey = () => `uvPos${k}`;
-}
-
-function texFoto(img, cor, rep = 1) {
-  const t = new CanvasTexture(img);
-  t.wrapS = t.wrapT = RepeatWrapping;
-  t.repeat.set(rep, rep);
-  t.anisotropy = 8;
-  if (cor) t.colorSpace = SRGBColorSpace;
-  return t;
-}
-
-/** baixa as 7 fotos (cor, relevo e rugosidade) e troca nos materiais num momento parado. Sem a foto: fica o canvas. */
-function carregarTexturasReais() {
-  if (texReais || !ladoMat.size) return;
-  texReais = "carregando";
-  const base = new URL("../img/texturas/", import.meta.url);
-  const ver = new URL(import.meta.url).search;
-  const imagem = (nome) => {
-    const img = new Image();
-    img.decoding = "async";
-    img.src = new URL(nome + ".webp" + ver, base).href;
-    return img.decode().then(() => img);
-  };
-  Promise.all(Object.keys(TEX_REAIS).map((n) => Promise.all(["cor", "normal", "rugosidade"].map((k) => imagem(`${n}-${k}`))).then((imgs) => [n, imgs])))
-    .then((lista) => {
-      const fotos = Object.fromEntries(lista);
-      const aplicar = () => {
-        if (voo || agora() - ultimaRolagem < 400) { setTimeout(aplicar, 300); return; } // recompila os materiais: só parado
-        aplicarTexturasReais(fotos);
-      };
-      aplicar();
-    })
-    .catch(() => { texReais = null; ladoMat = new Map(); });
-}
-
-function aplicarTexturasReais(f) {
-  const usar = (m, n, opc = {}) => {
-    const [cor, normal, rug] = f[n];
-    const rep = opc.rep || 1;
-    m.map = texFoto(cor, true, rep);
-    m.normalMap = texFoto(normal, false, rep);
-    m.roughnessMap = texFoto(rug, false, rep);
-    m.roughness = opc.rugosidade ?? 1;
-    if (opc.relevo) m.normalScale.set(opc.relevo, opc.relevo);
-    m.color.set(opc.cor || "#ffffff");
-    m.needsUpdate = true;
-  };
-  // Blocão por fora: a frente do bloco tem UV 2,2 por metro — a repetição devolve o tamanho real da foto
-  usar(mats.concreto, "concreto", { rep: 1 / (BLOCO_UV * TEX_REAIS.concreto), cor: "#f1ede6", relevo: 0.6 });
-  uvPorPosicao(mats.concreto, BLOCO_UV);
-  usar(mats.laje, "concreto", { cor: "#f4f2ec", relevo: 0.4 });
-  usar(mats.pintura, "reboco", { cor: "#fdfbf6", relevo: 0.45 });
-  uvPorPosicao(mats.pintura, 1 / TEX_REAIS.reboco);
-  usar(mats.piso, "madeira", { rugosidade: 0.9 });
-  usar(mats.porcelanato, "porcelanato", { rugosidade: 0.55, relevo: 0.5 });
-  usar(mats.telha, "telha", { cor: "#f0e2d6", relevo: 0.8 });
-  usar(mats.grama, "grama", { cor: "#c3cca9" }); // puxa pro verde-sálvia da maquete
-  usar(mats.pedra, "calcada", { cor: "#f2efe9", relevo: 0.7 });
-  texReais = "prontas";
-  pDesenhado = -1;
-  pedir();
 }
 
 /* ------------------------------------------------------------------ */
@@ -669,8 +565,7 @@ const _raio = new Vector3();
 const centro = new Vector3();
 
 function peca(geo, mat, x, y, z, entra, tipo = "desce") {
-  const lado = ladoMat.get(Array.isArray(mat) ? mat[2] : mat); // caixa com foto: UV em metros (tamanho real)
-  if (lado && geo.type === "BoxGeometry") uvMetros(geo, lado);
+  uvNaCaixa(geo, mat); // caixa com foto: UV em metros (tamanho real)
   const m = new Mesh(geo, mat);
   m.position.set(x, y, z);
   m.castShadow = m.receiveShadow = nivel.sombra;
@@ -707,6 +602,7 @@ function criarMateriais() {
   const tSan = texSanduiche(128);
   const tMad = texMadeira(Math.max(128, nivel.tex / 2));
   const real = nivel !== NIVEIS.baixa; // aparelho fraco: só as texturas de canvas
+  ligarTexturas(real);
   mats = {
     concreto: new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" }),
     topo: new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" }),
@@ -729,14 +625,26 @@ function criarMateriais() {
     gente: new MeshStandardMaterial({ color: "#fbfaf7", roughness: 0.6 }),
     sombra: new MeshBasicMaterial({ map: texSombra(), transparent: true, depthWrite: false }),
   };
-  // térreo de porcelanato, laje de concreto e telhado de telha: até a foto chegar, iguais ao que eram
+  // térreo de porcelanato, laje de concreto, telhado de telha e deck: até a foto chegar, iguais ao que eram
   mats.porcelanato = mats.piso.clone();
   mats.laje = mats.branco.clone();
   mats.telha = mats.branco.clone();
-  ladoMat = new Map(real ? [
-    [mats.piso, TEX_REAIS.madeira], [mats.porcelanato, TEX_REAIS.porcelanato], [mats.laje, TEX_REAIS.concreto],
-    [mats.telha, TEX_REAIS.telha], [mats.grama, TEX_REAIS.grama], [mats.pedra, TEX_REAIS.calcada],
-  ] : []);
+  mats.deck = mats.madeira.clone();
+  // fotos (texturas.js): o Blocão por fora tem UV 2,2 por metro — a repetição devolve o tamanho real da foto
+  comFoto(mats.concreto, "concreto", { rep: 1 / (BLOCO_UV * LADO.concreto), porPosicao: BLOCO_UV, cor: "#f1ede6", relevo: 0.6 });
+  comFoto(mats.pintura, "reboco", { uv: false, porPosicao: 1 / LADO.reboco, cor: "#fdfbf6", relevo: 0.45 });
+  comFoto(mats.laje, "concreto", { cor: "#f4f2ec", relevo: 0.4 });
+  comFoto(mats.branco, "reboco", { cor: "#fbfaf6", relevo: 0.35 });
+  comFoto(mats.piso, "madeira", { rugosidade: 0.9 });
+  comFoto(mats.porcelanato, "porcelanato", { rugosidade: 0.55, relevo: 0.5 });
+  comFoto(mats.telha, "telha", { cor: "#f0e2d6", relevo: 0.8 });
+  comFoto(mats.grama, "grama", { cor: "#c3cca9" }); // puxa pro verde-sálvia da maquete
+  comFoto(mats.pedra, "calcada", { cor: "#f2efe9", relevo: 0.7 });
+  comFoto(mats.madeira, "teca", { cor: "#c99a72", rugosidade: 0.8 }); // portas e ripado
+  comFoto(mats.deck, "deck", { cor: "#efe2d4", rugosidade: 0.85 });
+  comFoto(mats.pedraEscura, "pedra-fachada", { cor: "#d9d4cc" });
+  comFoto(mats.tronco, "casca");
+  comFoto(mats.folha, "folhagem", { cor: "#7f9a6f" });
   geoBloco = new BoxGeometry(BL - JUNTA, BA - JUNTA, BE);
   const uv = geoBloco.attributes.uv;
   for (let i = 0; i < uv.count; i++) {
@@ -801,7 +709,7 @@ function montar(id) {
   blocosMesh.frustumCulled = false; // as instâncias se espalham pela casa toda
   obra.add(blocosMesh);
   const geoPintura = new BoxGeometry(BL, BA, BE + 0.012);
-  if (ladoMat.size) uvMetros(geoPintura, TEX_REAIS.reboco);
+  if (texturasLigadas()) uvMetros(geoPintura, LADO.reboco);
   pinturaMesh = new InstancedMesh(geoPintura, M.pintura, lista.length);
   lista.forEach((bl, i) => {
     _o.position.set(bl.x, bl.y, bl.z);
@@ -834,7 +742,7 @@ function montar(id) {
   const xs = L > 12 ? [A.x0 + 0.2, xm, A.x1 - 0.2] : [A.x0 + 0.2, A.x1 - 0.2];
   xs.forEach((x, i) => peca(new BoxGeometry(0.16, PE, 0.16), M.grafite, x, CHAO + PE / 2, zFrente - 0.15, [T.pilares[0] + i * 0.01, T.pilares[1] + i * 0.01], "cresce"));
   // deck de madeira na varanda do térreo
-  peca(new BoxGeometry(L - 0.1, 0.06, P.varanda - 0.05), M.madeira, xm, CHAO + 0.03, A.z1 + P.varanda / 2, [T.vidros, T.vidros + 0.04], "sobe");
+  peca(new BoxGeometry(L - 0.1, 0.06, P.varanda - 0.05), M.deck, xm, CHAO + 0.03, A.z1 + P.varanda / 2, [T.vidros, T.vidros + 0.04], "sobe");
 
   let yTopo;
   let R; // retângulo coberto pela cobertura
@@ -900,7 +808,7 @@ function montar(id) {
   // piscina com deck (casarão)
   if (P.piscina) {
     const q = P.piscina;
-    peca(new BoxGeometry(q.lx + 2.2, 0.1, q.lz + 1.6), M.madeira, q.x, -0.0, q.z, [0.86, 0.9], "sobe");
+    peca(new BoxGeometry(q.lx + 2.2, 0.1, q.lz + 1.6), M.deck, q.x, -0.0, q.z, [0.86, 0.9], "sobe");
     peca(new BoxGeometry(q.lx, 0.05, q.lz), M.agua, q.x, 0.04, q.z, [0.88, 0.92], "sobe");
   }
 
@@ -1998,6 +1906,11 @@ function montarPaisagem() {
  * um voo (montar tudo de uma vez, forçado pelo prazo, travava a casa logo no começo da construção).
  */
 let ultimaRolagem = 0;
+/** fn num momento sem voo nem rolagem (trocar texturas recompila os materiais) */
+function quandoParado(fn) {
+  if (voo || agora() - ultimaRolagem < 400) setTimeout(() => quandoParado(fn), 300);
+  else fn();
+}
 function prepararExtrasOcioso() {
   const proj = projeto;
   const agendar = () => (window.requestIdleCallback ? window.requestIdleCallback(passo, { timeout: 3000 }) : setTimeout(passo, 700));
@@ -2375,7 +2288,7 @@ window.ImperioCasa3D = {
   progresso(novo) {
     novo = limitar(novo);
     if (novo !== pAlvo) ultimaRolagem = agora();
-    if (novo > 0 && !texReais) carregarTexturasReais(); // a obra começou: as fotos das texturas descem agora
+    if (novo > 0) carregarTexturas(quandoParado, () => { pDesenhado = -1; pedir(); }); // a obra começou: as fotos descem agora
     // rolar DE VERDADE (não um tremidinho do dedo ou da barra do navegador) recoloca as paredes e tira a câmera
     if (Math.abs(novo - pRemocao) > 0.03) {
       if (tour) pararTour();

@@ -11,6 +11,7 @@ import {
   BoxGeometry, CanvasTexture, Color, Group, IcosahedronGeometry, InstancedMesh, Mesh, MeshStandardMaterial,
   Object3D, PlaneGeometry, SRGBColorSpace,
 } from "../vendor/three-imperio.min.js";
+import { comFoto, LADO, texturasLigadas, uvNaCaixa } from "./texturas.js?v=20261103b";
 
 const R90 = Math.PI / 2;
 let M = null;
@@ -88,12 +89,28 @@ function materiais() {
     farol: new MeshStandardMaterial({ color: "#fffbe8", emissive: new Color("#fff3c4"), emissiveIntensity: 0.6 }),
     lanterna: new MeshStandardMaterial({ color: "#a01818", emissive: new Color("#7a0d0d"), emissiveIntensity: 0.5 }),
   };
+  // fotos realistas (texturas.js; aparelho fraco fica com a cor lisa). Tecido, tapete e folha: a foto é cinza e
+  // a cor de cada material dá o tom
+  comFoto(M.branco, "reboco", { cor: "#fbfaf6", relevo: 0.25, rugosidade: 0.7 });
+  comFoto(M.madeiraClara, "madeira-clara", { rugosidade: 0.7 });
+  comFoto(M.madeiraEscura, "madeira-clara", { cor: "#8a6448", rugosidade: 0.7 });
+  comFoto(M.moldura, "madeira-clara", { cor: "#4a3a30", rugosidade: 0.6 });
+  for (const t of [M.tecidoCinza, M.tecidoAzul, M.tecidoBege, M.tecidoVerde, M.colchao]) comFoto(t, "tecido", { manterCor: true, relevo: 0.6 });
+  for (const t of [M.tapete, M.tapete2]) comFoto(t, "tapete", { manterCor: true, relevo: 0.8 });
+  comFoto(M.pedra, "granito", { rugosidade: 0.4 });
+  comFoto(M.folha, "folhagem", { manterCor: true });
+  comFoto(M.gramado, "grama", { cor: "#c3cca9" });
+  for (const t of [M.morro, M.morroLonge]) comFoto(t, "grama", { manterCor: true, rep: 4 });
+  comFoto(M.asfalto, "asfalto", { cor: "#d8d8d8" });
+  comFoto(M.calcada, "calcada", { cor: "#f2efe9" });
+  comFoto(M.vizinha, "reboco", { manterCor: true, relevo: 0.4 });
+  comFoto(M.vizinhaTelhado, "telha", { cor: "#e6d2c4" });
   return M;
 }
 
 /* ---------- peças ---------- */
 function cx(g, w, h, d, m, x, y, z, ry = 0) {
-  const b = new Mesh(new BoxGeometry(w, h, d), m);
+  const b = new Mesh(uvNaCaixa(new BoxGeometry(w, h, d), m), m);
   b.position.set(x, y, z);
   b.rotation.y = ry;
   b.castShadow = false;
@@ -502,6 +519,20 @@ export function cenario(base, frente, cxCasa) {
   const tGrama = new CanvasTexture(cv);
   tGrama.colorSpace = SRGBColorSpace;
   const matGrama = mat("#ffffff", { map: tGrama, transparent: true, depthWrite: false, roughness: 1 });
+  if (texturasLigadas()) {
+    // com foto: a grama de verdade no lugar do degradê, que vira só a transparência da borda (alphaMap)
+    const cvA = document.createElement("canvas");
+    cvA.width = cvA.height = 128;
+    const ga = cvA.getContext("2d");
+    const gradA = ga.createRadialGradient(64, 64, 20, 64, 64, 64);
+    gradA.addColorStop(0, "#fff");
+    gradA.addColorStop(0.5, "#999");
+    gradA.addColorStop(1, "#000");
+    ga.fillStyle = gradA;
+    ga.fillRect(0, 0, 128, 128);
+    matGrama.alphaMap = new CanvasTexture(cvA);
+    comFoto(matGrama, "grama", { cor: "#c3cca9", rep: (raioGrama * 2) / LADO.grama });
+  }
   const grama = new Mesh(new PlaneGeometry(raioGrama * 2, raioGrama * 2), matGrama);
   grama.rotation.x = -R90;
   grama.position.set(cxCasa, 0.005, base.cz);
@@ -516,8 +547,8 @@ export function cenario(base, frente, cxCasa) {
     const r = raioGrama + 4 + sorte() * 26;
     pos.push([cxCasa + Math.cos(a) * r, base.cz + Math.sin(a) * r, 0.8 + sorte() * 0.9]);
   }
-  const troncos = new InstancedMesh(new BoxGeometry(0.22, 1, 0.22), mat("#8a7a6c", { roughness: 1 }), pos.length);
-  const copas = new InstancedMesh(new IcosahedronGeometry(1, 1), mat("#ffffff", { roughness: 0.9 }), pos.length);
+  const troncos = new InstancedMesh(new BoxGeometry(0.22, 1, 0.22), comFoto(mat("#8a7a6c", { roughness: 1 }), "casca", { manterCor: true, uv: false }), pos.length);
+  const copas = new InstancedMesh(new IcosahedronGeometry(1, 1), comFoto(mat("#ffffff", { roughness: 0.9 }), "folhagem", { manterCor: true, uv: false }), pos.length);
   const o = new Object3D();
   // a = quanto a árvore está de pé (1) ou recolhida no chão (0): some quando fica entre a câmera e a casa
   const plantar = (i, a) => {
@@ -528,7 +559,8 @@ export function cenario(base, frente, cxCasa) {
   };
   pos.forEach((_, i) => {
     plantar(i, 1);
-    copas.setColorAt(i, new Color().setHSL(0.26, 0.16, 0.62 + (i % 4) * 0.04)); // verde bem claro: combina com o fundo branco
+    // verde bem claro: combina com o fundo branco (com a foto da folhagem por cima, um verde de folha de verdade)
+    copas.setColorAt(i, texturasLigadas() ? new Color().setHSL(0.27, 0.32, 0.5 + (i % 4) * 0.04) : new Color().setHSL(0.26, 0.16, 0.62 + (i % 4) * 0.04));
   });
   relevo.add(troncos, copas);
   const vizinhas = [];

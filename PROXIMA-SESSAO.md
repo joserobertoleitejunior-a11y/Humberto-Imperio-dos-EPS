@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103a`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103b`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -47,31 +47,42 @@ Perguntar qual ele prefere. O atalho já está ligado: sem ele o drone atravessa
 
 Script de medição: rolar até `#por-dentro`, esperar `ImperioCasa3D.emTourPontos()` virar true e medir até virar false.
 
-## Texturas realistas — FEITO (1ª versão)
+## Texturas realistas em tudo — FEITO
 
-- **Fotos:** CC0 da Poly Haven, 1K, convertidas para WebP em `assets/img/texturas/`. São 21 arquivos (≈ 0,9 MB), três por superfície: `-cor`, `-normal` e `-rugosidade`.
+- **Fotos:** CC0 da Poly Haven, em WebP, na pasta `assets/img/texturas/`. São 17 fotos com 3 mapas cada (`-cor`, `-normal` e `-rugosidade`): 51 arquivos, ≈ 2,2 MB.
+- **Código:** fica em `assets/js/texturas.js`, usado pela casa (`casa3d.js`) e pelos móveis e paisagem (`casa-interior.js`).
+  - `comFoto(material, nome, opções)` marca o material para receber a foto.
+  - `uvNaCaixa()` põe a foto no tamanho real (UV em metros) em qualquer caixa.
+  - `carregarTexturas()` baixa tudo quando a obra começa e troca as fotos só com a tela parada.
+  - Nos blocos e na pintura, a foto corre contínua de bloco para bloco.
+  - O lado real de cada foto fica em `LADO`.
 
-| Superfície | Arquivo | Foto original | Lado real |
-|---|---|---|---|
-| Blocão por fora e laje | `concreto` | concrete_floor_worn_001, clareada | 3 m |
-| Paredes pintadas | `reboco` | painted_plaster_wall, clareada | 2 m |
-| Piso de cima e escada | `madeira` | laminate_floor_02 | 1,7 m |
-| Térreo (piso novo) | `porcelanato` | marble_01 | 1,5 m |
-| Cobertura dentro da platibanda | `telha` | clay_roof_tiles_02 | 2,5 m |
-| Base da maquete | `grama` | leafy_grass, puxada pro verde | 2 m |
-| Alicerce, caminho e entrada do carro | `calcada` | concrete_pavement | 1,8 m |
+| Foto | Onde vai | Original |
+|---|---|---|
+| `concreto` | Blocão por fora e laje | concrete_floor_worn_001 |
+| `reboco` | pintura, branco (platibanda, base, garagem, móveis brancos) e casas vizinhas | painted_plaster_wall |
+| `madeira` | piso de cima e escada | laminate_floor_02 |
+| `porcelanato` | térreo | marble_01 |
+| `telha` | cobertura e telhado dos vizinhos | clay_roof_tiles_02 |
+| `grama` | base, gramado em volta (degradê vira só a transparência) e morros | leafy_grass |
+| `calcada` | alicerce, caminho, entrada do carro e calçada | concrete_pavement |
+| `teca` | portas e ripado | teak_veneer |
+| `deck` | deck da varanda e da piscina | wood_floor_deck, menos saturada |
+| `madeira-clara` | móveis (clara, escura e moldura) | oak_veneer_01 |
+| `tecido` | sofás, camas e colchão; cinza, tingido pela cor do material | rough_linen |
+| `tapete` | tapetes; cinza, tingido | dirty_carpet |
+| `granito` | bancadas | granite_tile |
+| `pedra-fachada` | painel de pedra do casarão | stacked_stone_wall |
+| `casca` | troncos | bark_brown_02 |
+| `folhagem` | copas e cerca viva; cinza, tingida | forest_leaves_02 |
+| `asfalto` | rua | asphalt_02 |
 
-- **Código** (`casa3d.js`, bloco "texturas realistas"):
-  - `TEX_REAIS` guarda o lado real de cada foto.
-  - `uvMetros()` põe a foto no tamanho real em qualquer peça.
-  - `uvPorPosicao()` deixa a foto contínua de um bloco para o outro nos blocos e na pintura instanciados.
-  - `carregarTexturasReais()` baixa as fotos quando a obra começa (`progresso > 0`).
-  - `aplicarTexturasReais()` troca as fotos nos materiais, só com a tela parada.
-- **Materiais novos:** `mats.porcelanato`, `mats.laje` e `mats.telha`. Até as fotos chegarem, ficam com a aparência antiga.
-- **Aparelho fraco** (`data-qualidade="baixa"`): nada muda, ficam as texturas de canvas.
-- **Corte do Blocão** (concreto | EPS | concreto, faces `ponta`/`topo`) e **bloco-guia:** continuam desenhados por código.
-- **Ajuste fino com o cliente:** os tons ficam em `aplicarTexturasReais()` (campo `cor`) e a força do relevo no campo `relevo`. Exemplos: telha mais ou menos laranja, grama mais escura.
-- **Ainda dá pra melhorar:** os móveis e o gramado em degradê em volta da casa (`casa-interior.js`) ainda são cor lisa.
+- **Sem foto, de propósito:**
+  - vidro, água, inox, grafite (metal pintado), cerâmica do banheiro, TV, espelho, carro, pneu e luzes. São superfícies lisas, que já ficam realistas com a cor e o brilho;
+  - bonequinhos de escala (maquete);
+  - corte do Blocão e bloco-guia (desenhados por código).
+- **Aparelho fraco** (`data-qualidade="baixa"`): nada muda.
+- **Tons:** cada `comFoto` tem os campos `cor` e `relevo`. Exemplos: telha menos laranja, deck mais claro.
 
 **Testes:**
 - Os E2E precisam de `CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --workers=1`: o navegador fixado pelo projeto não existe no ambiente novo.
