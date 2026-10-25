@@ -92,14 +92,20 @@ entra na casa pela parede da frente (que sai) e percorre os cômodos mobiliados 
 cada projeto em `PROJETOS`), só até sair da casa. As 6 vantagens do Blocão ficam escritas em **quadros nas paredes**
 do caminho (`montarPlacas` + `texturaPlaca` em `casa3d.js`): cada quadro só vai numa parede inteira (os 4 cantos na
 mesma parede, sem janela, porta, móvel, TV ou quadro de decoração na frente), longe dos outros; o drone chega perto
-dele pelo caminho livre e desliza devagar 1,5 s pra dar tempo de ler (`TOUR_LER`), correndo entre um e outro. ~17 s no
-total (`DUR_TOUR_SITE`). Sem legenda, sem cartão, nenhum botão: durante o tour a página não rola (`travarRolagem` em
+dele pelo caminho livre e desliza devagar 2 s pra dar tempo de ler (`TOUR_LER`). Velocidade de drone de verdade:
+2,6 m/s dentro da casa (`VEL_DENTRO`), 4,5 m/s chegando e saindo (`VEL_FORA`). Pra não ficar longo, o caminho pega
+**atalho**: pula os desvios do vídeo quando a reta até mais adiante está livre (raios com folga pros lados contra
+paredes, móveis e escada), só dentro da casa e no mesmo andar (nunca corta janela nem laje); os pontos de leitura dos
+quadros nunca saem do caminho. A curva do voo limita cada ponto vizinho a 1,5× o trecho atual (`vizinho()`): saindo da maquete lá do alto, o
+drone não "embala" e não mergulha abaixo do piso ao entrar. Móveis e paisagem são montados em duas etapas, só com a
+tela parada (`prepararExtrasOcioso`), e o aquecimento inicial desenha num pixel só (a obra não trava nem pisca). Sem legenda, sem cartão, nenhum botão: durante o tour a página não rola (`travarRolagem` em
 `casa.js`) e só o dedo funciona — gira a vista em volta do que o drone filma, sem parar o drone (`olharTour`). No fim
 volta pra maquete inteira com "Gostou? A sua pode ser assim." + "Quero construir a minha", e o site continua.
 Os móveis são montados num momento ocioso, antes de a casa ficar pronta (`garantirExtras`).
 Quadros de verdade: moldura grafite com profundidade + passe-partout claro, número "0N / 06", título azul e o texto
 (`criarQuadro`). **Arte própria (ex.: Gemini):** pôr a imagem 3 colunas × 2 linhas em `assets/img/` e apontar
-`quadrosVantagens` no `config.js` — o site recorta os 6 painéis na ORDEM (Obra rápida · Bem mais leve · Casa mais
+`quadrosVantagens` no `config.js` (hoje: `assets/img/quadros-vantagens.webp`, 2700×1520, painéis 900×760 feitos
+a partir da arte do Gemini) — o site recorta os 6 painéis na ORDEM (Obra rápida · Bem mais leve · Casa mais
 fresca / Mais silêncio · Sem mofo · Acabamento fácil); vazio = quadros desenhados pelo site.
 **Na parede em volta de cada quadro** (enquanto o drone lê): os blocos em volta perdem a tinta (Blocão cru) e a parede
 abre ao lado, mostrando o miolo (concreto + EPS + concreto); no "Acabamento fácil" a casa inteira perde a tinta.
