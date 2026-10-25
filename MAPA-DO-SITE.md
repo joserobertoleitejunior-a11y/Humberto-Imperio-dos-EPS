@@ -109,10 +109,12 @@ Quadros de verdade: moldura grafite com profundidade + passe-partout claro, núm
 `quadrosVantagens` no `config.js` (hoje: `assets/img/quadros-vantagens.webp`, 2700×1520, painéis 900×760 feitos
 a partir da arte do Gemini) — o site recorta os 6 painéis na ORDEM (Obra rápida · Bem mais leve · Casa mais
 fresca / Mais silêncio · Sem mofo · Acabamento fácil); vazio = quadros desenhados pelo site.
-**Na parede em volta de cada quadro** (enquanto o drone lê): os blocos em volta perdem a tinta (Blocão cru) e a parede
-abre ao lado, mostrando o miolo (concreto + EPS + concreto); no "Acabamento fácil" a casa inteira perde a tinta.
-Fecha ao sair do quadro (`tourAcoes`, `blocosEmVolta`, `blocoAoLado`). Trecho curto pulado por aparelho lento ainda
-dispara a sua ação (`posVoo`).
+**Paredes no tour: nenhuma abre** (só a da frente sai, pro drone entrar). Os quadros são só leitura.
+**Depois do tour, a casa é clicável:** tocar numa parede de fora (ou no telhado/varanda: vale a parede de fora
+mais perto do toque) tira ela e a câmera entra pela abertura pra ver por dentro (`tocar` → `removerParede`). A
+chamada do fim avisa: "Toque numa parede e veja a casa por dentro".
+**Rolagem rápida para na maquete:** o embalo do dedo/roda pra baixo que cruzaria o ponto da casa pronta para ali
+(`ligarParadaNaMaquete` em `casa.js`; > 1,2 px/ms, só gesto da pessoa — links do menu passam direto).
 
 **Celular — maquete livre:** título, etapa, dica, tipos de casa, botão/contador e a nota ficam todos embaixo, no bloco
 de texto; na frente da maquete, nada. A câmera enquadra a casa no espaço livre entre o

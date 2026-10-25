@@ -208,8 +208,9 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.mouse.move(cx.x - 140, cx.y, { steps: 6 });
   await page.mouse.up();
   expect(await page.evaluate(() => window.ImperioCasa3D.olharTour())).not.toBe(0);
+  expect(await page.evaluate(() => window.ImperioCasa3D.corteAberto())).toBe(0); // o tour não abre parede
   expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(true);
-  // termina sozinho com a chamada pra comprar, e o site continua (tour ≈ 48 s: duração em decisão com o cliente)
+  // termina sozinho com a chamada pra comprar, e o site continua (tour ≈ 31 s: duração em decisão com o cliente)
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 80000 }).toBe(false);
   await expect(page.locator("[data-casa-vantagem]")).toContainText("Gostou?");
   await expect(page.locator(".casa__cta")).toBeVisible();

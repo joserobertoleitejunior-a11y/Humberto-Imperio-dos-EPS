@@ -151,6 +151,63 @@
     });
   }
 
+  /**
+   * Rolagem RÁPIDA pra baixo (embalo do dedo ou da roda) não passa reto da maquete: o embalo para no ponto em que a
+   * casa fica pronta — aí o tour começa. Rolagem normal segue livre; links do menu (#contato…) passam direto.
+   */
+  function ligarParadaNaMaquete() {
+    var yAnt = window.scrollY;
+    var tAnt = performance.now();
+    var gesto = 0;      // último toque/roda da pessoa
+    var navegando = 0;  // último clique num link do menu
+    var segurando = false;
+    var dedo = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    var marcar = function () { gesto = performance.now(); };
+    ["touchstart", "touchmove", "touchend", "wheel", "keydown"].forEach(function (t) { window.addEventListener(t, marcar, { passive: true }); });
+    document.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest('a[href^="#"]')) navegando = performance.now();
+    }, true);
+    var barrar = function (e) { if (e.cancelable) e.preventDefault(); };
+    function pararEm(y) {
+      segurando = true;
+      // corta o embalo: no celular, o overflow escondido por 1 quadro para a inércia do dedo (iPhone); roda e
+      // trackpad seguem mandando eventos por um instante — esses são ignorados por 0,6 s
+      if (dedo) html.style.overflow = "hidden";
+      window.scrollTo({ top: y, behavior: "instant" });
+      window.addEventListener("wheel", barrar, { passive: false });
+      window.addEventListener("touchmove", barrar, { passive: false });
+      requestAnimationFrame(function () {
+        if (dedo) html.style.overflow = "";
+        window.scrollTo({ top: y, behavior: "instant" });
+      });
+      setTimeout(function () {
+        window.removeEventListener("wheel", barrar, { passive: false });
+        window.removeEventListener("touchmove", barrar, { passive: false });
+        segurando = false;
+        yAnt = window.scrollY;
+      }, 600);
+    }
+    function yMaquete() {
+      var j = window.ImperioMotion && window.ImperioMotion.jornada();
+      if (!j || !j.medido || !(j.fim < 1)) return null;
+      var total = j.alturaSecao - alturaTela();
+      var q = TROCA + 0.985 * (1 - TROCA); // casa pronta (maquete completa: p > 0,97)
+      return j.topoSecao + (j.fim + q * (1 - j.fim)) * total;
+    }
+    window.addEventListener("scroll", function () {
+      var y = window.scrollY;
+      var t = performance.now();
+      var de = yAnt;
+      var v = (y - de) / Math.max(1, t - tAnt); // px/ms
+      yAnt = y;
+      tAnt = t;
+      if (segurando || !C3 || v < 1.2) return;
+      if (t - gesto > 2500 || t - navegando < 2500) return; // só o embalo da pessoa (não o menu nem o código)
+      var yM = yMaquete();
+      if (yM !== null && de < yM - 2 && y > yM + 2) pararEm(Math.round(yM));
+    }, { passive: true });
+  }
+
   function aoDesenhar(info) {
     if (contador && info.assentados !== ultimoCont) {
       ultimoCont = info.assentados;
@@ -191,7 +248,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261104a")
+    import("./casa3d.js?v=20261104b")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -229,6 +286,7 @@
         ligarMargens();
         ligarTour();
         ligarVantagens();
+        ligarParadaNaMaquete();
         if (botaoAndar) botaoAndar.addEventListener("click", function () { C3.trocarAndar(); atualizarAndar(); if (corte) corte.hidden = true; });
         var rec = camada.querySelector("[data-casa-recolocar]");
         if (rec) rec.addEventListener("click", function () { C3.recolocar(); });

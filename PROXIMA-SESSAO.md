@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104a`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104b`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -31,19 +31,17 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
 
-## Tour: ler o quadro, recuar e só então abrir a parede (feito)
+## Tour sem abrir parede + casa clicável + parada na maquete (feito)
 
-- Em cada quadro o drone passa por 4 pontos (`ver[0..3]` em `montarPlacas`):
-  1. chega;
-  2. lê com a parede fechada (`TOUR_LER`, 2 s);
-  3. recua o máximo que o cômodo deixa e vira para o lado do quadro, com a parede ainda fechada (`TOUR_RECUAR`, 1,4 s);
-  4. lá atrás, quase parado, a parede abre (`TOUR_VER`, 2,2 s).
-- Motivo: no celular em pé a tela é estreita. De perto só o quadro cabia, e a parede abrindo ficava fora do enquadramento.
-- **Recuo:**
-  - na altura do olho, nunca passa de um móvel alto: o drone não entra no armário;
-  - na altura dos móveis baixos (vaso, cadeira), fica na frente deles se sobrar distância.
-- **Para testes:** `ImperioCasa3D.corteAberto()` diz se a parede ao lado do quadro está aberta (0..1).
-- **Como conferir o tour quadro a quadro:** usar o relógio falso do Playwright (`page.clock.install()` + `runFor`). Com o WebGL por software, o tempo real pula quadros e as capturas enganam.
+- **Tour:** nenhuma parede abre. Só a da frente sai, para o drone entrar. Em cada quadro o drone chega e desliza 2 s lendo (`TOUR_LER`). Saíram o recuo, a abertura ao lado do quadro e a tinta saindo no "Acabamento".
+- **Depois do tour:** tocar numa parede de fora abre a parede e a câmera entra (`tocar` → `removerParede`).
+  - Tocar no telhado, na varanda ou no deck usa a parede de fora mais perto do toque.
+  - A chamada do fim diz "Toque numa parede e veja a casa por dentro".
+- **Rolagem rápida para baixo para na maquete pronta** (`ligarParadaNaMaquete` em `casa.js`):
+  - só com gesto da pessoa (dedo ou roda) acima de 1,2 px/ms;
+  - links do menu passam direto;
+  - no celular, o `overflow` escondido por 1 quadro corta a inércia do dedo.
+- **Duração do tour:** voltou a ser só leitura, como antes (31 s na casa média, medido com relógio controlado).
 
 ## Texturas em todo celular (corrigido de verdade)
 
@@ -82,7 +80,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 
 ## Decisão pendente com o cliente: duração do tour
 
-**Hoje, com ler → recuar → abrir:** ≈ 48 s na casa média. O teste E2E espera até 80 s.
+**Hoje (só leitura, sem abrir parede):** 31 s na casa média. O teste E2E espera até 80 s.
 
 Medido antes dessa mudança, com o drone "de verdade":
 - simples: 28,4 s
