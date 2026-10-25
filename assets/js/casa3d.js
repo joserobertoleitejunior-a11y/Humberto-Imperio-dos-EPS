@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104c";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104c";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104d";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104d";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -1480,7 +1480,8 @@ function iniciarTour(site = false) {
   return true;
 }
 
-function fimTour() {
+/** silencioso = troca de casa no meio do tour: encerra sem a chamada "Gostou?" (o tour recomeça na casa nova) */
+function fimTour(silencioso = false) {
   const site = tour && tour.site;
   const inteiro = !(tour && tour.interrompido);
   tour = null;
@@ -1492,7 +1493,9 @@ function fimTour() {
   fecharPonto();
   animarOrbita();
   // acabou o tour do site: a chamada pra comprar e o site continua
-  if (ouvintePonto) ouvintePonto({ ativo: false, fim: true, acabou: inteiro, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
+  if (!ouvintePonto) return;
+  if (silencioso) ouvintePonto({ ativo: false });
+  else ouvintePonto({ ativo: false, fim: true, acabou: inteiro, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
 }
 
 /** parar no meio: volta voando pra vista de fora */
@@ -2502,7 +2505,8 @@ girar(dx, dy = 0, dtMs = 16) {
   tipo(id) {
     if (id === tipoAtual || !PROJETOS[id]) return;
     const estavaDentro = !!interior || fora.size > 0;
-    if (foco || (voo && voo.ponto)) { voltarPonto(); saidaFoco = null; } // trocou de casa: sai do ponto / do tour
+    if (foco || (voo && voo.ponto)) { voltarPonto(); saidaFoco = null; } // trocou de casa: sai do ponto
+    if (tour) { tour.interrompido = true; voo = null; fimTour(true); } // ...e do tour (avisando a página)
     destaque = null;
     montar(id);
     passeio = null;

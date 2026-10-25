@@ -208,6 +208,9 @@ main { position: relative; z-index: 2; }
 .jornada { height: 1060vh; height: calc(var(--vh, 1vh) * 1060); }
 .jornada.jornada--sem-casa { height: 640vh; height: calc(var(--vh, 1vh) * 640); }
 .jornada__ancora-casa { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; }
+/* parada na maquete pronta (casa.js): o embalo do dedo/roda não passa reto — o próprio navegador segura a inércia */
+html.com-parada { scroll-snap-type: y proximity; }
+.jornada__parada { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-snap-align: start; scroll-snap-stop: always; }
 .casa { position: absolute; inset: 0; z-index: 6; opacity: 0; visibility: hidden; pointer-events: none; --ouro: 0; }
 .fase-casa .casa { visibility: visible; pointer-events: auto; }
 /* o Blocão do site voa POR CIMA da maquete até o canto da obra (sem cópia); no celular o canvas dele ocupa a tela */
@@ -281,7 +284,9 @@ main { position: relative; z-index: 2; }
 /* tour: legenda de cinema (embaixo da escolha de casa) + parar; aviso do corte ao tirar parede por dentro */
 .casa__tour { margin-top: 8px; margin-left: 6px; opacity: 0; pointer-events: none; transition: opacity 0.35s; background: var(--grafite); color: #fff; }
 .casa--pronta .casa__tour { opacity: 1; pointer-events: auto; }
-.casa--tour .casa__txt, .casa--tour .casa__contador, .casa--tour .casa__nota { opacity: 0; pointer-events: none; }
+/* tour: o texto sai da frente — menos a escolha de casa (trocar de casa recomeça o tour na casa nova) */
+.casa--tour .casa__txt > :not(.casa__tipos), .casa--tour .casa__contador, .casa--tour .casa__nota { opacity: 0; pointer-events: none; }
+.casa__txt > * { transition: opacity 0.35s; }
 .casa__tourbarra { position: absolute; z-index: 6; left: 50%; bottom: max(22px, 4vh); transform: translateX(-50%); width: min(560px, 100% - 24px); display: grid; justify-items: center; gap: 10px; }
 .casa__tourbarra[hidden], .casa__aviso[hidden], .casa__legenda[hidden] { display: none; }
 .casa__legenda { margin: 0; padding: 10px 18px; border-radius: 12px; background: rgba(20, 22, 26, 0.72); color: #fff; font-size: 1.02rem; font-weight: 750; text-align: center;

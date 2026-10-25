@@ -116,7 +116,12 @@ entra na casa (`tocar` → `alternarParedeFora`). Tocar de novo na mesma parede,
 A chamada do fim avisa: "Toque numa parede e veja a casa por dentro". (`removerParede`, que entrava na casa, ficou
 reservado sem uso.)
 **Rolagem rápida para na maquete:** o embalo do dedo/roda pra baixo que cruzaria o ponto da casa pronta para ali
-(`ligarParadaNaMaquete` em `casa.js`; > 1,2 px/ms, só gesto da pessoa — links do menu passam direto).
+(`ligarParadaNaMaquete` em `casa.js`). 1) Nativo: marcador `.jornada__parada` com `scroll-snap-stop: always` (e
+`html.com-parada { scroll-snap-type: y proximity }`) — o próprio navegador segura a inércia do dedo; posicionado em
+`posicionarAncora` (compensa o `scroll-padding-top`). 2) Reforço em JS: > 1,2 px/ms com gesto da pessoa, a página
+fica sem rolagem por 0,3 s e volta pra maquete. Links do menu passam direto; subir é livre.
+**Trocar de casa recomeça o tour:** com a maquete pronta na tela, clicar em outra casa encerra o tour atual (sem a
+chamada do fim) e, 0,9 s depois, começa o tour da casa nova. Os botões de tipo ficam visíveis durante o tour.
 
 **Celular — maquete livre:** título, etapa, dica, tipos de casa, botão/contador e a nota ficam todos embaixo, no bloco
 de texto; na frente da maquete, nada. A câmera enquadra a casa no espaço livre entre o

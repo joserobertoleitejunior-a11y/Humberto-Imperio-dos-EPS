@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104c`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104d`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -41,9 +41,13 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
   - `removerParede` (que entrava na casa) ficou sem uso, só reservado. Com isso, o passeio por dentro também ficou inalcançável.
   - A chamada do fim diz "Toque numa parede e veja a casa por dentro".
 - **Rolagem rápida para baixo para na maquete pronta** (`ligarParadaNaMaquete` em `casa.js`):
-  - só com gesto da pessoa (dedo ou roda) acima de 1,2 px/ms;
-  - links do menu passam direto;
-  - no celular, o `overflow` escondido por 1 quadro corta a inércia do dedo.
+  - a 1ª versão (só JavaScript) não segurou a inércia num celular de verdade;
+  - agora a parada é **nativa**: marcador `.jornada__parada` com `scroll-snap-stop: always`. Testado com gesto do Chromium: 2.600 px cruzando a maquete pararam exatamente nela, e depois dá para continuar descendo;
+  - o JavaScript ficou como reforço: a página fica sem rolagem por 0,3 s;
+  - o Chromium de teste não simula a inércia do dedo: **conferir num celular real**, principalmente iPhone.
+- **Trocar de casa recomeça o tour** com a maquete pronta: o tour atual acaba sem a chamada do fim e o da casa nova começa 0,9 s depois.
+  - Os botões de tipo ficam visíveis durante o tour.
+  - O CSS do tour esconde os filhos de `.casa__txt`, menos `.casa__tipos`.
 - **Duração do tour:** voltou a ser só leitura, como antes (31 s na casa média, medido com relógio controlado).
 
 ## Texturas em todo celular (corrigido de verdade)

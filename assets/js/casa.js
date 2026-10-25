@@ -83,11 +83,22 @@
     pintar(ultimoP);
   }
 
+  var timerTipo = 0;
   function escolherTipo(id) {
     botoesTipo.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-casa-tipo") === id)); });
     if (!C3) return;
+    var mudou = C3.tipoAtual() !== id;
     C3.tipo(id);
     montarEtapas();
+    // trocou de casa com a maquete pronta na tela: o tour recomeça na casa nova (dá um respiro pra ela montar
+    // móveis e paisagem num momento ocioso — o clique não trava)
+    clearTimeout(timerTipo);
+    if (mudou && camada.classList.contains("casa--maquete")) {
+      timerTipo = setTimeout(function () {
+        var j = window.ImperioMotion && window.ImperioMotion.jornada();
+        if (camada.classList.contains("casa--maquete") && j && j.dentro && !C3.emTour()) C3.tourPontos();
+      }, 900);
+    }
   }
 
   /* ---------- tour do drone pelas vantagens: parece um vídeo, mas o dedo pode girar a vista ---------- */
@@ -156,6 +167,16 @@
    * casa fica pronta — aí o tour começa. Rolagem normal segue livre; links do menu (#contato…) passam direto.
    */
   function ligarParadaNaMaquete() {
+    // 1) nativo: ponto de encaixe (scroll-snap-stop: always) na maquete pronta — o navegador para a inércia ali
+    if (jornadaEl && window.CSS && CSS.supports && CSS.supports("scroll-snap-stop", "always")) {
+      parada = document.createElement("span");
+      parada.className = "jornada__parada";
+      parada.setAttribute("aria-hidden", "true");
+      jornadaEl.appendChild(parada);
+      html.classList.add("com-parada");
+      ancoraFim = -1; // reposiciona já
+    }
+    // 2) reforço: se a inércia passar assim mesmo, o código corta o embalo e volta pra maquete
     var yAnt = window.scrollY;
     var tAnt = performance.now();
     var gesto = 0;      // último toque/roda da pessoa
@@ -170,16 +191,18 @@
     var barrar = function (e) { if (e.cancelable) e.preventDefault(); };
     function pararEm(y) {
       segurando = true;
-      // corta o embalo: no celular, o overflow escondido por 1 quadro para a inércia do dedo (iPhone); roda e
-      // trackpad seguem mandando eventos por um instante — esses são ignorados por 0,6 s
-      if (dedo) html.style.overflow = "hidden";
+      // corta o embalo: no celular, a página fica sem rolagem por 0,3 s (overflow escondido no html e no body) —
+      // a inércia do dedo morre (iPhone e Android); roda e trackpad seguem mandando eventos: ignorados por 0,6 s
       window.scrollTo({ top: y, behavior: "instant" });
+      if (dedo) { html.style.overflow = "hidden"; document.body.style.overflow = "hidden"; }
       window.addEventListener("wheel", barrar, { passive: false });
       window.addEventListener("touchmove", barrar, { passive: false });
-      requestAnimationFrame(function () {
-        if (dedo) html.style.overflow = "";
-        window.scrollTo({ top: y, behavior: "instant" });
-      });
+      var segurar = function () { window.scrollTo({ top: y, behavior: "instant" }); };
+      requestAnimationFrame(segurar);
+      setTimeout(function () {
+        if (dedo) { html.style.overflow = ""; document.body.style.overflow = ""; }
+        segurar();
+      }, 300);
       setTimeout(function () {
         window.removeEventListener("wheel", barrar, { passive: false });
         window.removeEventListener("touchmove", barrar, { passive: false });
@@ -216,11 +239,18 @@
   }
 
   /** âncora #casa (menu "A casa") no começo da fase da casa */
+  var parada = null; // ponto de encaixe da rolagem na maquete pronta (ligarParadaNaMaquete)
   function posicionarAncora(j) {
     if (!ancora || !j || j.fim === ancoraFim) return;
     ancoraFim = j.fim;
     var total = jornadaEl.offsetHeight - alturaTela();
     ancora.style.top = Math.round((j.fim + (1 - j.fim) * 0.06) * total) + "px";
+    if (parada) {
+      // o encaixe alinha o topo do marcador no topo da tela + scroll-padding-top (cabeçalho): compensa
+      var pad = parseFloat(getComputedStyle(html).scrollPaddingTop) || 0;
+      var q = TROCA + 0.985 * (1 - TROCA); // casa pronta (maquete completa: p > 0,97)
+      parada.style.top = Math.round((j.fim + q * (1 - j.fim)) * total + pad) + "px";
+    }
   }
 
   function atualizar(j) {
@@ -248,7 +278,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261104c")
+    import("./casa3d.js?v=20261104d")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
