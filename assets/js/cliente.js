@@ -1,6 +1,7 @@
 /**
- * Cadastro do cliente ("Entrar com WhatsApp"). Base: identificacao.js da San.
- * - Guarda nome/WhatsApp/cidade/perfil no navegador ("Bem-vindo de volta").
+ * Cadastro do cliente: só nome e WhatsApp. Base: identificacao.js da San.
+ * - Guarda nome/WhatsApp no navegador ("Bem-vindo de volta").
+ * - Autorização de contato (LGPD) informada no próprio formulário: cadastrar = autorizar.
  * - Com Supabase ativo, grava na tabela "clientes" (só inserção — ver schema).
  * - Sem verificação por código: exige a API oficial do WhatsApp Business.
  */
@@ -75,7 +76,7 @@
       var ini = b.querySelector("[data-inicial]");
       var logado = !!(c && c.nome);
       b.setAttribute("data-logado", String(logado));
-      b.setAttribute("aria-label", logado ? "Conectado como " + c.nome : "Entrar com WhatsApp");
+      b.setAttribute("aria-label", logado ? "Conectado como " + c.nome : "Cadastro com WhatsApp");
       if (ini) ini.textContent = logado ? c.nome.charAt(0).toUpperCase() : "";
     });
     if (!el.modal) return;
@@ -113,21 +114,14 @@
     var f = el.form;
     var nome = f.querySelector("#entrar-nome").value.trim();
     var whats = f.querySelector("#entrar-whatsapp").value;
-    var aceite = f.querySelector("#entrar-aceite").checked;
     var status = f.querySelector("[data-entrar-status]");
     if (!nome) { status.textContent = "Escreva seu nome."; return; }
     if (!whatsappValido(whats)) { status.textContent = "Confira o WhatsApp com DDD, ex.: (15) 99999-9999."; return; }
-    if (!aceite) { status.textContent = "Marque a autorização de contato para continuar."; return; }
     status.textContent = "";
     var botao = f.querySelector("button[type=submit]");
     botao.disabled = true;
     botao.classList.add("carregando");
-    salvar({
-      nome: nome,
-      whatsapp: whats,
-      cidade: f.querySelector("#entrar-cidade").value,
-      perfil: (f.querySelector("input[name=perfil]:checked") || {}).value || "",
-    }, "entrar");
+    salvar({ nome: nome, whatsapp: whats }, "entrar");
     setTimeout(function () {
       botao.disabled = false;
       botao.classList.remove("carregando");

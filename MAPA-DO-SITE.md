@@ -7,7 +7,7 @@
 
 | Quero mudar... | Arquivo | Onde |
 |---|---|---|
-| WhatsApp, Instagram, cidade, endereço, mapa, link do Google (`googleUrl`), Facebook (`facebookUrl`: vazio = ícone escondido) — alimentam os **atalhos flutuantes** (`index.html` `===== ATALHOS FLUTUANTES`) | `assets/js/config.js` | `window.IMPERIO_CONFIG` (único ponto) |
+| WhatsApp, Instagram, cidade, endereço, mapa, link do Google (`googleUrl`), Facebook (`facebookUrl`: vazio = ícone escondido) — alimentam a **faixa de atalhos** (`index.html` `===== ATALHOS`) | `assets/js/config.js` | `window.IMPERIO_CONFIG` (único ponto) |
 | Medida do bloco (habilita "nº de blocos" na calculadora **e** medidas/peso nas fichas da jornada) | `assets/js/config.js` | `medidaBloco: { largura, altura }` em metros + `perdaPercentual` |
 | Peso real de cada bloco | `assets/js/config.js` | `pesos: { b15: 80, ... }` (substitui a estimativa) · estimativa usa `densidades` |
 | Ficha técnica dos blocos | `config.js` → `blocos` **e** `index.html` → `===== FICHA TÉCNICA` e painéis da `===== JORNADA` | o corte em escala usa `style="--c:3.5;--e:8"` |
@@ -17,8 +17,6 @@
 | Ligar Sentry | `config.js` → `sentryDsn` | |
 | Cores e fonte | `assets/css/site.css` / `admin.css` | `:root` (cal, concreto, grafite, azul técnico). Fonte Archivo hospedada em `assets/fonts/` |
 | Logo | `assets/img/marca.svg` (claro) e `marca-clara.svg` (fundo escuro) | provisório; ver `brand/LOGO.md` |
-| Splash (abertura) | `index.html` `===== SPLASH` + CSS "Splash" em `site.css` | tempo de fechar: `boas-vindas.js` (3,2 s) |
-| Tela de boas-vindas com vídeo | `index.html` `===== BOAS-VINDAS` + `boas-vindas.js` | vídeo em `video/como-orcar.mp4` |
 | Aparência do bloco 3D (concreto, pérolas do EPS, luz) | `assets/js/bloco3d.js` | `texturasConcreto()`, `texturasEPS()`, luzes em `iniciar()` |
 | Roteiro do bloco: vista explodida SÓ DEMONSTRATIVA (o concreto não solta do EPS na vida real) → abre ao meio → fichas na horizontal → monta de novo | `assets/js/cena.js` (`alvoJornada`, comentário com as faixas de rolagem) e `assets/js/motion.js` (`pintarJornada`, curva do "L") | |
 | Peças interativas (arrastar, girar, Separar/Juntar/Só EPS/Só concreto, volta ao rolar) | `assets/js/toque.js` (gestos e botões) + `bloco3d.js` → objeto `interacao` | área de toque: `[data-toque]` (hero e `.jornada__toque`) |
@@ -92,6 +90,18 @@ Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamen
 **Toque livre pro giro:** a faixa de toque da linha fica só sob o texto (a parte que cruza a casa não segura o dedo);
 bolinhas escondidas e a bolinha do ponto em foco (no meio da tela) deixam o dedo passar pra maquete.
 
+**Passo a passo e tour do drone (sem botão):** o cartão do ponto mostra "N de 6" e ‹ Anterior · Próxima › (minimalista),
+na ordem `ORDEM` de `casa3d.js` (Obra rápida → Bem mais leve → Casa mais fresca → Mais silêncio → Sem mofo → Acabamento
+fácil). Quando a maquete termina na rolagem e a página fica parada, o drone faz sozinho o tour por todos os pontos
+(`tourPontos`): nunca para — desacelera contornando cada corte (1,7 s) enquanto o cartão conta a vantagem e acelera até
+o próximo (0,85 s); volta pra maquete inteira e termina com "Gostou? A sua pode ser assim." + o botão "Quero construir
+a minha". ~17,7 s no total (medido). Uma vez por visita; não começa se a pessoa já tocou na casa; qualquer toque,
+arrasto ou rolagem devolve o controle na hora.
+
+**Celular — maquete livre:** título, etapa, dica, tipos de casa, botão/contador e a nota ficam todos embaixo, no bloco
+de texto; na frente da maquete só as etiquetas minimalistas. A câmera enquadra a casa no espaço livre entre o
+cabeçalho e o bloco de texto, medido de verdade (`ImperioCasa3D.margens`, `ligarMargens` em `casa.js`).
+
 **Cenário leve (fundo branco):** casa pronta = fundo branco (`.casa__ceu::before`); cor só em volta da casa (gramado
 em degradê que some no branco) e 12 árvores claras ao fundo. Saíram rua, morros, vizinhas e o gramado até o horizonte
 (`cenario()` em `casa-interior.js`).
@@ -148,8 +158,8 @@ da tela. `dispositivo.js` guarda uma altura estável (`ImperioTela.altura()` e `
 numa mudança grande); a seção "Por dentro", a tela fixa e o 3D usam essa medida. A obra também desliza até o ponto da
 rolagem com uma "mola" de ~90 ms (fora do voo do Blocão, que segue a rolagem exata).
 
-**Abertura**: na 1ª visita o site abre DIRETO na tela do vídeo (o html já nasce com `.abre-video`: capa no 1º quadro,
-botões na hora, o vídeo toca quando carregar). A splash clara só aparece ao recarregar na mesma sessão.
+**Abertura**: o site abre DIRETO no conteúdo (sem splash e sem tela de vídeo antes — saíram `#splash`, `#boas-vindas`
+e `boas-vindas.js`). O 3D do Blocão começa a preparar no primeiro momento ocioso.
 Toda mudança em JS/CSS troca o `?v=` no index.html (senão o celular continua com a versão antiga no cache).
 
 **Sem zoom**: meta viewport com `user-scalable=no`, `touch-action: pan-x pan-y` no html e `dispositivo.js` barra pinça
@@ -165,9 +175,9 @@ O menu "A casa" leva pra `#casa` (âncora posicionada no começo da fase). `moti
 ## 3. Arquivos
 
 ```
-index.html                     Página de vendas (splash, hero 3D, faixas, jornada em L, benefícios, ficha,
+index.html                     Página de vendas (abre direto, sem splash; faixa de atalhos, hero 3D, faixas, jornada em L, benefícios, ficha,
                                comparativo, calculadora, linha EPS, galeria, promoções, como funciona, FAQ, contato,
-                               boas-vindas com vídeo, modal de cadastro, lightbox)
+                               modal de cadastro (nome + WhatsApp), lightbox)
 admin.html                     Painel: login | Visão geral · Orçamentos · Clientes · Promoções · Galeria
 
 assets/css/site.css            Visual do site (mobile-first)
@@ -178,13 +188,12 @@ assets/vendor/three-imperio.min.js  Three.js só com o que a cena usa (gerado: n
 assets/js/dispositivo.js       (head) nível de qualidade do aparelho + altura real da tela
 assets/js/config.js            ★ Configuração única
 assets/js/observabilidade.js   Sentry (só com DSN)
-assets/js/boas-vindas.js       Splash (fecha/pula) + tela de boas-vindas com o vídeo (1x por sessão)
 assets/js/supabase-init.js     SDK sob demanda (não bloqueia a abertura)
 assets/js/analytics.js         Páginas vistas e cliques → tabelas paginas_vistas/cliques
-assets/js/main.js              Links de contato, atalhos flutuantes (Google, Ligar, Facebook), menu, header, revelar ao rolar, toast
+assets/js/main.js              Links de contato, faixa de atalhos que anda sozinha e arrasta (iniciarFaixaAtalhos), menu, header, revelar ao rolar, toast
 assets/js/especificacoes.js    Medidas e peso de cada peça (concreto externo, EPS, concreto interno, montado) + espessura escolhida
 assets/js/motion.js            Letras na rolagem, faixas horizontais, jornada em "L" (sticky)
-assets/js/cliente.js           Cadastro "Entrar com WhatsApp" → tabela clientes
+assets/js/cliente.js           Cadastro só com nome + WhatsApp (autorização LGPD informada no formulário) → tabela clientes
 assets/js/calculadora-nucleo.js  Regra da calculadora (sem DOM, roda no Node)
 assets/js/calculadora.js       Interface da calculadora → WhatsApp + tabela orcamentos
 assets/js/conteudo.js          Promoções e galeria vindas do banco (skeleton + lightbox)
@@ -196,13 +205,13 @@ assets/img/                    marca, favicon, og-image, bloco-fechado/desmontad
 
 video/index.html               Vídeo tutorial "O Blocão em 30 segundos" (Stories 1080×1920) — motor da Pizza em Dobro
 video/motion.js / motion.css   Motor: celular com o site de verdade, legendas animadas, WhatsApp chegando
-video/como-orcar.mp4 (+ capa)  Vídeo pronto, 720p ~2 MB (tela de boas-vindas; liga/desliga em config.boasVindasComVideo)
+video/como-orcar.mp4 (+ capa)  Vídeo pronto, 720p ~2 MB (fora do site: a tela de boas-vindas saiu)
 video/trilha-como-orcar.mp3    Trilha sintetizada (sem direitos autorais, sem locução)
 scripts/                       vendor-three.js, exportar-roteiro.js, gerar-trilha-video.py, renderizar-video.js
 
 supabase/schema.sql            Tabelas + RLS + bucket de fotos + papel admin
 tests/*.test.js                Unitários (npm test) — rodam antes de todo deploy
-tests/e2e/fluxo.spec.js        E2E Playwright (splash → boas-vindas, calculadora, cadastro, 3D/L, peças interativas, nível estático, painel, sem rolagem lateral)
+tests/e2e/fluxo.spec.js        E2E Playwright (abre direto, calculadora, cadastro, 3D/L, peças interativas, nível estático, painel, sem rolagem lateral)
 brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md, capas de destaque, scripts geradores
 ```
 
@@ -212,7 +221,7 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 - PC: o canvas 3D fica **fixo atrás** do conteúdo: hero e jornada são transparentes; as outras seções têm fundo e cobrem o canvas.
 - Celular (< 760 px): o canvas **mora dentro do que rola** — no palco da hero e, depois, na parte fixa (sticky) da jornada.
   Quem move o bloco é o navegador, junto com a página (canvas fixo + JS fica 1–2 quadros atrás da rolagem do celular e o bloco "escorrega").
-- Ordem dos `<script>` importa: `config` → `observabilidade` → `boas-vindas` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena` → `toque`.
+- Ordem dos `<script>` importa: `config` → `observabilidade` → `supabase-init` → `analytics` → `main` → `especificacoes` → `motion` → `cliente` → `calculadora-nucleo` → `calculadora` → `conteudo` → `cena` → `toque`.
 - Tudo respeita `prefers-reduced-motion` (vira nível `estatica`).
 
 ## Pendências (próxima sessão)

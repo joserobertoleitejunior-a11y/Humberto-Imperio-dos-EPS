@@ -21,10 +21,8 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261029d"></script>
-  <!-- splash só na 1ª abertura da sessão (ou ao recarregar); navegando dentro do site ela não volta -->
-  <script>try{var _n=performance.getEntriesByType("navigation")[0],_r=_n&&_n.type==="reload",_i=document.referrer&&document.referrer.indexOf(location.origin)===0;if(sessionStorage.getItem("imperio_splash")&&!_r&&_i)document.documentElement.classList.add("sem-splash");if(!sessionStorage.getItem("imperio_bv")&&!/[?&]video/.test(location.search))document.documentElement.classList.add("abre-video")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261029d">
+  <script src="assets/js/dispositivo.js?v=20261030e"></script>
+  <link rel="stylesheet" href="assets/css/site.css?v=20261030e">
 
   <script type="application/ld+json">
   {
@@ -42,20 +40,6 @@
   </script>
 </head>
 <body>
-  <!-- ===== SPLASH (CSS puro: aparece no 1º quadro, sem esperar JS) -->
-  <div id="splash" role="dialog" aria-label="Boas-vindas ao Império do EPS">
-    <div class="splash__bloco" aria-hidden="true">
-      <div class="splash__metade splash__metade--e"><i class="c"></i><i class="e"></i><i class="c"></i></div>
-      <div class="splash__metade splash__metade--d"><i class="c"></i><i class="e"></i><i class="c"></i></div>
-    </div>
-    <p class="splash__nome" aria-hidden="true"><span style="--i:0">IMPÉRIO</span> <span class="az" style="--i:1">DO</span> <span class="az" style="--i:2">EPS</span></p>
-    <p class="splash__sub" aria-hidden="true">Fábrica do Blocão · Itapetininga</p>
-    <div class="splash__acoes">
-      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#topo"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
-      <button type="button" class="btn-redondo btn-redondo--azul" data-ir="#calculadora"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M15.5 12h0M8.5 16h1M12 16h1M15.5 16h0"/></svg></span><span class="btn-redondo__tx">Orçamento</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
-    </div>
-    <p class="splash__toque">toque fora dos botões pra entrar</p>
-  </div>
 
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
@@ -77,7 +61,7 @@
         <a class="nav__admin" href="admin.html">Área administrativa</a>
       </nav>
       <div class="cabecalho__acoes">
-        <button class="botao-entrar" type="button" data-abrir-entrar aria-label="Entrar com WhatsApp">
+        <button class="botao-entrar" type="button" data-abrir-entrar aria-label="Cadastro com WhatsApp">
           <span class="botao-entrar__inicial" data-inicial aria-hidden="true"></span>
           <svg class="botao-entrar__icone" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
         </button>
@@ -90,40 +74,42 @@
   </header>
 
 
-  <!-- ===== ATALHOS FLUTUANTES (transparentes): WhatsApp · Instagram · Local · Google · Ligar · Facebook (só se existir) -->
+  <!-- ===== ATALHOS: faixa de botões translúcidos que anda sozinha e arrasta com o dedo (Facebook/e-mail só se existirem) -->
   <nav class="atalhos" aria-label="Contatos e redes sociais">
-    <a class="atalho" data-whatsapp="" data-rotulo="Atalho WhatsApp" href="#contato" aria-label="WhatsApp">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
-      <span class="atalho__txt"><b>WhatsApp</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
-    </a>
-    <a class="atalho" data-link-instagram href="#" aria-label="Instagram">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
-      <span class="atalho__txt"><b>Instagram</b><small data-texto="instagram">@humbertoimperioeps</small></span>
-    </a>
-    <a class="atalho" data-link-maps href="#" aria-label="Local no mapa">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
-      <span class="atalho__txt"><b>Local</b><small data-texto="area">Itapetininga e região</small></span>
-    </a>
-    <a class="atalho" data-link-google href="#" aria-label="Google">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
-      <span class="atalho__txt"><b>Google</b><small>Ver no Google</small></span>
-    </a>
-    <a class="atalho" data-link-tel href="#" aria-label="Ligar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2z"/></svg>
-      <span class="atalho__txt"><b>Ligar</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
-    </a>
-    <a class="atalho" data-ir-link href="#calculadora" aria-label="Calcular minha obra">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M8.5 16h1M12 16h1"/></svg>
-      <span class="atalho__txt"><b>Orçamento</b><small>Calcule sua obra</small></span>
-    </a>
-    <a class="atalho" data-link-email href="#" aria-label="E-mail" hidden>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 7 8.5-7"/></svg>
-      <span class="atalho__txt"><b>E-mail</b><small data-texto="email">Enviar e-mail</small></span>
-    </a>
-    <a class="atalho" data-link-facebook href="#" aria-label="Facebook" hidden>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1z"/></svg>
-      <span class="atalho__txt"><b>Facebook</b><small>Nossa página</small></span>
-    </a>
+    <div class="atalhos__trilha" data-atalhos-trilha>
+      <a class="atalho" data-whatsapp="" data-rotulo="Atalho WhatsApp" href="#contato" aria-label="WhatsApp">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+        <span class="atalho__txt"><b>WhatsApp</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
+      </a>
+      <a class="atalho" data-link-instagram href="#" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+        <span class="atalho__txt"><b>Instagram</b><small data-texto="instagram">@humbertoimperioeps</small></span>
+      </a>
+      <a class="atalho" data-link-maps href="#" aria-label="Local no mapa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <span class="atalho__txt"><b>Local</b><small data-texto="area">Itapetininga e região</small></span>
+      </a>
+      <a class="atalho" data-link-google href="#" aria-label="Google">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
+        <span class="atalho__txt"><b>Google</b><small>Ver no Google</small></span>
+      </a>
+      <a class="atalho" data-link-tel href="#" aria-label="Ligar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2C9.5 21 3 14.5 3 6a2 2 0 0 1 1-2z"/></svg>
+        <span class="atalho__txt"><b>Ligar</b><small data-texto="whatsapp">(15) 99121-2917</small></span>
+      </a>
+      <a class="atalho" data-ir-link href="#calculadora" aria-label="Calcular minha obra">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M8.5 16h1M12 16h1"/></svg>
+        <span class="atalho__txt"><b>Orçamento</b><small>Calcule sua obra</small></span>
+      </a>
+      <a class="atalho" data-link-email href="#" aria-label="E-mail" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 7 8.5-7"/></svg>
+        <span class="atalho__txt"><b>E-mail</b><small data-texto="email">Enviar e-mail</small></span>
+      </a>
+      <a class="atalho" data-link-facebook href="#" aria-label="Facebook" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1z"/></svg>
+        <span class="atalho__txt"><b>Facebook</b><small>Nossa página</small></span>
+      </a>
+    </div>
   </nav>
 
   <main id="conteudo">
@@ -265,16 +251,25 @@
             </ol>
             <p class="casa__dica">Toque nos pontos da casa pra ver as vantagens do Blocão · arraste pra girar.</p>
             <div class="casa__vantagem" data-casa-vantagem hidden aria-live="polite">
+              <p class="casa__vantagem-passo" data-vantagem-passo></p>
               <p class="casa__vantagem-titulo" data-vantagem-titulo></p>
               <p class="casa__vantagem-texto" data-vantagem-texto></p>
+              <div class="casa__vantagem-nav" data-vantagem-nav>
+                <button type="button" data-vantagem-ir="-1">‹ Anterior</button>
+                <button type="button" data-vantagem-ir="1">Próxima ›</button>
+              </div>
               <p class="casa__vantagem-dica">Arraste pra olhar em volta · toque na casa pra ver ela inteira.</p>
             </div>
-            <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
-          </div>
-          <div class="casa__tipos" role="group" aria-label="Escolha o tipo de casa">
-            <button type="button" data-casa-tipo="simples" aria-pressed="false">Casa simples</button>
-            <button type="button" data-casa-tipo="media" aria-pressed="true">Casa média</button>
-            <button type="button" data-casa-tipo="casarao" aria-pressed="false">Casarão</button>
+            <div class="casa__tipos" role="group" aria-label="Escolha o tipo de casa">
+              <button type="button" data-casa-tipo="simples" aria-pressed="false">Casa simples</button>
+              <button type="button" data-casa-tipo="media" aria-pressed="true">Casa média</button>
+              <button type="button" data-casa-tipo="casarao" aria-pressed="false">Casarão</button>
+            </div>
+            <div class="casa__linha">
+              <a class="botao botao--azul casa__cta" data-rotulo="WhatsApp da casa" data-whatsapp="Olá! Vi a casa de Blocão no site e quero construir a minha. Pode me passar um orçamento?" href="#contato">Quero construir a minha</a>
+              <p class="casa__contador"><b data-casa-contador>0</b> Blocões assentados</p>
+            </div>
+            <p class="casa__nota"><span data-casa-ficha>Sobrado 9 × 7 m · 2 andares · ≈ 125 m²</span> · maquete ilustrativa</p>
           </div>
           <div class="casa__pontos" data-casa-pontos aria-label="Vantagens de construir com o Blocão"><svg class="casa__linhas" aria-hidden="true"></svg></div>
           <div class="casa__passeio" data-casa-passeio hidden>
@@ -285,8 +280,6 @@
           </div>
           <p class="casa__aviso" data-casa-aviso hidden><b>Dentro do Blocão</b> concreto + EPS + concreto</p>
           <p class="casa__corte" data-casa-corte hidden><b>Dentro do Blocão</b> concreto + EPS + concreto</p>
-          <p class="casa__contador"><b data-casa-contador>0</b> Blocões assentados</p>
-          <p class="casa__nota"><span data-casa-ficha>Sobrado 9 × 7 m · 2 andares · ≈ 125 m²</span> · maquete ilustrativa</p>
         </div>
       </div>
       <span class="jornada__ancora-casa" id="casa" aria-hidden="true"></span>
@@ -549,38 +542,18 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
   </a>
 
-  <!-- ===== BOAS-VINDAS: vídeo "Por que comprar o Blocão" + 2 caminhos (1x por sessão, depois da splash) -->
-  <div class="bv" id="boas-vindas" hidden role="dialog" aria-modal="true" aria-label="Como você quer começar?">
-    <video class="bv__video" src="video/blocao.mp4?v=20261029d" poster="video/blocao-capa.jpg?v=20261029d" muted playsinline loop preload="none"></video>
-    <div class="bv__veu"></div>
-    <button class="bv__som" type="button" data-bv-som aria-label="Ligar o som do vídeo">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="bv__onda" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
-    </button>
-    <div class="bv__txt">
-      <button type="button" class="btn-redondo btn-redondo--claro" data-ir="#topo"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span><span class="btn-redondo__tx">Conhecer nosso produto</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
-      <button type="button" class="btn-redondo btn-redondo--azul" data-ir="#calculadora"><span class="btn-redondo__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h1M12 12h1M15.5 12h0M8.5 16h1M12 16h1M15.5 16h0"/></svg></span><span class="btn-redondo__tx">Orçamento</span><span class="btn-redondo__seta" aria-hidden="true">›</span></button>
-    </div>
-  </div>
-
   <!-- ===== MODAL: ENTRAR COM WHATSAPP -->
   <div class="modal" data-modal-entrar hidden role="dialog" aria-modal="true" aria-labelledby="entrar-titulo">
     <div class="modal__caixa">
       <button class="modal__fechar" type="button" data-fechar-entrar aria-label="Fechar">×</button>
       <form data-form-entrar novalidate>
-        <h2 id="entrar-titulo">Entre com seu WhatsApp</h2>
-        <p>Receba promoções primeiro e agilize seus orçamentos.</p>
+        <h2 id="entrar-titulo">Cadastre-se pelo WhatsApp</h2>
+        <p>Só seu nome e WhatsApp: você recebe as promoções primeiro e agiliza seus orçamentos.</p>
         <label class="campo"><span>Nome</span><input id="entrar-nome" autocomplete="name" maxlength="120" required></label>
         <label class="campo"><span>WhatsApp com DDD</span><input id="entrar-whatsapp" inputmode="tel" autocomplete="tel" placeholder="(15) 99999-9999" required></label>
-        <label class="campo"><span>Cidade</span><input id="entrar-cidade" autocomplete="address-level2" maxlength="120" placeholder="Itapetininga"></label>
-        <fieldset class="alternador alternador--3">
-          <legend>Você…</legend>
-          <label><input type="radio" name="perfil" value="construir" checked><span>Vai construir</span></label>
-          <label><input type="radio" name="perfil" value="reformar"><span>Vai reformar</span></label>
-          <label><input type="radio" name="perfil" value="profissional"><span>É da obra</span></label>
-        </fieldset>
-        <label class="aceite"><input type="checkbox" id="entrar-aceite"> <span>Autorizo o Império do EPS a falar comigo pelo WhatsApp (LGPD). Posso sair quando quiser.</span></label>
+        <p class="modal__lgpd">Ao cadastrar, você autoriza o Império do EPS a falar com você pelo WhatsApp (LGPD). Pode sair quando quiser.</p>
         <p class="modal__status" data-entrar-status role="alert"></p>
-        <button class="botao botao--azul botao--largo" type="submit">Entrar</button>
+        <button class="botao botao--azul botao--largo" type="submit">Cadastrar</button>
       </form>
       <div class="modal__conectado" data-entrar-conectado hidden>
         <h2 data-entrar-saudacao>Olá!</h2>
@@ -601,20 +574,19 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261029d"></script>
-  <script src="assets/js/observabilidade.js?v=20261029d"></script>
-  <script src="assets/js/boas-vindas.js?v=20261029d"></script>
-  <script src="assets/js/supabase-init.js?v=20261029d"></script>
-  <script src="assets/js/analytics.js?v=20261029d"></script>
-  <script src="assets/js/main.js?v=20261029d"></script>
-  <script src="assets/js/especificacoes.js?v=20261029d"></script>
-  <script src="assets/js/motion.js?v=20261029d"></script>
-  <script src="assets/js/cliente.js?v=20261029d"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261029d"></script>
-  <script src="assets/js/calculadora.js?v=20261029d"></script>
-  <script src="assets/js/conteudo.js?v=20261029d"></script>
-  <script src="assets/js/cena.js?v=20261029d"></script>
-  <script src="assets/js/casa.js?v=20261029d"></script>
-  <script src="assets/js/toque.js?v=20261029d"></script>
+  <script src="assets/js/config.js?v=20261030e"></script>
+  <script src="assets/js/observabilidade.js?v=20261030e"></script>
+  <script src="assets/js/supabase-init.js?v=20261030e"></script>
+  <script src="assets/js/analytics.js?v=20261030e"></script>
+  <script src="assets/js/main.js?v=20261030e"></script>
+  <script src="assets/js/especificacoes.js?v=20261030e"></script>
+  <script src="assets/js/motion.js?v=20261030e"></script>
+  <script src="assets/js/cliente.js?v=20261030e"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261030e"></script>
+  <script src="assets/js/calculadora.js?v=20261030e"></script>
+  <script src="assets/js/conteudo.js?v=20261030e"></script>
+  <script src="assets/js/cena.js?v=20261030e"></script>
+  <script src="assets/js/casa.js?v=20261030e"></script>
+  <script src="assets/js/toque.js?v=20261030e"></script>
 </body>
 </html>

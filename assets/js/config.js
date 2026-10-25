@@ -79,13 +79,6 @@ window.IMPERIO_CONFIG = {
     },
   ],
 
-  /**
-   * Tela de boas-vindas com o vídeo "Por que comprar o Blocão" (video/blocao.mp4, pronto).
-   * Pra desligar, mude para false. Mesmo ligada, só aparece se o vídeo carregar;
-   * se falhar ou demorar mais de 2,5 s, o site abre direto.
-   */
-  boasVindasComVideo: true,
-
   // Supabase (banco do painel). A anon key NÃO é segredo — a proteção é o
   // RLS (ver supabase/schema.sql). Vazio = site funciona só com WhatsApp
   // e o painel abre em modo demonstração.

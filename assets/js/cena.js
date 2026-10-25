@@ -138,6 +138,8 @@
   }
 
   function atualizarCelular(j) {
+    // confere a posição de verdade (o observador às vezes não avisa quando a página rola logo depois de abrir)
+    if (palco && j && j.dentro) palcoVisivel = palco.getBoundingClientRect().bottom > 56;
     var naJornada = j && j.dentro && j.entrada > 0 && !palcoVisivel;
     morarEm(naJornada ? fixo : palco);
     var alvo;
@@ -240,7 +242,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261029d")
+    import("./bloco3d.js?v=20261030e")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);
@@ -281,12 +283,6 @@
 
   function quandoOcioso() {
     if (window.__gravandoVideo) return iniciar();
-    // com a tela do vídeo de boas-vindas aberta, o 3D espera ela fechar (preparar o WebGL junto travava o vídeo)
-    var ab = window.ImperioAbertura;
-    if (ab && ab.bvAberta && ab.bvAberta()) {
-      window.addEventListener("imperio:bv-fechou", quandoOcioso, { once: true });
-      return;
-    }
     if (window.requestIdleCallback) window.requestIdleCallback(iniciar, { timeout: 1500 });
     else setTimeout(iniciar, 400);
   }

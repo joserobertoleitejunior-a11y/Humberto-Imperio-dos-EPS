@@ -163,7 +163,7 @@ function quadro(t){
   if(C.splash){
     var st=C.splash.t;
     if(t<st){D().getAnimations({subtree:true}).forEach(function(a){try{a.pause();a.currentTime=t*1000;}catch(e){}});flags.splashPausa=true;}
-    else if(!flags.splashAberta){flags.splashAberta=true;D().getAnimations({subtree:true}).forEach(function(a){try{a.play();}catch(e){}});W().ImperioAbertura.fecharSplash();}
+    else if(!flags.splashAberta){flags.splashAberta=true;D().getAnimations({subtree:true}).forEach(function(a){try{a.play();}catch(e){}});var Ab=W().ImperioAbertura;if(Ab)Ab.fecharSplash();}
   }
   /* rolagens do site (vertical, com início e fim suaves) */
   var velH=0, vel=0;   // velocidade da rolagem agora (px/s do site): as legendas reagem a ela

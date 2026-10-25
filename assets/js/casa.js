@@ -95,6 +95,7 @@
   var linhasEl = null;
   var etiquetas = {};
   var voandoPonto = false;
+  var pontoAtivo = null;     // id do ponto aberto (clique) ou do ponto em que o tour está
   var SVGNS = "http://www.w3.org/2000/svg";
   function ligarPontos() {
     pontosEl = camada.querySelector("[data-casa-pontos]");
@@ -122,21 +123,69 @@
       etiquetas[q.id] = { btn: btn, dot: dot, linha: linha, toque: toque, w: 0, h: 0 };
     });
     var card = camada.querySelector("[data-casa-vantagem]");
+    var timerFim = 0;
+    // passo a passo: anterior / próxima vantagem
+    if (card) card.addEventListener("click", function (ev) {
+      var b = ev.target.closest("[data-vantagem-ir]");
+      if (b) C3.passoPonto(+b.getAttribute("data-vantagem-ir"));
+    });
+    // o foco no botão não pode rolar a página (rolar de verdade fecha o ponto)
+    if (card) card.addEventListener("mousedown", function (ev) { if (ev.target.closest("[data-vantagem-ir]")) ev.preventDefault(); });
     C3.aoPonto(function (e) {
-      voandoPonto = !e.ativo && !!e.voando;
+      pontoAtivo = e.ativo ? e.id : null;
+      voandoPonto = !e.ativo && !!e.voando && !e.fim;
       camada.classList.toggle("casa--foco", !!e.ativo);
-      if (card) {
-        card.hidden = !e.ativo;
-        if (e.ativo) {
-          card.querySelector("[data-vantagem-titulo]").textContent = e.titulo;
-          card.querySelector("[data-vantagem-texto]").textContent = e.texto;
-          card.classList.remove("entra");
-          void card.offsetWidth;
-          card.classList.add("entra");
-        }
+      camada.classList.toggle("casa--tourpontos", !!e.tour);
+      camada.classList.toggle("casa--fimtour", !!e.fim);
+      clearTimeout(timerFim);
+      if (!card) { atualizarPontos(); return; }
+      var mostrar = !!(e.ativo || e.fim);
+      card.hidden = !mostrar;
+      card.classList.toggle("casa__vantagem--fim", !!e.fim);
+      if (mostrar) {
+        card.querySelector("[data-vantagem-passo]").textContent = e.passo ? e.passo + " de " + e.total : "";
+        card.querySelector("[data-vantagem-titulo]").textContent = e.titulo;
+        card.querySelector("[data-vantagem-texto]").textContent = e.texto;
+        card.classList.remove("entra");
+        void card.offsetWidth;
+        card.classList.add("entra");
       }
+      // fim do tour: a chamada fica um tempo com o botão "Quero construir a minha" logo abaixo e some sozinha
+      if (e.fim) timerFim = setTimeout(fecharFim, 9000);
       atualizarPontos();
     });
+    function fecharFim() {
+      if (!camada.classList.contains("casa--fimtour")) return;
+      camada.classList.remove("casa--fimtour");
+      card.hidden = true;
+    }
+    // tocou na maquete ou rolou depois do fim do tour: a chamada sai e volta tudo ao normal
+    palco.addEventListener("pointerdown", fecharFim);
+    window.addEventListener("scroll", fecharFim, { passive: true });
+    ligarTourAuto();
+  }
+
+  /**
+   * Tour sem botão: quando a maquete termina na rolagem (e a página fica parada), o drone passa sozinho por todas
+   * as vantagens — uma vez por visita. Se a pessoa já abriu um ponto, girou ou saiu da casa, não começa.
+   */
+  function ligarTourAuto() {
+    var feito = false;
+    var timer = 0;
+    var ultimaRolagem = Date.now();
+    window.addEventListener("scroll", function () { ultimaRolagem = Date.now(); }, { passive: true });
+    var tentar = function () {
+      timer = 0;
+      if (feito || !camada.classList.contains("casa--maquete") || C3.emFoco()) return;
+      if (Date.now() - ultimaRolagem < 700) { timer = setTimeout(tentar, 400); return; }
+      if (C3.tourPontos()) feito = true;
+    };
+    if (window.ImperioMotion) window.ImperioMotion.aoRolar(function () {
+      if (feito || timer || !camada.classList.contains("casa--maquete")) return;
+      timer = setTimeout(tentar, 900);
+    });
+    // tocou em qualquer coisa da casa (maquete, tipo de casa, ponto) antes do tour: já está explorando sozinho
+    camada.addEventListener("pointerdown", function () { if (!C3.emTourPontos()) feito = true; });
   }
 
   function esconder(e) {
@@ -158,16 +207,16 @@
     if (!pontosEl || !C3) return;
     // no zoom de um ponto as outras opções continuam na tela (dá pra ir direto pra outra ou arrastar pra ver)
     var mostrar = camada.classList.contains("casa--maquete") && !voandoPonto && !camada.classList.contains("casa--tour");
-    var ativo = C3.emFoco();
+    var ativo = pontoAtivo; // ponto aberto (clique) ou o ponto do tour
     pontosEl.classList.toggle("on", mostrar);
     if (!mostrar) return;
     var r = camada.getBoundingClientRect();
     var W = r.width;
     var H = r.height;
     var larga = W > H * 1.15;
-    var tipos = camada.querySelector(".casa__tipos").getBoundingClientRect();
     var txt = camada.querySelector(".casa__txt").getBoundingClientRect();
-    var topo = larga ? H * 0.16 : tipos.bottom - r.top + 34;
+    var cab = document.querySelector("[data-cabecalho]");
+    var topo = larga ? H * 0.16 : (cab ? cab.getBoundingClientRect().bottom - r.top : 64) + 22;
     var base = larga ? H * 0.8 : txt.top - r.top - 24;
     var cols = { e: [], d: [] };
     C3.pontosNaTela().forEach(function (q) {
@@ -265,7 +314,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261029d")
+    import("./casa3d.js?v=20261030e")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -300,6 +349,7 @@
           }
         }
         ligarToque();
+        ligarMargens();
         ligarTour();
         ligarPontos();
         if (botaoAndar) botaoAndar.addEventListener("click", function () { C3.trocarAndar(); atualizarAndar(); if (corte) corte.hidden = true; });
@@ -323,6 +373,25 @@
         canvas.remove();
         semCasa();
       });
+  }
+
+  /**
+   * Celular: a maquete é enquadrada no espaço LIVRE entre o cabeçalho e o bloco de texto (medido de verdade,
+   * muda quando aparece o botão, o cartão etc.) — nenhum texto fica na frente da casa, só as etiquetas.
+   */
+  function ligarMargens() {
+    var txt = camada.querySelector(".casa__txt");
+    var cab = document.querySelector("[data-cabecalho]");
+    var medir = function () {
+      if (!C3 || !C3.margens) return;
+      var r = camada.getBoundingClientRect();
+      var t = txt.getBoundingClientRect();
+      var topo = (cab ? cab.offsetHeight : 64) + 12;
+      C3.margens(topo, Math.max(0, r.height - (t.top - r.top)) + 12);
+    };
+    if (window.ResizeObserver) new ResizeObserver(medir).observe(txt);
+    window.addEventListener("resize", medir, { passive: true });
+    medir();
   }
 
   var corte = null;
@@ -502,8 +571,7 @@
       window.addEventListener("scroll", function () { ultimaRolagem = Date.now(); }, { passive: true });
       var tentar = function () {
         if (carregando) return;
-        var ab = window.ImperioAbertura;
-        if (Date.now() - ultimaRolagem < 700 || (ab && ab.bvAberta && ab.bvAberta())) { setTimeout(tentar, 1000); return; }
+        if (Date.now() - ultimaRolagem < 700) { setTimeout(tentar, 1000); return; }
         quandoOcioso();
       };
       // prepara cedo (assim que a página fica parada depois de abrir): quem rola rápido até a casa não pega a montagem no caminho

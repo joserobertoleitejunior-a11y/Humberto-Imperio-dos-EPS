@@ -1,72 +1,18 @@
 // Fluxos principais (PADROES-AGENCIA.md §3.3). Rodar: npm run test:e2e
 const { test, expect } = require("@playwright/test");
 
-/** Abre a página já sem a tela de boas-vindas e pulando a splash com um toque. */
+/** Abre a página (o site abre direto: sem splash e sem tela de vídeo antes). */
 async function abrir(page, url = "/") {
-  await page.addInitScript(() => { try { sessionStorage.setItem("imperio_bv", "1"); } catch (e) {} });
   await page.goto(url);
-  await page.waitForFunction(() => window.ImperioAbertura);
-  await page.evaluate(() => window.ImperioAbertura.fecharSplash());
-  await expect(page.locator("#splash")).toBeHidden({ timeout: 10000 });
 }
 
-test("1ª visita: abre DIRETO na tela do vídeo (sem splash antes), com os 2 botões na hora; sem vídeo fica a capa", async ({ page }) => {
-  await page.route("**/video/blocao.mp4*", (rota) => rota.abort());
+test("abre direto no site: sem splash e sem tela de vídeo, já no topo", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 2000 });
-  await expect(page.locator("#splash")).toBeHidden();
-  await expect(page.locator('#boas-vindas [data-ir="#calculadora"]')).toBeVisible({ timeout: 2000 });
-  expect(await page.locator("#boas-vindas video").getAttribute("poster")).toContain("blocao-capa");
-  await page.click('#boas-vindas [data-ir="#topo"]');
-  await expect(page.locator("#boas-vindas")).toBeHidden();
+  await expect(page.locator("#splash")).toHaveCount(0);
+  await expect(page.locator("#boas-vindas")).toHaveCount(0);
+  await expect(page.locator(".hero__titulo")).toBeInViewport({ timeout: 5000 });
   await expect(page.locator("body")).not.toHaveClass(/travado/);
-  await page.waitForTimeout(900);
   expect(await page.evaluate(() => window.scrollY)).toBeLessThan(80);
-  // recarregar na mesma sessão: não abre de novo a tela do vídeo
-  await page.reload();
-  await page.waitForTimeout(600);
-  await expect(page.locator("#boas-vindas")).toBeHidden();
-});
-
-test("vídeo pronto: boas-vindas aparece e 'Calcular minha obra' leva pra calculadora", async ({ page }) => {
-  // simula um vídeo que carrega (o Chromium do teste não decodifica H.264). O "preload" fica travado em "none":
-  // senão o navegador tenta baixar o MP4 de verdade, dá erro antes da simulação e o site (certo) pula a boas-vindas
-  await page.addInitScript(() => {
-    Object.defineProperty(HTMLMediaElement.prototype, "preload", { get: () => "none", set: () => {}, configurable: true });
-    // o site começa a baixar o vídeo já na splash: a simulação também responde "pronto" (readyState)
-    Object.defineProperty(HTMLMediaElement.prototype, "readyState", { get() { return this.__pronto ? 4 : 0; }, configurable: true });
-    HTMLMediaElement.prototype.load = function () { setTimeout(() => { this.__pronto = true; this.dispatchEvent(new Event("loadeddata")); }, 50); };
-    HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
-  });
-  await page.goto("/");
-  await expect(page.locator("#boas-vindas")).toBeVisible({ timeout: 10000 });
-  await page.click('#boas-vindas [data-ir="#calculadora"]');
-  await expect(page.locator("#boas-vindas")).toBeHidden();
-  await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 5000 });
-});
-
-test("splash: botão redondo 'Orçamento' fecha a splash e vai pra calculadora; 'Conhecer nosso produto' vai pro bloco", async ({ page }) => {
-  await page.addInitScript(() => { try { sessionStorage.setItem("imperio_bv", "1"); } catch (e) {} });
-  await page.goto("/");
-  await expect(page.locator('#splash [data-ir="#calculadora"]')).toBeVisible({ timeout: 8000 });
-  await expect(page.locator("#splash .btn-redondo")).toHaveCount(2);
-  const raio = await page.locator('#splash [data-ir="#calculadora"]').evaluate((e) => getComputedStyle(e).borderRadius);
-  expect(parseFloat(raio)).toBeGreaterThan(30);
-  await page.click('#splash [data-ir="#calculadora"]');
-  await expect(page.locator("#splash")).toBeHidden({ timeout: 5000 });
-  await expect(page.locator("#calculadora")).toBeInViewport({ timeout: 6000 });
-  await expect(page.locator("#boas-vindas")).toBeHidden();
-});
-
-test("splash: 'Conhecer nosso produto' começa do topo do site (cabeçalho), não pula pro produto", async ({ page }) => {
-  await page.addInitScript(() => { try { sessionStorage.setItem("imperio_bv", "1"); } catch (e) {} });
-  await page.goto("/");
-  await expect(page.locator('#splash [data-ir="#topo"]')).toBeVisible({ timeout: 8000 });
-  await page.click('#splash [data-ir="#topo"]');
-  await expect(page.locator("#splash")).toBeHidden({ timeout: 5000 });
-  await page.waitForTimeout(900);
-  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(80);
-  await expect(page.locator(".hero__titulo")).toBeInViewport();
 });
 
 test("celular: botões ficam fora da área do bloco 3D", async ({ page }) => {
@@ -103,7 +49,6 @@ test("cadastro do cliente valida WhatsApp e lembra o nome", async ({ page }) => 
   await page.click(".botao-entrar");
   await page.fill("#entrar-nome", "Maria Teste");
   await page.fill("#entrar-whatsapp", "1599");
-  await page.check("#entrar-aceite");
   await page.click("[data-form-entrar] button[type=submit]");
   await expect(page.locator("[data-entrar-status]")).toContainText("DDD");
   await page.fill("#entrar-whatsapp", "15999998888");
@@ -284,9 +229,9 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
   // pontos estratégicos: etiquetas nas margens com linha até a casa; clicou = zoom + a vantagem do Blocão
   await expect.poll(() => page.locator(".casa__ponto").evaluateAll((l) => l.filter((b) => getComputedStyle(b).opacity === "1").length), { timeout: 15000 }).toBeGreaterThan(2);
-  await expect(page.locator("[data-casa] button:not([data-casa-tipo]):not(.casa__ponto)")).toHaveCount(0);
+  await expect(page.locator("[data-casa] button:not([data-casa-tipo]):not(.casa__ponto):not([data-vantagem-ir])")).toHaveCount(0);
   const visivel = await page.locator(".casa__ponto").evaluateAll((l) => l.findIndex((b) => getComputedStyle(b).opacity === "1"));
-  await page.locator(".casa__ponto").nth(visivel).click();
+  await page.locator(".casa__ponto").nth(visivel).dispatchEvent("click"); // a etiqueta desliza enquanto o 3D assenta: clique direto nela
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();
   await expect(page.locator("[data-casa-vantagem]")).toBeVisible();
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
@@ -298,10 +243,25 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.mouse.up();
   expect(await page.evaluate(() => window.ImperioCasa3D.focoGiro())).not.toBe(giroFoco);
   expect(await page.evaluate(() => window.ImperioCasa3D.emFoco())).not.toBeNull();
+  // passo a passo: "Próxima" leva pra vantagem seguinte (o cartão mostra "N de 6")
+  const antesPasso = await page.evaluate(() => window.ImperioCasa3D.emFoco());
+  await expect(page.locator("[data-vantagem-passo]")).toContainText("de 6");
+  await page.click('[data-vantagem-ir="1"]');
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBe(antesPasso);
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();
   // tocar na casa volta pra vista inteira
   await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth / 2, innerHeight / 2));
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).toBeNull();
   await expect(page.locator("[data-casa-vantagem]")).toBeHidden({ timeout: 30000 });
+  // tour do drone pelos pontos: começa sozinho (aqui chamado direto), mostra "1 de 6" e o dedo interrompe
+  expect(await page.evaluate(() => window.ImperioCasa3D.tourPontos())).toBe(true);
+  expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(true);
+  await expect(page.locator("[data-vantagem-passo]")).toContainText("1 de 6", { timeout: 15000 });
+  await page.mouse.move(cx.x, cx.y);
+  await page.mouse.down();
+  await page.mouse.move(cx.x - 80, cx.y, { steps: 4 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(false);
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);
