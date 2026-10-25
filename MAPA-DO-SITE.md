@@ -87,14 +87,16 @@ Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamen
 **Toque livre pro giro:** a faixa de toque da linha fica só sob o texto (a parte que cruza a casa não segura o dedo);
 bolinhas escondidas e a bolinha do ponto em foco (no meio da tela) deixam o dedo passar pra maquete.
 
-**Tour do drone = o passo a passo da maquete (sem clique):** assim que a maquete termina de ser construída na rolagem,
-o drone começa sozinho a filmar todas as vantagens na ordem `ORDEM` de `casa3d.js` (Obra rápida → Bem mais leve → Casa
-mais fresca → Mais silêncio → Sem mofo → Acabamento fácil): nunca para — desacelera contornando cada corte (1,7 s)
-enquanto o cartão "N de 6" conta a vantagem e acelera até o próximo (0,85 s); volta pra maquete inteira e termina com
-"Gostou? A sua pode ser assim." + o botão "Quero construir a minha". ~17,7 s no total (medido). Durante o tour a página
-NÃO rola (`travarRolagem` em `casa.js`) e a única coisa possível é arrastar o dedo: gira a vista em volta do que o drone
-filma, sem parar o drone; ao soltar, a vista volta devagar pro enquadramento (`olharTour`). Acabou, o site continua.
-Uma vez por visita. As etiquetas de pontos na maquete saíram (o tour mostra tudo).
+**Tour do drone pela casa (sem botão, sem clique):** assim que a maquete termina de ser construída na rolagem, o drone
+entra na casa pela parede da frente (que sai) e percorre os cômodos mobiliados — o mesmo caminho do vídeo (`tour` de
+cada projeto em `PROJETOS`), só até sair da casa. As 6 vantagens do Blocão ficam escritas em **quadros nas paredes**
+do caminho (`montarPlacas` + `texturaPlaca` em `casa3d.js`): cada quadro só vai numa parede inteira (os 4 cantos na
+mesma parede, sem janela, porta, móvel, TV ou quadro de decoração na frente), longe dos outros; o drone chega perto
+dele pelo caminho livre e desliza devagar 1,5 s pra dar tempo de ler (`TOUR_LER`), correndo entre um e outro. ~17 s no
+total (`DUR_TOUR_SITE`). Sem legenda, sem cartão, nenhum botão: durante o tour a página não rola (`travarRolagem` em
+`casa.js`) e só o dedo funciona — gira a vista em volta do que o drone filma, sem parar o drone (`olharTour`). No fim
+volta pra maquete inteira com "Gostou? A sua pode ser assim." + "Quero construir a minha", e o site continua.
+Os móveis são montados num momento ocioso, antes de a casa ficar pronta (`garantirExtras`).
 
 **Celular — maquete livre:** título, etapa, dica, tipos de casa, botão/contador e a nota ficam todos embaixo, no bloco
 de texto; na frente da maquete, nada. A câmera enquadra a casa no espaço livre entre o

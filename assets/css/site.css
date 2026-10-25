@@ -233,8 +233,8 @@ main { position: relative; z-index: 2; }
 /* no fim do tour o cartão chama pra comprar */
 .casa__vantagem--fim .casa__vantagem-dica { display: none; }
 .casa__vantagem--fim .casa__vantagem-titulo { color: #14161a; }
-.casa--fimtour .casa__txt .sobretitulo, .casa--fimtour .casa__txt h2, .casa--fimtour .casa__etapas, .casa--fimtour .casa__dica, .casa--fimtour .casa__tipos, .casa--fimtour .casa__nota { display: none; }
-.casa--foco .casa__txt .sobretitulo, .casa--foco .casa__txt h2, .casa--foco .casa__etapas, .casa--foco .casa__dica { display: none; }
+.casa--fimtour .casa__txt .sobretitulo, .casa--fimtour .casa__txt h2, .casa--fimtour .casa__etapas, .casa--fimtour .casa__tipos, .casa--fimtour .casa__nota { display: none; }
+.casa--foco .casa__txt .sobretitulo, .casa--foco .casa__txt h2, .casa--foco .casa__etapas { display: none; }
 /* ponto aberto: tela limpa — só a casa, a bolinha do ponto e o cartão da vantagem */
 .casa.casa--foco .casa__tipos, .casa.casa--foco .casa__nota, .casa.casa--foco .casa__contador, .casa.casa--foco .casa__cta { opacity: 0; pointer-events: none; }
 .casa__tipos, .casa__cta { transition: opacity 0.3s, transform 0.35s var(--ease); }
@@ -253,8 +253,6 @@ main { position: relative; z-index: 2; }
 .casa__palco { cursor: grab; }
 .casa--girando .casa__palco { cursor: grabbing; }
 .casa--pronta .casa__palco { cursor: pointer; }
-.casa__dica { margin: 0 0 10px; font-size: 0.9rem; font-weight: 650; color: var(--azul); opacity: 0; transition: opacity 0.35s; }
-.casa--pronta .casa__dica { opacity: 1; }
 /* POR DENTRO: o site continua aparecendo (título, botão, contador) e a página rola normal (rolar = sair da casa);
    a câmera anda por toque */
 .casa__txt, .casa__contador, .casa__nota { transition: opacity 0.35s; }
@@ -283,7 +281,7 @@ main { position: relative; z-index: 2; }
 /* tour: legenda de cinema (embaixo da escolha de casa) + parar; aviso do corte ao tirar parede por dentro */
 .casa__tour { margin-top: 8px; margin-left: 6px; opacity: 0; pointer-events: none; transition: opacity 0.35s; background: var(--grafite); color: #fff; }
 .casa--pronta .casa__tour { opacity: 1; pointer-events: auto; }
-.casa--tour .casa__txt, .casa--tour .casa__contador, .casa--tour .casa__nota, .casa--tour .casa__dica { opacity: 0; pointer-events: none; }
+.casa--tour .casa__txt, .casa--tour .casa__contador, .casa--tour .casa__nota { opacity: 0; pointer-events: none; }
 .casa__tourbarra { position: absolute; z-index: 6; left: 50%; bottom: max(22px, 4vh); transform: translateX(-50%); width: min(560px, 100% - 24px); display: grid; justify-items: center; gap: 10px; }
 .casa__tourbarra[hidden], .casa__aviso[hidden], .casa__legenda[hidden] { display: none; }
 .casa__legenda { margin: 0; padding: 10px 18px; border-radius: 12px; background: rgba(20, 22, 26, 0.72); color: #fff; font-size: 1.02rem; font-weight: 750; text-align: center;
@@ -315,7 +313,6 @@ main { position: relative; z-index: 2; }
 @media (min-width: 760px) and (max-height: 760px) {
   .casa__txt { top: calc(var(--cabecalho) + 2.5vh); }
   .casa__txt h2 { font-size: clamp(1.4rem, 2.5vw, 2.1rem); margin-bottom: 0.4em; }
-  .casa__dica { margin-bottom: 6px; font-size: 0.82rem; }
 }
 @media (max-width: 759px) {
   .jornada { height: 980vh; height: calc(var(--vh, 1vh) * 980); }
@@ -349,7 +346,7 @@ main { position: relative; z-index: 2; }
 }
 /* sem 3D (aparelho muito fraco / sem WebGL / "estatica"): imagem pronta da casa e a lista de etapas, depois do "L" */
 .casa--sem3d { position: static; opacity: 1; visibility: visible; pointer-events: auto; padding: 40px 0 56px; display: flex; flex-direction: column; }
-.casa--sem3d .casa__ceu, .casa--sem3d .casa__palco, .casa--sem3d .casa__contador, .casa--sem3d .casa__dica, .casa--sem3d .casa__passeio { display: none; }
+.casa--sem3d .casa__ceu, .casa--sem3d .casa__palco, .casa--sem3d .casa__contador, .casa--sem3d .casa__passeio { display: none; }
 .casa--sem3d .casa__txt { position: static; width: min(1200px, 100% - 32px); margin: 0 auto; }
 .casa--sem3d .casa__etapas { height: auto; display: grid; gap: 6px; margin-bottom: 16px; }
 .casa--sem3d .casa__etapas li { position: static; opacity: 1; transform: none; }

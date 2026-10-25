@@ -198,10 +198,10 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect.poll(() => page.evaluate(() => { const b = window.ImperioCasa3D.blocos(); return b.assentados === b.total; }), { timeout: 15000 }).toBe(true);
   const caixaP = await page.locator("[data-casa-palco]").boundingBox();
   const cx = { x: caixaP.x + caixaP.width * 0.6, y: caixaP.y + caixaP.height * 0.55 };
-  // maquete pronta = o tour do drone começa SOZINHO (sem clique), com o passo a passo das vantagens
+  // maquete pronta = o tour do drone começa SOZINHO (sem clique): entra na casa e as 6 vantagens estão em quadros nas paredes
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 15000 }).toBe(true);
-  await expect(page.locator("[data-vantagem-passo]")).toContainText("de 6", { timeout: 15000 });
-  await expect(page.locator(".casa__ponto")).toHaveCount(0); // sem etiquetas na maquete: o tour mostra tudo
+  expect(await page.evaluate(() => window.ImperioCasa3D.placasTour())).toBe(6);
+  await expect(page.locator("[data-casa] button:not([data-casa-tipo])")).toHaveCount(0); // nenhum botão na maquete
   // durante o tour a página não rola...
   const yTour = await page.evaluate(() => scrollY);
   await page.mouse.move(cx.x, cx.y);
@@ -219,6 +219,10 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect(page.locator("[data-casa-vantagem]")).toContainText("Gostou?");
   await expect(page.locator(".casa__cta")).toBeVisible();
   await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");
+  // tocar na maquete depois do tour: a chamada sai e voltam os tipos de casa
+  await page.mouse.click(cx.x, cx.y);
+  await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--fimtour/);
+  await expect(page.locator('[data-casa-tipo="simples"]')).toBeInViewport();
   // os 3 tipos: casa simples (térrea, 5 etapas), casa média e casarão — cada um com o seu total de blocos
   const totais = {};
   for (const tipo of ["simples", "media", "casarao"]) {
