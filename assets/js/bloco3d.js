@@ -614,18 +614,23 @@ function laco(t) {
   }
   desenhar();
   // Aparelho engasgando mesmo no modo leve? Reduz o teto da resolução HD e o leve (até 1×).
-  if (gasto > 34 && gasto < 250 && ++lentos > 24) {
+  // Ajusta UMA resolução só (rolando e parado iguais): trocar entre duas realocava a imagem a cada parada e travava
+  if (gasto > 34 && gasto < 250 && ++lentos > 24 && ratioHD > 1) {
     lentos = 0;
-    ratioLeve = Math.max(1, ratioLeve - 0.25); // só o desenho EM MOVIMENTO fica mais leve; parado continua no máximo
-    usarRatio(emHD ? ratioHD : ratioLeve);
+    ratioHD = ratioLeve = Math.max(1, ratioHD - 0.25);
+    emHD = true;
+    usarRatio(ratioHD);
   }
 }
 
+let tamAntes = "";
 function redimensionar() {
   const tela = renderer.domElement;
   const w = tela.clientWidth;
   const h = tela.clientHeight;
   if (!w || !h) return;
+  if (`${w}x${h}` === tamAntes) { sujo = true; return; } // mesmo tamanho (canvas só mudou de lugar): não realoca a imagem
+  tamAntes = `${w}x${h}`;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.position.set(0, 0.32, 2.2);

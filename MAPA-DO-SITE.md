@@ -92,6 +92,20 @@ Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamen
 **Toque livre pro giro:** a faixa de toque da linha fica só sob o texto (a parte que cruza a casa não segura o dedo);
 bolinhas escondidas e a bolinha do ponto em foco (no meio da tela) deixam o dedo passar pra maquete.
 
+**Cenário leve (fundo branco):** casa pronta = fundo branco (`.casa__ceu::before`); cor só em volta da casa (gramado
+em degradê que some no branco) e 12 árvores claras ao fundo. Saíram rua, morros, vizinhas e o gramado até o horizonte
+(`cenario()` em `casa-interior.js`).
+
+**Ponto aberto = tela limpa:** somem as outras etiquetas e linhas, os tipos de casa, o contador, a nota e o botão;
+fica a casa, a bolinha do ponto e um cartão compacto (no celular, embaixo, acima do WhatsApp). A câmera fica a ~8 m de
+casa na largura (PC: ~10 m na altura) pra dar contexto. PC de tela baixa (≤ 760 px de altura): título menor e tudo do
+texto acima dos tipos de casa.
+
+**Sem travar na entrada da maquete:** a casa 3D é preparada cedo (1,5 s depois de abrir, com a página parada, ou ao
+entrar no "L"), não quando o visitante chega nela. O Blocão 3D não troca mais de resolução entre rolar e parar
+(realocar a imagem travava ~0,8 s em celular lento): se o aparelho engasga, baixa UMA vez e fica. Canvas que só muda de
+lugar com o mesmo tamanho não realoca a imagem.
+
 **Giro da maquete = drone** (arrastar o dedo/mouse): o dedo move um alvo e a câmera persegue suave (mola ~0,14 s),
 inclina de lado na curva pela distância até o alvo do dedo (suave, sem tremer no celular) e, ao soltar, plana com o embalo e vai parando (`quadroOrbita`
 em `casa3d.js`). Altura limitada (não desce rente ao chão). **Vista livre:** vizinhas e árvores que ficam entre a

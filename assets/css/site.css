@@ -329,7 +329,7 @@ main { position: relative; z-index: 2; }
 .casa__ceu { position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, #dfe6ea 0%, #eef0ec 46%, var(--cal) 78%); }
 .casa__ceu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #f6d9b4 0%, #f7e6cf 45%, var(--cal) 80%); opacity: var(--ouro); }
 /* casa pronta: céu azul da paisagem atrás do 3D (degradê em CSS — leve) */
-.casa__ceu::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, #5f9fd6 0%, #a9cfe9 45%, #e6eff2 70%, #f3efe4 100%); opacity: var(--paisagem, 0); }
+.casa__ceu::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #ffffff; opacity: var(--paisagem, 0); } /* casa pronta: fundo branco (leve) */
 /* pontos estratégicos: etiquetas nas margens (fora do 3D), linha em svg até o ponto da casa, bolinha pulsando */
 .casa__pontos { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity 0.35s; }
 .casa__pontos.on { opacity: 1; }
@@ -362,6 +362,9 @@ main { position: relative; z-index: 2; }
 .casa__vantagem-texto { margin: 0 0 6px; font-size: 0.98rem; line-height: 1.45; color: var(--texto); }
 .casa__vantagem-dica { margin: 0; font-size: 0.8rem; color: var(--texto-suave); }
 .casa--foco .casa__txt .sobretitulo, .casa--foco .casa__txt h2, .casa--foco .casa__etapas, .casa--foco .casa__dica { display: none; }
+/* ponto aberto: tela limpa — só a casa, a bolinha do ponto e o cartão da vantagem */
+.casa.casa--foco .casa__tipos, .casa.casa--foco .casa__nota, .casa.casa--foco .casa__contador, .casa.casa--foco .casa__cta { opacity: 0; pointer-events: none; }
+.casa__tipos, .casa__cta { transition: opacity 0.3s, transform 0.35s var(--ease); }
 .casa__palco { position: absolute; inset: 0; }
 .casa__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .casa__estatica { display: none; }
@@ -434,6 +437,15 @@ main { position: relative; z-index: 2; }
   padding: 8px 14px; border-radius: 999px; background: rgba(251, 250, 247, 0.85); border: 1px solid var(--linha); }
 .casa__contador b { font-size: 1.25rem; font-stretch: 120%; color: var(--azul); font-variant-numeric: tabular-nums; margin-right: 4px; }
 .casa__nota { position: absolute; z-index: 2; right: max(16px, calc((100vw - 1200px) / 2)); bottom: 5vh; margin: 0; font-size: 0.74rem; color: var(--texto-suave); }
+/* PC de tela baixa (notebook com barra do navegador): tudo do texto cabe acima dos tipos de casa */
+@media (min-width: 760px) and (max-height: 760px) {
+  .casa__txt { top: calc(var(--cabecalho) + 2.5vh); }
+  .casa__txt h2 { font-size: clamp(1.4rem, 2.5vw, 2.1rem); margin-bottom: 0.4em; }
+  .casa__dica { margin-bottom: 6px; font-size: 0.82rem; }
+  .casa__tipos { bottom: calc(2.5vh + 50px); }
+  .casa__contador { bottom: 2.5vh; }
+  .casa__nota { bottom: 2.5vh; }
+}
 @media (max-width: 759px) {
   .jornada { height: 980vh; height: calc(var(--vh, 1vh) * 980); }
   /* celular: o Blocão está em cima (na zona do bloco) → a maquete fica em cima e os textos da casa embaixo */
@@ -443,6 +455,11 @@ main { position: relative; z-index: 2; }
   .casa__etapas { height: 2.6em; }
   .casa__etapas li { font-size: 0.98rem; }
   .casa__cta { margin-top: 8px; }
+  .casa--foco .casa__txt { bottom: 92px; width: calc(100% - 32px); }
+  .casa__vantagem { padding: 12px 14px; }
+  .casa__vantagem-titulo { font-size: 1rem; }
+  .casa__vantagem-texto { font-size: 0.88rem; line-height: 1.4; margin-bottom: 4px; }
+  .casa__vantagem-dica { font-size: 0.72rem; }
   .casa__contador { bottom: 14px; font-size: 0.85rem; padding: 6px 12px; }
   /* passeio: a barra fica à esquerda do botão flutuante do WhatsApp */
   /* celular: o painel do drone vai pra cima (debaixo dos tipos de casa); embaixo ficam o joystick e a altura */

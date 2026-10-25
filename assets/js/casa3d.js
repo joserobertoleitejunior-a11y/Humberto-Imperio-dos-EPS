@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261028c";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261029d";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -1250,7 +1250,7 @@ function poseDestaque(i, de) {
   const dir = _a.set(mx * 0.77 - mz * 0.64 * lado, 0.55, mz * 0.77 + mx * 0.64 * lado).normalize();
   // distância pela LARGURA da tela: ~6 m de parede visíveis em volta do corte
   const meiaV = Math.tan(MathUtils.degToRad(30) / 2);
-  const D = Math.max(9, 3 / (meiaV * Math.min(1.4, camera.aspect)));
+  const D = Math.max(18, 4.2 / (meiaV * Math.min(1.4, camera.aspect))); // ~8 m de casa na largura e ~10 m na altura: dá contexto
   return { i, alvo, pos: alvo.clone().addScaledVector(dir, D), dir: dir.clone(), D, n: { x: mx, z: mz } };
 }
 
@@ -1302,7 +1302,7 @@ function paredeDoPonto(pt, nn) {
     const d = Math.abs((m.eixo === "x" ? pt.z : pt.x) - m.fixo);
     if (d < dMin) { dMin = d; melhor = m; }
   }
-  return melhor && dMin < 1.5 ? melhor.id : undefined;
+  return melhor && dMin < 4 ? melhor.id : undefined; // varanda na frente: a parede fica recuada do ponto
 }
 
 function montarPontos() {
@@ -1738,11 +1738,13 @@ function desenhar(hd) {
   if (ouvinte) ouvinte({ assentados, total: lista.length });
 }
 
+let tamAntes = "";
 function redimensionar() {
   const el = renderer.domElement;
   const w = el.clientWidth;
   const h = el.clientHeight;
-  if (!w || !h) return;
+  if (!w || !h || `${w}x${h}` === tamAntes) return; // mesmo tamanho: não realoca a imagem
+  tamAntes = `${w}x${h}`;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();

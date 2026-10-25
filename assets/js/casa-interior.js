@@ -483,64 +483,55 @@ export function cenario(base, frente, cxCasa) {
   chao.position.set(cxCasa, -0.01, base.cz);
   chao.renderOrder = -5;
   chao.userData.manter = true;
+  chao.visible = false; // fundo branco: o gramado até o horizonte saiu (cor só em volta da casa)
   g.add(chao);
-  // o resto (rua, morros, árvores, vizinhos, canteiros) "brota" do chão quando a casa fica pronta
+  // o resto (gramado em volta, árvores ao fundo, canteiros) "brota" do chão quando a casa fica pronta.
+  // fundo branco e leve: cor só em volta da casa (gramado que some em degradê) e poucas árvores lá atrás
   const relevo = new Group();
   g.add(relevo);
-  // rua na frente + calçadas
-  const zRua = base.cz + base.z / 2 + 4.5;
-  cx(relevo, 420, 0.02, 7, M.asfalto, cxCasa, 0.0, zRua);
-  cx(relevo, 420, 0.03, 1.8, M.calcada, cxCasa, 0.01, zRua - 4.4);
-  cx(relevo, 420, 0.03, 1.8, M.calcada, cxCasa, 0.01, zRua + 4.4);
-  for (let i = -20; i <= 20; i++) cx(relevo, 2.2, 0.025, 0.14, M.calcada, cxCasa + i * 6, 0.012, zRua);
-  // morros ao longe (2 camadas: perto mais verde, longe mais azulado)
-  const morro = (r, cor, n, a0, alt) => {
-    for (let i = 0; i < n; i++) {
-      const a = a0 + (i / n) * Math.PI * 2;
-      bola(relevo, 1, cor, cxCasa + Math.cos(a) * r, -alt * 0.15, base.cz + Math.sin(a) * r, 26 + (i % 3) * 8, alt + (i % 4) * 3, 22 + (i % 2) * 10);
-    }
-  };
-  morro(150, M.morroLonge, 14, 0.2, 18);
-  morro(95, M.morro, 11, 0.5, 9);
-  // árvores espalhadas (instanciadas: 2 desenhos só), fora da base e longe da rua
-  const sorte = ((s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; })(7);
+  const raioGrama = Math.max(base.x, base.z) * 0.5 + 7;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 128;
+  const cx2 = cv.getContext("2d");
+  const grad = cx2.createRadialGradient(64, 64, 20, 64, 64, 64);
+  grad.addColorStop(0, "rgba(160,178,112,1)");
+  grad.addColorStop(0.7, "rgba(178,192,138,0.7)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  cx2.fillStyle = grad;
+  cx2.fillRect(0, 0, 128, 128);
+  const tGrama = new CanvasTexture(cv);
+  tGrama.colorSpace = SRGBColorSpace;
+  const matGrama = mat("#ffffff", { map: tGrama, transparent: true, depthWrite: false, roughness: 1 });
+  const grama = new Mesh(new PlaneGeometry(raioGrama * 2, raioGrama * 2), matGrama);
+  grama.rotation.x = -R90;
+  grama.position.set(cxCasa, 0.005, base.cz);
+  grama.renderOrder = -4;
+  grama.userData.manter = true;
+  relevo.add(grama);
+  // poucas árvores, longe (no fundo branco), instanciadas: 2 desenhos só
+  const sorte = ((sm) => () => { sm = (sm * 16807) % 2147483647; return sm / 2147483647; })(7);
   const pos = [];
-  while (pos.length < 40) {
+  while (pos.length < 12) {
     const a = sorte() * Math.PI * 2;
-    const r = Math.max(base.x, base.z) * 0.55 + 3 + sorte() * 45;
-    const x = cxCasa + Math.cos(a) * r;
-    const z = base.cz + Math.sin(a) * r;
-    if (Math.abs(z - zRua) < 6.5) continue;
-    pos.push([x, z, 0.8 + sorte() * 0.9]);
+    const r = raioGrama + 4 + sorte() * 26;
+    pos.push([cxCasa + Math.cos(a) * r, base.cz + Math.sin(a) * r, 0.8 + sorte() * 0.9]);
   }
-  const troncos = new InstancedMesh(new BoxGeometry(0.22, 1, 0.22), mat("#5b4636", { roughness: 1 }), pos.length);
-  const copas = new InstancedMesh(new IcosahedronGeometry(1, 1), M.folha, pos.length);
+  const troncos = new InstancedMesh(new BoxGeometry(0.22, 1, 0.22), mat("#8a7a6c", { roughness: 1 }), pos.length);
+  const copas = new InstancedMesh(new IcosahedronGeometry(1, 1), mat("#ffffff", { roughness: 0.9 }), pos.length);
   const o = new Object3D();
   // a = quanto a árvore está de pé (1) ou recolhida no chão (0): some quando fica entre a câmera e a casa
   const plantar = (i, a) => {
-    const [x, z, s] = pos[i];
+    const [x, z, sc] = pos[i];
     const sy = Math.max(0.001, a);
-    o.position.set(x, 1.0 * s * sy, z); o.scale.set(s, 2 * s * sy, s); o.rotation.set(0, 0, 0); o.updateMatrix(); troncos.setMatrixAt(i, o.matrix);
-    o.position.set(x, 2.6 * s * sy, z); o.scale.set(1.4 * s, 1.8 * s * sy, 1.4 * s); o.rotation.set(0, i, 0); o.updateMatrix(); copas.setMatrixAt(i, o.matrix);
+    o.position.set(x, 1.0 * sc * sy, z); o.scale.set(sc, 2 * sc * sy, sc); o.rotation.set(0, 0, 0); o.updateMatrix(); troncos.setMatrixAt(i, o.matrix);
+    o.position.set(x, 2.6 * sc * sy, z); o.scale.set(1.4 * sc, 1.8 * sc * sy, 1.4 * sc); o.rotation.set(0, i, 0); o.updateMatrix(); copas.setMatrixAt(i, o.matrix);
   };
   pos.forEach((_, i) => {
     plantar(i, 1);
-    copas.setColorAt(i, new Color().setHSL(0.27 + (i % 5) * 0.012, 0.32, 0.3 + (i % 4) * 0.035));
+    copas.setColorAt(i, new Color().setHSL(0.26, 0.16, 0.62 + (i % 4) * 0.04)); // verde bem claro: combina com o fundo branco
   });
   relevo.add(troncos, copas);
-  // casas vizinhas (dos 2 lados e do outro lado da rua): cada uma fundida à parte, pra poder abaixar sozinha
-  const vidroViz = mat("#3a4a55", { roughness: 0.15 });
-  const vizinhas = [[-1, 0], [1, 0], [-1, 1], [1, 1], [0, 1]].map(([lado, outra], i) => {
-    const x = cxCasa + lado * (base.x / 2 + 9);
-    const z = outra ? zRua + 12 : base.cz - 1;
-    const w = 8 + (i % 2) * 2;
-    const d = 7;
-    const v = new Group();
-    cx(v, w, 3.2 + (i % 2) * 2.8, d, M.vizinha, x, (3.2 + (i % 2) * 2.8) / 2, z);
-    cx(v, w + 0.6, 0.25, d + 0.6, M.vizinhaTelhado, x, 3.2 + (i % 2) * 2.8 + 0.12, z);
-    for (let k = 0; k < 3; k++) cx(v, 1.1, 1.2, 0.05, vidroViz, x - w / 3 + k * (w / 3), 1.6, z + (outra ? -d / 2 - 0.03 : d / 2 + 0.03));
-    return { g: fundirPorMaterial(v), x, z, r: Math.hypot(w, d) / 2 };
-  });
+  const vizinhas = [];
   // canteiros floridos na beira da base
   for (let i = 0; i < 26; i++) {
     const t = i / 26;
@@ -556,7 +547,7 @@ export function cenario(base, frente, cxCasa) {
   g.traverse((m) => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = false; } });
   /** k = 0..1: céu e gramado aparecem, o resto brota do chão */
   g.userData.surgir = (k) => {
-    matChao.opacity = k;
+    matChao.opacity = 0;
     fundido.scale.y = Math.max(0.001, k);
     fundido.visible = k > 0.01;
   };

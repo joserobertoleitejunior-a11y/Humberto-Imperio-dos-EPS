@@ -175,7 +175,8 @@
       if (!e) return;
       q.px = q.x - r.left;
       q.py = q.y - r.top;
-      if (q.id === ativo) { ligarCartao(e, q, r); return; } // o ponto em foco: linha do ponto até a informação
+      // ponto aberto: tela limpa — só a bolinha dele (as outras etiquetas e linhas somem até voltar pra casa inteira)
+      if (ativo) { if (q.id === ativo) soPonto(e, q); else esconder(e); return; }
       if (!q.visivel) { esconder(e); return; }
       (larga || q.px > W / 2 ? cols.d : cols.e).push(q);
     });
@@ -213,23 +214,15 @@
     });
   }
 
-  /** ponto em foco: some a etiqueta e a linha preta vai do ponto da casa até o cartão com a vantagem */
-  function ligarCartao(e, q, r) {
-    var card = camada.querySelector("[data-casa-vantagem]");
-    var c = card && !card.hidden ? card.getBoundingClientRect() : null;
+  /** ponto em foco: só a bolinha no corte (sem etiqueta nem linha); o dedo passa por ela pra girar a vista */
+  function soPonto(e, q) {
     e.btn.style.opacity = 0;
     e.btn.style.pointerEvents = "none";
+    e.linha.setAttribute("d", "");
     e.toque.setAttribute("d", "");
-    if (!c || !c.width) { e.dot.style.opacity = 0; e.dot.style.pointerEvents = "none"; e.linha.setAttribute("d", ""); return; }
     e.dot.style.transform = "translate(" + q.px.toFixed(1) + "px," + q.py.toFixed(1) + "px)";
     e.dot.style.opacity = 1;
-    e.dot.style.pointerEvents = "none"; // fica no meio da tela, em cima do Blocão: o dedo ali gira a maquete
-    var L = c.left - r.left;
-    var T = c.top - r.top;
-    var ex = Math.min(Math.max(q.px, L + 14), L + c.width - 14);
-    var ey = q.py < T ? T : q.py > T + c.height ? T + c.height : T;
-    if (q.py >= T && q.py <= T + c.height) { ex = q.px < L ? L : L + c.width; ey = q.py; }
-    e.linha.setAttribute("d", "M" + q.px.toFixed(1) + " " + q.py.toFixed(1) + " L" + ex.toFixed(1) + " " + ey.toFixed(1));
+    e.dot.style.pointerEvents = "none";
   }
 
   function aoDesenhar(info) {
@@ -272,7 +265,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261028c")
+    import("./casa3d.js?v=20261029d")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -513,11 +506,12 @@
         if (Date.now() - ultimaRolagem < 700 || (ab && ab.bvAberta && ab.bvAberta())) { setTimeout(tentar, 1000); return; }
         quandoOcioso();
       };
-      window.addEventListener("load", function () { setTimeout(tentar, 5000); }, { once: true });
+      // prepara cedo (assim que a página fica parada depois de abrir): quem rola rápido até a casa não pega a montagem no caminho
+      window.addEventListener("load", function () { setTimeout(tentar, 1500); }, { once: true });
       if (window.ImperioMotion) window.ImperioMotion.aoRolar(function (j) {
         if (carregando || !j || !j.dentro) return;
         if (j.casa > 0) iniciar3D();
-        else if (j.p > 0.3) tentar();
+        else if (j.p > 0.02) tentar();
       });
     }
     if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);
