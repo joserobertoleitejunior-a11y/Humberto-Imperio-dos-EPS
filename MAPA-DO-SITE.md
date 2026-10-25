@@ -97,6 +97,14 @@ total (`DUR_TOUR_SITE`). Sem legenda, sem cartão, nenhum botão: durante o tour
 `casa.js`) e só o dedo funciona — gira a vista em volta do que o drone filma, sem parar o drone (`olharTour`). No fim
 volta pra maquete inteira com "Gostou? A sua pode ser assim." + "Quero construir a minha", e o site continua.
 Os móveis são montados num momento ocioso, antes de a casa ficar pronta (`garantirExtras`).
+Quadros de verdade: moldura grafite com profundidade + passe-partout claro, número "0N / 06", título azul e o texto
+(`criarQuadro`). **Arte própria (ex.: Gemini):** pôr a imagem 3 colunas × 2 linhas em `assets/img/` e apontar
+`quadrosVantagens` no `config.js` — o site recorta os 6 painéis na ORDEM (Obra rápida · Bem mais leve · Casa mais
+fresca / Mais silêncio · Sem mofo · Acabamento fácil); vazio = quadros desenhados pelo site.
+**Na parede em volta de cada quadro** (enquanto o drone lê): os blocos em volta perdem a tinta (Blocão cru) e a parede
+abre ao lado, mostrando o miolo (concreto + EPS + concreto); no "Acabamento fácil" a casa inteira perde a tinta.
+Fecha ao sair do quadro (`tourAcoes`, `blocosEmVolta`, `blocoAoLado`). Trecho curto pulado por aparelho lento ainda
+dispara a sua ação (`posVoo`).
 
 **Celular — maquete livre:** título, etapa, dica, tipos de casa, botão/contador e a nota ficam todos embaixo, no bloco
 de texto; na frente da maquete, nada. A câmera enquadra a casa no espaço livre entre o

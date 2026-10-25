@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261031g";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261101e";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -1049,7 +1049,12 @@ function posVoo(v, pos, olhar) {
   const n = P.length - 1;
   catmull(pos, P[Math.max(0, i - 1)], P[i], P[i + 1], P[Math.min(n, i + 2)], t);
   catmull(olhar, A[Math.max(0, i - 1)], A[i], A[i + 1], A[Math.min(n, i + 2)], t);
-  if (v.seg !== i) { v.seg = i; if (v.aoTrecho) v.aoTrecho(i); }
+  // aparelho lento pode pular trechos curtos num quadro só: cada trecho pulado ainda dispara a sua ação, em ordem
+  if (v.seg !== i) {
+    const de = v.seg;
+    v.seg = i;
+    if (v.aoTrecho) for (let k = Math.min(de + 1, i); k <= i; k++) v.aoTrecho(k);
+  }
   // inclina na curva (como drone): rola pro lado em que está virando
   const yaw = Math.atan2(olhar.x - pos.x, olhar.z - pos.z);
   if (v.yawAntes !== null && e > v.tAntes) {
@@ -1156,39 +1161,124 @@ function avisar() { if (ouvinteInterior) ouvinteInterior({ dentro: !!interior, r
  * caminho (placas). Sem legenda nem cartão; o dedo só gira a vista (olharTour) e o drone não para.
  */
 const DUR_TOUR_SITE = 16.5;
-const TOUR_LER = 1.5;      // s deslizando devagar em frente a cada quadro (dá pra ler); no resto o drone corre
+const TOUR_LER = 1.8;      // s deslizando devagar em frente a cada quadro (dá pra ler e ver a parede abrir); no resto corre
 let placas = null;
+let tourAcoes = null;       // tour do site: o que cada trecho faz na parede (abrir o corte / tirar a tinta)
 
-/** quadro com a vantagem: fundo claro, moldura fina, título azul e o texto (canvas → textura, sem luz: sempre nítido) */
-function texturaPlaca(titulo, texto) {
+/**
+ * Arte dos quadros: se `quadrosVantagens` (config.js) aponta pra uma imagem 3 × 2 (as 6 vantagens na ORDEM, linha
+ * por linha — ex.: gerada no Gemini), ela é recortada em 6; sem imagem, cada quadro é desenhado aqui (canvas).
+ */
+let artesQuadros = null;   // { tex: [6 texturas], aspecto } quando a imagem carregou
+let arteCarregando = false;
+function carregarArteQuadros() {
+  const url = (window.IMPERIO_CONFIG || {}).quadrosVantagens;
+  if (!url || arteCarregando) return;
+  arteCarregando = true;
+  const img = new Image();
+  img.decoding = "async";
+  img.onload = () => {
+    const pw = img.naturalWidth / 3;
+    const ph = img.naturalHeight / 2;
+    const corte = 0.015; // tira a borda/espaço entre os painéis
+    const tex = [];
+    for (let k = 0; k < 6; k++) {
+      const cv = document.createElement("canvas");
+      cv.width = 768;
+      cv.height = Math.round((768 * ph) / pw);
+      const sx = (k % 3) * pw + pw * corte;
+      const sy = Math.floor(k / 3) * ph + ph * corte;
+      cv.getContext("2d").drawImage(img, sx, sy, pw * (1 - 2 * corte), ph * (1 - 2 * corte), 0, 0, cv.width, cv.height);
+      const t = new CanvasTexture(cv);
+      t.colorSpace = SRGBColorSpace;
+      t.anisotropy = 4;
+      tex.push(t);
+    }
+    artesQuadros = { tex, aspecto: pw / ph };
+  };
+  img.src = url;
+}
+
+/** quadro desenhado (sem a imagem): passe-partout claro, número, título azul, fio fino, texto e assinatura */
+function texturaPlaca(k, titulo, texto) {
   const cv = document.createElement("canvas");
-  cv.width = 640;
-  cv.height = 420;
+  cv.width = 768;
+  cv.height = 512;
   const c = cv.getContext("2d");
+  c.fillStyle = "#f4f1ea";
+  c.fillRect(0, 0, 768, 512);
   c.fillStyle = "#fbfaf7";
-  c.fillRect(0, 0, 640, 420);
-  c.strokeStyle = "#14161a";
-  c.lineWidth = 14;
-  c.strokeRect(7, 7, 626, 406);
+  c.fillRect(34, 34, 700, 444);
+  c.strokeStyle = "rgba(20, 22, 26, 0.18)";
+  c.lineWidth = 2;
+  c.strokeRect(34, 34, 700, 444);
+  c.fillStyle = "#8a877f";
+  c.font = "700 24px Archivo, Arial, sans-serif";
+  c.fillText(`0${k + 1} / 06`, 74, 98);
   c.fillStyle = "#1f4bd8";
-  c.font = "800 50px Archivo, Arial, sans-serif";
-  c.fillText(titulo, 44, 104);
+  c.font = "800 60px Archivo, Arial, sans-serif";
+  c.fillText(titulo, 72, 176);
   c.fillStyle = "#14161a";
-  c.font = "500 31px Archivo, Arial, sans-serif";
+  c.fillRect(74, 204, 64, 4);
+  c.fillStyle = "#2a2c30";
+  c.font = "500 33px Archivo, Arial, sans-serif";
   let linha = "";
-  let y = 168;
+  let y = 262;
   for (const p0 of texto.split(" ")) {
     const t = linha ? `${linha} ${p0}` : p0;
-    if (c.measureText(t).width > 552) { c.fillText(linha, 44, y); linha = p0; y += 42; } else linha = t;
+    if (c.measureText(t).width > 610) { c.fillText(linha, 74, y); linha = p0; y += 46; } else linha = t;
   }
-  c.fillText(linha, 44, y);
-  c.fillStyle = "#6b6a66";
-  c.font = "700 22px Archivo, Arial, sans-serif";
-  c.fillText("BLOCÃO · IMPÉRIO DO EPS", 44, 384);
+  c.fillText(linha, 74, y);
+  c.fillStyle = "#8a877f";
+  c.font = "700 21px Archivo, Arial, sans-serif";
+  c.fillText("BLOCÃO · IMPÉRIO DO EPS", 74, 444);
   const tex = new CanvasTexture(cv);
   tex.colorSpace = SRGBColorSpace;
   tex.anisotropy = 4;
   return tex;
+}
+
+/** quadro de verdade: moldura grafite com profundidade + a arte (sem luz: sempre nítida) */
+function criarQuadro(k, larg, alt) {
+  const g = new Group();
+  const moldura = new Mesh(new BoxGeometry(larg + 0.05, alt + 0.05, 0.035), new MeshStandardMaterial({ color: "#1d1f23", roughness: 0.55 }));
+  moldura.position.z = 0.0175;
+  const [titulo, texto] = VANTAGENS[ORDEM[k]];
+  const mapa = artesQuadros ? artesQuadros.tex[k] : texturaPlaca(k, titulo, texto);
+  const arte = new Mesh(new PlaneGeometry(larg, alt), new MeshBasicMaterial({ map: mapa, toneMapped: false }));
+  arte.position.z = 0.0362;
+  g.add(moldura, arte);
+  return g;
+}
+
+/** os blocos da parede em volta do quadro: perdem a tinta enquanto o drone lê (o Blocão cru aparece em volta da moldura) */
+function blocosEmVolta(centro, n) {
+  const volta = new Set();
+  lista.forEach((bl, i) => {
+    if (bl.parede === 0) return;
+    const fora = Math.abs((bl.x - centro.x) * n.x + (bl.z - centro.z) * n.z);
+    const along = Math.abs((bl.x - centro.x) * -n.z + (bl.z - centro.z) * n.x);
+    if (fora < 0.3 && along < 1.5 && Math.abs(bl.y - centro.y) < 1.0) volta.add(i);
+  });
+  return volta;
+}
+
+/** um bloco da mesma parede logo ao lado do quadro (na altura dele): é ali que a parede abre durante o tour */
+function blocoAoLado(centro, n, larg) {
+  const tx = -n.z;
+  const tz = n.x;
+  let melhor = -1;
+  let dMin = Infinity;
+  lista.forEach((bl, i) => {
+    if (bl.parede === 0) return; // a parede da frente sai inteira no tour
+    const along = (bl.x - centro.x) * tx + (bl.z - centro.z) * tz;
+    const fora = Math.abs((bl.x - centro.x) * n.x + (bl.z - centro.z) * n.z);
+    if (fora > 0.3 || Math.abs(bl.y - centro.y) > 0.6) return;
+    const lado = Math.abs(along);
+    if (lado < larg / 2 + 0.4 || lado > larg / 2 + 1.2) return;
+    if (lado < dMin) { dMin = lado; melhor = i; }
+  });
+  return melhor;
 }
 
 /**
@@ -1196,7 +1286,15 @@ function texturaPlaca(titulo, texto) {
  * ela olha acha a parede; o quadro fica nela, na altura dos olhos, virado pro cômodo.
  */
 function montarPlacas() {
-  if (placas) { obra.remove(placas); placas.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.map.dispose(); o.material.dispose(); } }); }
+  if (placas) {
+    obra.remove(placas);
+    placas.traverse((o) => {
+      if (!o.isMesh) return;
+      o.geometry.dispose();
+      if (o.material.map && !(artesQuadros && artesQuadros.tex.includes(o.material.map))) o.material.map.dispose();
+      o.material.dispose();
+    });
+  }
   placas = new Group();
   placas.visible = false;
   obra.add(placas);
@@ -1205,7 +1303,7 @@ function montarPlacas() {
   const caixas = [P.A, P.B].filter(Boolean);
   const dentro = (x, z) => caixas.some((c) => x > c.x0 + 0.2 && x < c.x1 - 0.2 && z > c.z0 + 0.2 && z < c.z1 - 0.2);
   const LARG = 0.9;
-  const ALT = 0.59;
+  const ALT = artesQuadros ? limitarEntre(LARG / artesQuadros.aspecto, 0.45, 0.9) : 0.6;
   const raio = (de, para) => {
     const dir = para.clone().sub(de);
     const d = dir.length();
@@ -1254,17 +1352,20 @@ function montarPlacas() {
       if (centro) break;
     }
     if (!centro) continue;
-    const [titulo, texto] = VANTAGENS[ORDEM[usados.length]];
+    const k = usados.length;
     usados.push(centro);
-    const placa = new Mesh(new PlaneGeometry(LARG, ALT), new MeshBasicMaterial({ map: texturaPlaca(titulo, texto), toneMapped: false }));
-    placa.position.copy(centro);
+    const placa = criarQuadro(k, LARG, ALT);
+    placa.position.copy(centro).addScaledVector(n, -0.02);
     placa.rotation.y = Math.atan2(n.x, n.z);
     placas.add(placa);
+    // o que acontece na parede em volta do quadro: o "Acabamento" tira a tinta da casa; os outros abrem a parede ao
+    // lado do quadro e mostram o miolo do Blocão (concreto + EPS + concreto)
+    const acao = ORDEM[k] === "acabamento" ? { tinta: true } : { iBloco: blocoAoLado(centro, n, LARG), volta: blocosEmVolta(centro, n) };
     // o drone chega perto do quadro pelo caminho livre (o raio até a parede) e desliza devagar enquanto dá pra ler
     const visto = centro.clone().sub(cam).normalize();
     const d = Math.min(cam.distanceTo(centro) - 0.1, 2.2);
     const olho = (k) => centro.clone().addScaledVector(visto, -d * k).setY(centro.y - 0.08);
-    paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver: [olho(1), olho(0.8)] }));
+    paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver: [olho(1), olho(0.8)], acao }));
   }
   return paradas;
 }
@@ -1286,6 +1387,7 @@ function iniciarTour(site = false) {
     placas.visible = true;
     Object.assign(olhoTour, { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false });
     const ler = [false];
+    const acoes = [null];
     // só até sair da casa (o resto do voo do vídeo, pelo alto, gastaria o tempo do tour)
     const caixas = [projeto.A, projeto.B].filter(Boolean);
     const naCasa = ([x, , z]) => caixas.some((c) => x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1);
@@ -1293,12 +1395,14 @@ function iniciarTour(site = false) {
     projeto.tour.forEach((w, i) => { if (naCasa(w)) ultimo = i; });
     projeto.tour.slice(0, ultimo + 2).forEach(([x, y, z, lx, ly, lz], i) => {
       const pa = paradas.get(i);
-      if (pa) pa.forEach((q) => { pts.push(q.ver[0], q.ver[1]); alvos.push(q.pos, q.pos); ler.push(false, true); });
-      else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); }
+      if (pa) pa.forEach((q) => { pts.push(q.ver[0], q.ver[1]); alvos.push(q.pos, q.pos); ler.push(false, true); acoes.push(q.acao, null); });
+      else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); acoes.push(null); }
     });
     pts.push(ini.pos.clone());
     alvos.push(ini.alvo.clone());
     ler.push(false);
+    acoes.push(null);
+    tourAcoes = { acoes, ler };
     const dist = (i) => Math.max(pts[i].distanceTo(pts[i - 1]), alvos[i].distanceTo(alvos[i - 1]) * 0.3, 0.35);
     const nLer = ler.filter(Boolean).length;
     // entre os quadros o tempo cresce menos que a distância (trecho longo não come o tour: o drone acelera)
@@ -1323,6 +1427,17 @@ function iniciarTour(site = false) {
   iniciarVoo(criarVoo(pts, alvos, vels, {
     tour: true, fov: [ini.fov, site ? 56 : 62], off: [ini.off, 0], tourPontos: site, rampa: site ? 0.6 : undefined,
     aoTrecho: (i) => {
+      if (site && tourAcoes) {
+        // chegando num quadro: a parede em volta dele abre (ou a casa perde a tinta); saindo do quadro: fecha
+        if (tourAcoes.ler[i]) fecharPonto(); // primeiro fecha o quadro que ficou pra trás...
+        const a = tourAcoes.acoes[i + 1]; // ...depois abre o próximo (podem ser o mesmo trecho)
+        if (a && a.tinta) definirSemTinta(true);
+        else if (a && a.volta) {
+          const c = a.iBloco >= 0 ? montarCorte(a.iBloco, 0.55, 0.55, 1.6, 1.0) : { furo: new Set(), borda: new Set() };
+          for (const k of a.volta) if (!c.furo.has(k)) c.borda.add(k);
+          destaque = { i: a.iBloco, ...c, de: 0, para: 1, t0: agora() };
+        }
+      }
       const l = legendas[i + 1] !== undefined && legendas[i + 1] !== null ? legendas[i + 1] : tour && tour.legenda;
       if (!tour || l === tour.legenda) return;
       tour.legenda = l;
@@ -1343,6 +1458,8 @@ function fimTour() {
   if (ouvinteTour) ouvinteTour({ ativo: false, legenda: null, site });
   if (!site) return;
   if (placas) placas.visible = false;
+  tourAcoes = null;
+  fecharPonto();
   animarOrbita();
   // acabou o tour do site: a chamada pra comprar e o site continua
   if (ouvintePonto) ouvintePonto({ ativo: false, fim: true, acabou: true, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
@@ -1436,7 +1553,7 @@ function vistaLivre(pose) {
 }
 
 /** o corte: ~2 blocos × 3 fiadas saem da parede; os da volta perdem a tinta (o miolo aparece na borda) */
-function montarCorte(i) {
+function montarCorte(i, meia = 0.95, alt = 0.55, bordaMeia = 1.9, bordaAlt = 1.1) {
   const c = lista[i];
   const m = muroDe(c.parede);
   const ao = (bl) => (m.eixo === "x" ? bl.x : bl.z);
@@ -1446,8 +1563,8 @@ function montarCorte(i) {
     if (bl.parede !== c.parede) return;
     const da = Math.abs(ao(bl) - ao(c));
     const dy = Math.abs(bl.y - c.y);
-    if (da < 0.95 && dy < 0.55) furo.add(k);
-    else if (da < 1.9 && dy < 1.1) borda.add(k);
+    if (da < meia && dy < alt) furo.add(k);
+    else if (da < bordaMeia && dy < bordaAlt) borda.add(k);
   });
   return { furo, borda };
 }
@@ -1689,6 +1806,7 @@ function garantirExtras() {
   mobilia = fundirPorMaterial(mobiliar(P, [CHAO + 0.022, Y2 + 0.022], BE, [CHAO + PE, P.B ? Y2 + PE : CHAO + PE]));
   mobilia.visible = false;
   obra.add(mobilia);
+  carregarArteQuadros();
   paisagem = cenario(P.base, P.A.z1 + P.varanda, P.centro[0] * 0.4);
   paisagem.visible = false;
   obra.add(paisagem);
@@ -2197,6 +2315,8 @@ girar(dx, dy = 0, dtMs = 16) {
   /** tour do drone pelos pontos (sozinho, ≤ 20 s); devolve false se não deu pra começar agora */
   tourPontos: () => iniciarTour(true),
   emTourPontos: () => !!(voo && voo.tourPontos),
+  /** testes: quantos quadros abrem a parede ao lado (os outros: acabamento tira a tinta) */
+  cortesTour: () => (tourAcoes ? tourAcoes.acoes.filter((x) => x && x.iBloco >= 0).length : 0),
   /** testes: quantos quadros de vantagem o tour pendurou nas paredes */
   placasTour: () => (placas ? placas.children.length : 0),
   /** testes: quanto o dedo girou a vista durante o tour */

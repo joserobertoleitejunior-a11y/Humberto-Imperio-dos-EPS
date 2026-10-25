@@ -79,6 +79,13 @@ window.IMPERIO_CONFIG = {
     },
   ],
 
+  /**
+   * Arte dos 6 quadros do tour da casa (as vantagens nas paredes): uma imagem com 3 colunas × 2 linhas, na ordem
+   * Obra rápida · Bem mais leve · Casa mais fresca / Mais silêncio · Sem mofo · Acabamento fácil.
+   * Vazio = os quadros são desenhados pelo site.
+   */
+  quadrosVantagens: "",
+
   // Supabase (banco do painel). A anon key NÃO é segredo — a proteção é o
   // RLS (ver supabase/schema.sql). Vazio = site funciona só com WhatsApp
   // e o painel abre em modo demonstração.
