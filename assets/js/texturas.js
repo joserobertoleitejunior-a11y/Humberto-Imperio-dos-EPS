@@ -2,7 +2,7 @@
  * Texturas realistas das maquetes: fotos CC0 da Poly Haven (1K/512, WebP) em assets/img/texturas.
  * Cada foto tem 3 mapas: -cor, -normal (relevo) e -rugosidade. Usado pelo casa3d.js e pelo casa-interior.js.
  *
- * - comFoto(material, nome, opções): o material recebe a foto quando ela chegar (aparelho fraco: nada muda).
+ * - comFoto(material, nome, opções): o material recebe a foto quando ela chegar (aparelho fraco: só a cor, sem relevo).
  * - uvNaCaixa(geo, material): caixa com foto ganha UV em metros — a foto fica no tamanho real em qualquer peça.
  * - carregarTexturas(): baixa tudo (uma vez) e troca nos materiais num momento parado.
  */
@@ -15,14 +15,15 @@ export const LADO = {
   casca: 1, folhagem: 3, asfalto: 3,
 };
 
-let ligado = false;          // aparelho bom: usa as fotos
+let ligado = false;          // 3D ligado: usa as fotos
+let leve = false;            // aparelho fraco: só a foto de cor (relevo e rugosidade pesam no celular antigo)
 let carregando = false;
 let fotos = null;            // nome → [cor, normal, rugosidade] (imagens), quando chegaram
 const pedidos = [];          // [material, nome, opções]
 const ladoMat = new Map();   // material → lado da foto (m): as caixas dele ganham UV em metros
 const cache = new Map();     // uma textura por foto/mapa/repetição (a GPU guarda uma vez só)
 
-export function ligarTexturas(sim) { ligado = sim; }
+export function ligarTexturas(sim, soCor = false) { ligado = sim; leve = soCor; }
 export const texturasLigadas = () => ligado;
 
 /**
@@ -99,10 +100,12 @@ function textura(nome, mapa, rep) {
 function aplicar(m, nome, opc) {
   const rep = opc.rep || 1;
   m.map = textura(nome, 0, rep);
-  m.normalMap = textura(nome, 1, rep);
-  m.roughnessMap = textura(nome, 2, rep);
-  m.roughness = opc.rugosidade ?? 1;
-  if (opc.relevo) m.normalScale.set(opc.relevo, opc.relevo);
+  if (!leve) {
+    m.normalMap = textura(nome, 1, rep);
+    m.roughnessMap = textura(nome, 2, rep);
+    m.roughness = opc.rugosidade ?? 1;
+    if (opc.relevo) m.normalScale.set(opc.relevo, opc.relevo);
+  }
   if (!opc.manterCor) m.color.set(opc.cor || "#ffffff");
   if (opc.porPosicao) uvPorPosicao(m, opc.porPosicao);
   m.needsUpdate = true;
@@ -123,7 +126,8 @@ export function carregarTexturas(quandoParado, pronto) {
     img.src = new URL(arq + ".webp" + ver, base).href;
     return img.decode().then(() => img);
   };
-  Promise.all(Object.keys(LADO).map((n) => Promise.all(["cor", "normal", "rugosidade"].map((k) => imagem(`${n}-${k}`))).then((imgs) => [n, imgs])))
+  const mapas = leve ? ["cor"] : ["cor", "normal", "rugosidade"];
+  Promise.all(Object.keys(LADO).map((n) => Promise.all(mapas.map((k) => imagem(`${n}-${k}`))).then((imgs) => [n, imgs])))
     .then((lista) => quandoParado(() => {
       fotos = Object.fromEntries(lista);
       pedidos.forEach(([m, n, o]) => aplicar(m, n, o));

@@ -181,7 +181,7 @@ test("sem rolagem lateral no celular", async ({ page }) => {
 });
 
 test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no fim aparece o botão", async ({ page }) => {
-  test.setTimeout(150000); // monta 3 casas, entra e sai de uma (WebGL por software nos testes)
+  test.setTimeout(200000); // monta 3 casas, entra e sai de uma (WebGL por software nos testes)
   await abrir(page);
   await page.evaluate(() => { const j = document.querySelector("#por-dentro"); scrollTo({ top: j.offsetTop, behavior: "instant" }); });
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--3d/, { timeout: 60000 });
@@ -214,8 +214,8 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.mouse.up();
   expect(await page.evaluate(() => window.ImperioCasa3D.olharTour())).not.toBe(0);
   expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(true);
-  // ≤ 20 s: termina sozinho com a chamada pra comprar, e o site continua
-  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 40000 }).toBe(false);
+  // termina sozinho com a chamada pra comprar, e o site continua (tour ≈ 48 s: duração em decisão com o cliente)
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 80000 }).toBe(false);
   await expect(page.locator("[data-casa-vantagem]")).toContainText("Gostou?");
   await expect(page.locator(".casa__cta")).toBeVisible();
   await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");

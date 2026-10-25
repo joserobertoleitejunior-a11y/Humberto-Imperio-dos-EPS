@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103c`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103d`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -31,18 +31,31 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
 
-## Tour: a parede só abre depois de ler o quadro (feito)
+## Tour: ler o quadro, recuar e só então abrir a parede (feito)
 
-- Em cada quadro, o drone passa por 3 pontos (`ver[0..2]` em `montarPlacas`):
-  1. chega no quadro;
-  2. desliza devagar com a parede **fechada** por `TOUR_LER` (2 s), o tempo de ler;
-  3. só então a parede abre (ou a casa perde a tinta, no quadro "Acabamento") e o drone recua devagar mostrando o miolo, por `TOUR_VER` (1,8 s).
-- A parede fecha quando o drone sai do quadro (`tourAcoes.mostra`).
-- Isso aumentou o tour em cerca de 1,8 s por quadro (6 quadros, perto de +11 s). Entra na decisão de duração abaixo: dá para baixar `TOUR_VER`.
+- Em cada quadro o drone passa por 4 pontos (`ver[0..3]` em `montarPlacas`):
+  1. chega;
+  2. lê com a parede fechada (`TOUR_LER`, 2 s);
+  3. recua o máximo que o cômodo deixa e vira para o lado do quadro, com a parede ainda fechada (`TOUR_RECUAR`, 1,4 s);
+  4. lá atrás, quase parado, a parede abre (`TOUR_VER`, 2,2 s).
+- Motivo: no celular em pé a tela é estreita. De perto só o quadro cabia, e a parede abrindo ficava fora do enquadramento.
+- **Recuo:**
+  - na altura do olho, nunca passa de um móvel alto: o drone não entra no armário;
+  - na altura dos móveis baixos (vaso, cadeira), fica na frente deles se sobrar distância.
+- **Para testes:** `ImperioCasa3D.corteAberto()` diz se a parede ao lado do quadro está aberta (0..1).
+- **Como conferir o tour quadro a quadro:** usar o relógio falso do Playwright (`page.clock.install()` + `runFor`). Com o WebGL por software, o tempo real pula quadros e as capturas enganam.
+
+## Texturas em todo aparelho com 3D
+
+- Antes, celular com 4 núcleos ou menos (muitos iPhones informam 4) caía em "baixa" e ficava **sem** foto nenhuma.
+- Agora todo aparelho com 3D recebe as fotos. O "baixa" recebe só o mapa de cor, sem relevo nem rugosidade, porque pesam no celular antigo (`ligarTexturas(true, soCor)`).
+- O relevo foi reforçado: de longe ficava sutil.
 
 ## Decisão pendente com o cliente: duração do tour
 
-Medido com o drone "de verdade":
+**Hoje, com ler → recuar → abrir:** ≈ 48 s na casa média. O teste E2E espera até 80 s.
+
+Medido antes dessa mudança, com o drone "de verdade":
 - simples: 28,4 s
 - média: 30,8 s
 - casarão: 37,5 s

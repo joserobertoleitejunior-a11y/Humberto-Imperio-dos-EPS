@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103c";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261103c";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103d";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261103d";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -601,8 +601,8 @@ function criarMateriais() {
   const tGuia = texConcreto(Math.min(1024, nivel.tex * 2));
   const tSan = texSanduiche(128);
   const tMad = texMadeira(Math.max(128, nivel.tex / 2));
-  const real = nivel !== NIVEIS.baixa; // aparelho fraco: só as texturas de canvas
-  ligarTexturas(real);
+  const real = true; // fotos realistas em todo aparelho com 3D (o fraco recebe só a cor, sem relevo)
+  ligarTexturas(real, nivel === NIVEIS.baixa);
   mats = {
     concreto: new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" }),
     topo: new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" }),
@@ -631,15 +631,15 @@ function criarMateriais() {
   mats.telha = mats.branco.clone();
   mats.deck = mats.madeira.clone();
   // fotos (texturas.js): o Blocão por fora tem UV 2,2 por metro — a repetição devolve o tamanho real da foto
-  comFoto(mats.concreto, "concreto", { rep: 1 / (BLOCO_UV * LADO.concreto), porPosicao: BLOCO_UV, cor: "#f1ede6", relevo: 0.6 });
-  comFoto(mats.pintura, "reboco", { uv: false, porPosicao: 1 / LADO.reboco, cor: "#fdfbf6", relevo: 0.45 });
-  comFoto(mats.laje, "concreto", { cor: "#f4f2ec", relevo: 0.4 });
-  comFoto(mats.branco, "reboco", { cor: "#fbfaf6", relevo: 0.35 });
+  comFoto(mats.concreto, "concreto", { rep: 1 / (BLOCO_UV * LADO.concreto), porPosicao: BLOCO_UV, cor: "#ebe6de", relevo: 1.2 });
+  comFoto(mats.pintura, "reboco", { uv: false, porPosicao: 1 / LADO.reboco, cor: "#fdfbf6", relevo: 1.0 });
+  comFoto(mats.laje, "concreto", { cor: "#f4f2ec", relevo: 0.9 });
+  comFoto(mats.branco, "reboco", { cor: "#fbfaf6", relevo: 0.8 });
   comFoto(mats.piso, "madeira", { rugosidade: 0.9 });
   comFoto(mats.porcelanato, "porcelanato", { rugosidade: 0.55, relevo: 0.5 });
-  comFoto(mats.telha, "telha", { cor: "#f0e2d6", relevo: 0.8 });
-  comFoto(mats.grama, "grama", { cor: "#c3cca9" }); // puxa pro verde-sálvia da maquete
-  comFoto(mats.pedra, "calcada", { cor: "#f2efe9", relevo: 0.7 });
+  comFoto(mats.telha, "telha", { cor: "#f0e2d6", relevo: 1.4 });
+  comFoto(mats.grama, "grama", { cor: "#c3cca9", relevo: 1.5 }); // puxa pro verde-sálvia da maquete
+  comFoto(mats.pedra, "calcada", { cor: "#f2efe9", relevo: 1.2 });
   comFoto(mats.madeira, "teca", { cor: "#c99a72", rugosidade: 0.8 }); // portas e ripado
   comFoto(mats.deck, "deck", { cor: "#efe2d4", rugosidade: 0.85 });
   comFoto(mats.pedraEscura, "pedra-fachada", { cor: "#d9d4cc" });
@@ -1202,7 +1202,8 @@ function avisar() { if (ouvinteInterior) ouvinteInterior({ dentro: !!interior, r
  * caminho (placas). Sem legenda nem cartão; o dedo só gira a vista (olharTour) e o drone não para.
  */
 const TOUR_LER = 2.0;      // s deslizando devagar em frente a cada quadro, com a parede fechada (tempo de ler)
-const TOUR_VER = 1.8;      // s depois de ler: a parede abre ao lado do quadro e o drone recua devagar mostrando o miolo
+const TOUR_RECUAR = 1.4;   // s depois de ler: o drone recua e vira pro lado do quadro (parede ainda fechada)
+const TOUR_VER = 2.2;      // s já lá atrás, quase parado: a parede abre e mostra o miolo do Blocão
 const VEL_DENTRO = 2.6;    // m/s entre um quadro e outro, dentro da casa (drone de verdade, voo tranquilo)
 const VEL_FORA = 4.5;      // m/s chegando e saindo da casa (do lado de fora pode correr)
 let placas = null;
@@ -1406,12 +1407,32 @@ function montarPlacas() {
     // o que acontece na parede em volta do quadro: o "Acabamento" tira a tinta da casa; os outros abrem a parede ao
     // lado do quadro e mostram o miolo do Blocão (concreto + EPS + concreto)
     const acao = ORDEM[k] === "acabamento" ? { tinta: true } : { iBloco: blocoAoLado(centro, n, LARG), volta: blocosEmVolta(centro, n) };
-    // o drone chega perto do quadro pelo caminho livre (o raio até a parede), desliza devagar enquanto dá pra ler e só
-    // depois recua um pouco com a parede aberta
+    // o drone chega pelo caminho livre (o raio até a parede) e desliza devagar enquanto dá pra ler; depois RECUA o
+    // máximo que o cômodo deixa, virando pro lado do quadro, e só lá atrás a parede abre (no celular em pé a tela é
+    // estreita: de perto só o quadro cabia e a parede abrindo ficava fora do enquadramento)
     const visto = centro.clone().sub(cam).normalize();
-    const d = Math.min(cam.distanceTo(centro) - 0.1, 2.2);
+    const d = Math.min(cam.distanceTo(centro) - 0.1, 2.6);
     const olho = (k) => centro.clone().addScaledVector(visto, -d * k).setY(centro.y - 0.08);
-    paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver: [olho(1), olho(0.8), olho(0.95)], acao }));
+    const bl = acao.iBloco >= 0 ? lista[acao.iBloco] : null;
+    const abre = bl ? new Vector3(bl.x, centro.y, bl.z).addScaledVector(n, 0.03) : centro.clone();
+    const meio = abre.clone().lerp(centro, 0.3); // a abertura no meio da tela, com o quadro ainda na beirada
+    // espaço livre na frente da abertura. Na altura do olho é limite (o drone não entra no armário); na dos móveis
+    // baixos (vaso, cadeira, sofá) ele fica na frente deles se ainda sobrar distância pra ver a parede abrir
+    const livreEm = (dy) => {
+      _raycast.set(meio.clone().addScaledVector(n, 0.2).setY(centro.y + dy), n);
+      _raycast.far = 6;
+      const h = _raycast.intersectObjects([blocosMesh].concat(mobilia ? [mobilia] : [], solidos), true)
+        .find((x) => x.object !== blocosMesh || (lista[x.instanceId] && lista[x.instanceId].parede !== 0)); // a da frente sai no tour
+      _raycast.far = Infinity;
+      return h ? h.distance + 0.2 : 6;
+    };
+    let dVer = Math.min(livreEm(0) - 0.5, 3.6);
+    const baixo = Math.min(livreEm(-0.45), livreEm(-0.85)) - 0.4;
+    if (baixo >= 1.3) dVer = Math.min(dVer, baixo);
+    dVer = Math.max(dVer, 0.9);
+    const recuo = meio.clone().addScaledVector(n, dVer).setY(centro.y - 0.05);
+    const parado = meio.clone().addScaledVector(n, dVer + 0.15).setY(centro.y - 0.05); // deriva de leve enquanto abre
+    paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver: [olho(1), olho(0.88), recuo, parado], alvos: [centro, centro, meio, meio], acao }));
   }
   return paradas;
 }
@@ -1433,7 +1454,8 @@ function iniciarTour(site = false) {
     placas.visible = true;
     Object.assign(olhoTour, { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false });
     const ler = [false];
-    const mostra = [false]; // trecho em que a parede fica aberta (depois de ler)
+    const recua = [false];  // trecho em que o drone se afasta do quadro (depois de ler)
+    const mostra = [false]; // trecho em que a parede fica aberta (já lá atrás)
     const acoes = [null];
     // só até sair da casa (o resto do voo do vídeo, pelo alto, gastaria o tempo do tour)
     const caixas = [projeto.A, projeto.B].filter(Boolean);
@@ -1443,13 +1465,14 @@ function iniciarTour(site = false) {
     const fixo = [true]; // os pontos de leitura de cada quadro nunca saem do caminho
     projeto.tour.slice(0, ultimo + 2).forEach(([x, y, z, lx, ly, lz], i) => {
       const pa = paradas.get(i);
-      // chega (ver[0]) → lê com a parede fechada (ver[1]) → a parede abre e o drone recua mostrando (ver[2])
-      if (pa) pa.forEach((q) => { pts.push(...q.ver); alvos.push(q.pos, q.pos, q.pos); ler.push(false, true, false); mostra.push(false, false, true); acoes.push(null, null, q.acao); fixo.push(true, true, true); });
-      else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); mostra.push(false); acoes.push(null); fixo.push(false); }
+      // chega (ver[0]) → lê com a parede fechada (ver[1]) → recua e vira, ainda fechada (ver[2]) → a parede abre (ver[3])
+      if (pa) pa.forEach((q) => { pts.push(...q.ver); alvos.push(...q.alvos); ler.push(false, true, false, false); recua.push(false, false, true, false); mostra.push(false, false, false, true); acoes.push(null, null, null, q.acao); fixo.push(true, true, true, true); });
+      else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); recua.push(false); mostra.push(false); acoes.push(null); fixo.push(false); }
     });
     pts.push(ini.pos.clone());
     alvos.push(ini.alvo.clone());
     ler.push(false);
+    recua.push(false);
     mostra.push(false);
     acoes.push(null);
     fixo.push(true);
@@ -1485,6 +1508,7 @@ function iniciarTour(site = false) {
     pts.splice(0, pts.length, ...pegar(pts));
     alvos.splice(0, alvos.length, ...pegar(alvos));
     ler.splice(0, ler.length, ...pegar(ler));
+    recua.splice(0, recua.length, ...pegar(recua));
     mostra.splice(0, mostra.length, ...pegar(mostra));
     acoes.splice(0, acoes.length, ...pegar(acoes));
     tourAcoes = { acoes, mostra };
@@ -1493,7 +1517,7 @@ function iniciarTour(site = false) {
     const dentroDaCasa = (v) => caixas.some((c) => v.x > c.x0 && v.x < c.x1 && v.z > c.z0 && v.z < c.z1);
     for (let i = 1; i < pts.length; i++) {
       const dentro = dentroDaCasa(pts[i]) && dentroDaCasa(pts[i - 1]);
-      vels.push(ler[i] ? dist(i) / TOUR_LER : mostra[i] ? dist(i) / TOUR_VER : dentro ? Math.min(VEL_DENTRO, dist(i) / 0.5) : Math.max(VEL_FORA, dist(i) / 2.2));
+      vels.push(ler[i] ? dist(i) / TOUR_LER : recua[i] ? dist(i) / TOUR_RECUAR : mostra[i] ? dist(i) / TOUR_VER : dentro ? Math.min(VEL_DENTRO, dist(i) / 0.5) : Math.max(VEL_FORA, dist(i) / 2.2));
     }
     legendas.push(...pts.slice(1).map(() => null)); // sem legenda: as vantagens estão nos quadros
   } else {
@@ -2440,6 +2464,8 @@ girar(dx, dy = 0, dtMs = 16) {
   emTourPontos: () => !!(voo && voo.tourPontos),
   /** testes: quantos quadros abrem a parede ao lado (os outros: acabamento tira a tinta) */
   cortesTour: () => (tourAcoes ? tourAcoes.acoes.filter((x) => x && x.iBloco >= 0).length : 0),
+  /** parede aberta ao lado de um quadro agora (0..1) — testes e vídeo */
+  corteAberto: () => (destaque ? estadoDestaque() : 0),
   /** testes: quantos quadros de vantagem o tour pendurou nas paredes */
   placasTour: () => (placas ? placas.children.length : 0),
   /** testes: quanto o dedo girou a vista durante o tour */
