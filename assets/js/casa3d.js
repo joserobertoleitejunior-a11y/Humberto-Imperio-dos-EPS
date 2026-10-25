@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104b";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104b";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104c";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104c";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -1962,6 +1962,8 @@ function animar() {
   if (ouvinteInterior) ouvinteInterior({ dentro: !!interior, removidas: fora.size });
 }
 
+/** tira a parede e a câmera ENTRA na casa (passeio por dentro). Sem uso hoje: o cliente pediu ver de cima
+ *  (alternarParedeFora) — fica aqui pra religar, trocando a chamada em tocar(). */
 function removerParede(id) {
   const m = muroDe(id);
   if (!m || estadoParede(id) > 0.99) return;
@@ -1972,6 +1974,20 @@ function removerParede(id) {
   garantirExtras();
   interior = { de: capturarPose(), para: poseInterior(m), t0: agora(), volta: false, muro: m };
   if (ouvinteInterior) ouvinteInterior({ dentro: true, removidas: fora.size });
+  requestAnimationFrame(animar);
+}
+
+/**
+ * Por fora (vista de cima da maquete, depois do tour): tocou numa parede = ela sai e mostra os cômodos mobiliados;
+ * tocou de novo = ela volta. A câmera NÃO entra na casa.
+ */
+function alternarParedeFora(id) {
+  const a = fora.get(id);
+  const aberta = !!a && a.para === 1;
+  fora.set(id, { de: estadoParede(id), para: aberta ? 0 : 1, t0: agora() });
+  atualizarRevelados();
+  pRemocao = pAlvo; // rolar de verdade recoloca tudo
+  garantirExtras();
   requestAnimationFrame(animar);
 }
 
@@ -2079,8 +2095,8 @@ function aplicar() {
   mats.pintura.transparent = tinta < 0.999;
   mats.pintura.depthWrite = tinta > 0.5;
   mats.vidro.emissiveIntensity = dentro ? 0 : 0.55 * suave(faixa(p, 0.9, 1));
-  // casa aberta / tour: móveis aparecem e o vidro fica claro (vê o jardim lá fora)
-  if (mobilia) mobilia.visible = dentro;
+  // casa aberta / tour: móveis aparecem e o vidro fica claro (vê o jardim lá fora); parede tirada por fora: só os móveis
+  if (mobilia) mobilia.visible = dentro || fora.size > 0;
   mats.vidro.opacity = dentro ? 0.12 : 0.5;
   mats.vidro.color.set(dentro ? "#dfeef3" : "#2b3a44");
   // casa pronta: a paisagem (céu, gramado, morros, árvores, vizinhos) vira o FUNDO da seção, surgindo devagar
@@ -2310,7 +2326,7 @@ window.ImperioCasa3D = {
     if (voo && voo.tourPontos) return true; // tour: tocar não faz nada (só o arraste gira a vista)
     if (foco) { voltarPonto(); return true; } // com ponto aberto: volta pra maquete inteira
     if (voo) return false;
-    // casa pronta (fora do tour): tocou numa parede de fora = ela sai e a câmera entra pela abertura (ver por dentro)
+    // casa pronta (fora do tour): tocou numa parede de fora = ela sai e mostra os cômodos, vistos de cima (a câmera fica fora)
     camera.updateMatrixWorld();
     _raycast.setFromCamera(_ndcV, camera);
     blocosMesh.computeBoundingSphere();
@@ -2324,6 +2340,7 @@ window.ImperioCasa3D = {
       m = null;
       for (const w of muros) {
         if (w.interna) continue;
+        if (((w.eixo === "x" ? camera.position.z : camera.position.x) - w.fixo) * w.fora <= 0) continue; // só as viradas pra câmera
         const ao = w.eixo === "x" ? pt.x : pt.z;
         const fixo = w.eixo === "x" ? pt.z : pt.x;
         const fora = Math.max(0, w.ini - ao, ao - w.fim);
@@ -2333,7 +2350,7 @@ window.ImperioCasa3D = {
       if (!m || melhor > 3) return false;
       id = m.id;
     }
-    removerParede(id);
+    alternarParedeFora(id);
     return true;
   },
   recolocar() { recolocarParedes(); },
@@ -2434,6 +2451,8 @@ girar(dx, dy = 0, dtMs = 16) {
   tourPontos: () => iniciarTour(true),
   emTourPontos: () => !!(voo && voo.tourPontos),
   /** testes: quantos quadros abrem a parede ao lado (os outros: acabamento tira a tinta) */
+  /** paredes tiradas por fora agora (testes) */
+  paredesFora: () => [...fora.values()].filter((a) => a.para === 1).length,
   /** fotos realistas já na GPU (testes) */
   texturas: () => texturasCarregadas(),
   /** parede aberta ao lado de um quadro agora (0..1) — testes e vídeo */

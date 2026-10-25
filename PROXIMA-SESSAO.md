@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104b`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104c`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -34,8 +34,11 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 ## Tour sem abrir parede + casa clicável + parada na maquete (feito)
 
 - **Tour:** nenhuma parede abre. Só a da frente sai, para o drone entrar. Em cada quadro o drone chega e desliza 2 s lendo (`TOUR_LER`). Saíram o recuo, a abertura ao lado do quadro e a tinta saindo no "Acabamento".
-- **Depois do tour:** tocar numa parede de fora abre a parede e a câmera entra (`tocar` → `removerParede`).
-  - Tocar no telhado, na varanda ou no deck usa a parede de fora mais perto do toque.
+- **Depois do tour, na vista de cima** (a câmera não entra na casa, a pedido do cliente): tocar numa parede de fora tira a parede e mostra os cômodos mobiliados (`tocar` → `alternarParedeFora`).
+  - Tocar de novo na mesma parede, ela volta. Rolar recoloca todas.
+  - Tocar no telhado, na varanda ou no deck usa a parede de fora mais perto do toque e virada para a câmera.
+  - `ImperioCasa3D.paredesFora()` conta as paredes abertas (testes).
+  - `removerParede` (que entrava na casa) ficou sem uso, só reservado. Com isso, o passeio por dentro também ficou inalcançável.
   - A chamada do fim diz "Toque numa parede e veja a casa por dentro".
 - **Rolagem rápida para baixo para na maquete pronta** (`ligarParadaNaMaquete` em `casa.js`):
   - só com gesto da pessoa (dedo ou roda) acima de 1,2 px/ms;

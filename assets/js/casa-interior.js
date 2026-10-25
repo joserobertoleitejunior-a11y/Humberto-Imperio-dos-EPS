@@ -11,7 +11,7 @@ import {
   BoxGeometry, CanvasTexture, Color, Group, IcosahedronGeometry, InstancedMesh, Mesh, MeshStandardMaterial,
   Object3D, PlaneGeometry, SRGBColorSpace,
 } from "../vendor/three-imperio.min.js";
-import { comFoto, LADO, texturasLigadas, uvNaCaixa } from "./texturas.js?v=20261104b";
+import { comFoto, LADO, texturasLigadas, uvNaCaixa } from "./texturas.js?v=20261104c";
 
 const R90 = Math.PI / 2;
 let M = null;

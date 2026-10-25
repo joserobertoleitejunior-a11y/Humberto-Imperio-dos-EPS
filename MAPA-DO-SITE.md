@@ -110,9 +110,11 @@ Quadros de verdade: moldura grafite com profundidade + passe-partout claro, núm
 a partir da arte do Gemini) — o site recorta os 6 painéis na ORDEM (Obra rápida · Bem mais leve · Casa mais
 fresca / Mais silêncio · Sem mofo · Acabamento fácil); vazio = quadros desenhados pelo site.
 **Paredes no tour: nenhuma abre** (só a da frente sai, pro drone entrar). Os quadros são só leitura.
-**Depois do tour, a casa é clicável:** tocar numa parede de fora (ou no telhado/varanda: vale a parede de fora
-mais perto do toque) tira ela e a câmera entra pela abertura pra ver por dentro (`tocar` → `removerParede`). A
-chamada do fim avisa: "Toque numa parede e veja a casa por dentro".
+**Depois do tour, a casa é clicável — na VISTA DE CIMA:** tocar numa parede de fora (ou no telhado/varanda: vale
+a parede de fora mais perto do toque, virada pra câmera) tira ela e mostra os cômodos mobiliados; a câmera NÃO
+entra na casa (`tocar` → `alternarParedeFora`). Tocar de novo na mesma parede, ela volta; rolar recoloca todas.
+A chamada do fim avisa: "Toque numa parede e veja a casa por dentro". (`removerParede`, que entrava na casa, ficou
+reservado sem uso.)
 **Rolagem rápida para na maquete:** o embalo do dedo/roda pra baixo que cruzaria o ponto da casa pronta para ali
 (`ligarParadaNaMaquete` em `casa.js`; > 1,2 px/ms, só gesto da pessoa — links do menu passam direto).
 
