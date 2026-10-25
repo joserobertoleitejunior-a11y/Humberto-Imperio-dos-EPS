@@ -115,11 +115,12 @@ a parede de fora mais perto do toque, virada pra câmera) tira ela e mostra os c
 entra na casa (`tocar` → `alternarParedeFora`). Tocar de novo na mesma parede, ela volta; rolar recoloca todas.
 A chamada do fim avisa: "Toque numa parede e veja a casa por dentro". (`removerParede`, que entrava na casa, ficou
 reservado sem uso.)
-**Rolagem rápida para na maquete:** o embalo do dedo/roda pra baixo que cruzaria o ponto da casa pronta para ali
-(`ligarParadaNaMaquete` em `casa.js`). 1) Nativo: marcador `.jornada__parada` com `scroll-snap-stop: always` (e
-`html.com-parada { scroll-snap-type: y proximity }`) — o próprio navegador segura a inércia do dedo; posicionado em
-`posicionarAncora` (compensa o `scroll-padding-top`). 2) Reforço em JS: > 1,2 px/ms com gesto da pessoa, a página
-fica sem rolagem por 0,3 s e volta pra maquete. Links do menu passam direto; subir é livre.
+**Rolagem rápida para na maquete:** o embalo do dedo/roda pra baixo que passaria da casa pronta PARA nela e o tour
+começa (`ligarParadaNaMaquete` em `casa.js`, ligada já na abertura). 1) Encaixe nativo: marcador `.jornada__parada`
+com `scroll-snap-stop: always` (`html.com-parada`), posicionado em `posicionarAncora`. 2) Garantia (o iPhone não
+deixa o código frear o embalo): o site só MARCA que um embalo rápido (> 1,2 px/ms, com gesto da pessoa) cruzou a
+maquete; quando a rolagem para (0,22 s sem rolar), volta na hora pra maquete e mostra o tour (`mostrarTour`, espera
+o 3D carregar se preciso). Rolagem devagar passa normal; links do menu passam direto.
 **Casa padrão = CASARÃO** (obra e tour pra todo mundo; `tipoAtual` em `casa3d.js` + `aria-pressed` no `index.html`;
 no "estatica" a imagem pronta também é a do casarão). Rolagem rápida que para na maquete começa o tour NA HORA
 (`mostrarTour` em `casa.js`), mesmo pra quem já viu.

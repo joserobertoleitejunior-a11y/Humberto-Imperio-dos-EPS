@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104e";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104e";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104f";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104f";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 

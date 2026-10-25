@@ -163,19 +163,21 @@
   }
 
   /**
-   * Rolagem RÁPIDA pra baixo (embalo do dedo ou da roda) não passa reto da maquete: o embalo para no ponto em que a
-   * casa fica pronta e o tour começa NA HORA (mesmo pra quem já viu). Rolagem normal segue livre; links do menu
-   * (#contato…) passam direto.
+   * Rolagem RÁPIDA pra baixo (embalo do dedo ou da roda) não passa reto da maquete: PARA no ponto em que a casa fica
+   * pronta e o tour começa NA HORA (mesmo pra quem já viu). Rolagem normal segue livre; links do menu passam direto.
+   *  1) encaixe nativo (scroll-snap-stop: always) — onde o navegador respeita, o embalo já para ali;
+   *  2) garantia: o embalo do dedo não pode ser freado pelo código no iPhone, então o site só MARCA que a rolagem
+   *     cruzou a maquete; quando o embalo termina (onde quer que tenha parado), volta na hora pra maquete e mostra o
+   *     tour. Funciona em qualquer celular, até antes de o 3D terminar de carregar (o tour espera ele ficar pronto).
    */
   function mostrarTour(tentativas) {
-    if (!C3 || C3.emTour()) return;
-    // a obra ainda chegando no ponto (a casa assenta com uma "mola" de ~0,1 s): tenta de novo logo em seguida
-    if (!camada.classList.contains("casa--maquete") || !C3.tourPontos()) {
+    if (C3 && C3.emTour()) return;
+    // 3D ainda carregando, ou a obra chegando no ponto (a casa assenta com uma "mola" de ~0,1 s): tenta de novo
+    if (!C3 || !camada.classList.contains("casa--maquete") || !C3.tourPontos()) {
       if (tentativas > 0) setTimeout(function () { mostrarTour(tentativas - 1); }, 100);
     }
   }
   function ligarParadaNaMaquete() {
-    // 1) nativo: ponto de encaixe (scroll-snap-stop: always) na maquete pronta — o navegador para a inércia ali
     if (jornadaEl && window.CSS && CSS.supports && CSS.supports("scroll-snap-stop", "always")) {
       parada = document.createElement("span");
       parada.className = "jornada__parada";
@@ -184,50 +186,40 @@
       html.classList.add("com-parada");
       ancoraFim = -1; // reposiciona já
     }
-    // 2) reforço: se a inércia passar assim mesmo, o código corta o embalo e volta pra maquete
     var yAnt = window.scrollY;
     var tAnt = performance.now();
     var gesto = 0;      // último toque/roda da pessoa
     var navegando = 0;  // último clique num link do menu
-    var segurando = false;
-    var dedo = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    var rapida = 0;     // última rolagem rápida pra baixo (da pessoa)
+    var cruzou = 0;     // quando um embalo rápido passou da maquete
+    var timerFim = 0;
     var marcar = function () { gesto = performance.now(); };
     ["touchstart", "touchmove", "touchend", "wheel", "keydown"].forEach(function (t) { window.addEventListener(t, marcar, { passive: true }); });
     document.addEventListener("click", function (e) {
-      if (e.target.closest && e.target.closest('a[href^="#"]')) navegando = performance.now();
+      if (e.target.closest && e.target.closest('a[href^="#"]')) { navegando = performance.now(); cruzou = 0; }
     }, true);
-    var barrar = function (e) { if (e.cancelable) e.preventDefault(); };
-    function pararEm(y) {
-      segurando = true;
-      // corta o embalo: no celular, a página fica sem rolagem por 0,3 s (overflow escondido no html e no body) —
-      // a inércia do dedo morre (iPhone e Android); roda e trackpad seguem mandando eventos: ignorados por 0,6 s
-      window.scrollTo({ top: y, behavior: "instant" });
-      if (dedo) { html.style.overflow = "hidden"; document.body.style.overflow = "hidden"; }
-      window.addEventListener("wheel", barrar, { passive: false });
-      window.addEventListener("touchmove", barrar, { passive: false });
-      var segurar = function () { window.scrollTo({ top: y, behavior: "instant" }); };
-      requestAnimationFrame(segurar);
-      setTimeout(function () {
-        if (dedo) { html.style.overflow = ""; document.body.style.overflow = ""; }
-        segurar();
-      }, 300);
-      setTimeout(function () {
-        window.removeEventListener("wheel", barrar, { passive: false });
-        window.removeEventListener("touchmove", barrar, { passive: false });
-        segurando = false;
-        yAnt = window.scrollY;
-      }, 600);
-      mostrarTour(15);
-    }
     function yMaquete() {
       var j = window.ImperioMotion && window.ImperioMotion.jornada();
       if (!j || !j.medido || !(j.fim < 1)) return null;
       var total = j.alturaSecao - alturaTela();
       var q = TROCA + 0.985 * (1 - TROCA); // casa pronta (maquete completa: p > 0,97)
-      return j.topoSecao + (j.fim + q * (1 - j.fim)) * total;
+      return Math.round(j.topoSecao + (j.fim + q * (1 - j.fim)) * total);
     }
-    var rapida = 0;     // última vez que a pessoa rolou rápido pra baixo
-    var timerFim = 0;
+    // o embalo terminou: passou da maquete → volta pra ela; parou nela → mostra o tour
+    function fimDaRolagem() {
+      var yM = yMaquete();
+      if (yM === null) return;
+      var t = performance.now();
+      var y = window.scrollY;
+      if (cruzou && t - cruzou < 8000 && Math.abs(y - yM) > 6) {
+        cruzou = 0;
+        window.scrollTo({ top: yM, behavior: "instant" });
+        mostrarTour(100); // até ~10 s (3D ainda carregando)
+        return;
+      }
+      cruzou = 0;
+      if (Math.abs(y - yM) <= 6 && t - rapida < 3000) mostrarTour(100);
+    }
     window.addEventListener("scroll", function () {
       var y = window.scrollY;
       var t = performance.now();
@@ -235,17 +227,16 @@
       var v = (y - de) / Math.max(1, t - tAnt); // px/ms
       yAnt = y;
       tAnt = t;
-      // a rolagem terminou parada no ponto da maquete (o encaixe nativo segurou o embalo): mostra o tour já
       clearTimeout(timerFim);
-      timerFim = setTimeout(function () {
-        var yM = yMaquete();
-        if (yM !== null && Math.abs(window.scrollY - yM) <= 6 && performance.now() - rapida < 2500) mostrarTour(15);
-      }, 160);
-      if (segurando || !C3 || v < 1.2) return;
-      if (t - gesto > 2500 || t - navegando < 2500) return; // só o embalo da pessoa (não o menu nem o código)
+      timerFim = setTimeout(fimDaRolagem, 220); // sem rolagem por 0,22 s = o embalo acabou
+      if (v < 1.2 || t - gesto > 4000 || t - navegando < 2500) return; // só o embalo rápido da pessoa, pra baixo
       rapida = t;
       var yM = yMaquete();
-      if (yM !== null && de < yM - 2 && y > yM + 2) pararEm(Math.round(yM));
+      if (yM !== null && de < yM - 2 && y > yM + 2) {
+        cruzou = t;
+        // onde o navegador deixa (roda, Android), já tenta parar aqui; senão o fim da rolagem traz de volta
+        window.scrollTo({ top: yM, behavior: "instant" });
+      }
     }, { passive: true });
   }
 
@@ -296,7 +287,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261104e")
+    import("./casa3d.js?v=20261104f")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -334,7 +325,6 @@
         ligarMargens();
         ligarTour();
         ligarVantagens();
-        ligarParadaNaMaquete();
         if (botaoAndar) botaoAndar.addEventListener("click", function () { C3.trocarAndar(); atualizarAndar(); if (corte) corte.hidden = true; });
         var rec = camada.querySelector("[data-casa-recolocar]");
         if (rec) rec.addEventListener("click", function () { C3.recolocar(); });
@@ -538,6 +528,7 @@
     if (parado) { camada.classList.add("casa--sem3d"); ligarImagens(); return; }
     if (!temWebGL()) { semCasa(); return; }
     pintar(0);
+    ligarParadaNaMaquete(); // já na abertura: quem desce rápido antes de o 3D carregar também para na casa
     // prepara a casa num momento ocioso (não no meio da rolagem): celular antigo não engasga
     var quandoOcioso = function () {
       if (window.requestIdleCallback) window.requestIdleCallback(iniciar3D, { timeout: 1200 });

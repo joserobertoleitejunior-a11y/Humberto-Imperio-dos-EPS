@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104e`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104f`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -30,6 +30,20 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 5. **Tour sem quadros (0 em vez de 6)**
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
+
+## Rolagem rápida → para na maquete e mostra o tour (corrigido para iPhone)
+
+- **No celular do cliente o embalo passava direto:** o iPhone não deixa o código frear a inércia do dedo, e o encaixe nativo não é respeitado em todo navegador.
+- **Agora** (`ligarParadaNaMaquete` em `casa.js`):
+  1. o site marca que um embalo rápido cruzou a maquete;
+  2. quando a rolagem para (0,22 s sem rolar), volta na hora para a maquete e mostra o tour.
+  - O encaixe nativo continua como 1ª camada.
+  - Ligado já na abertura: quem rola antes de o 3D carregar também para, e o tour espera o 3D por até 10 s.
+- **Testes:**
+  - embalo "tipo iPhone" (ignora encaixe e código) até 11837 px: voltou para 8451 e o tour começou, inclusive logo ao abrir o site;
+  - rolagem devagar passa normal;
+  - o link "Contato" do menu chega ao destino;
+  - 15/15 E2E.
 
 ## Casarão para todos + tour na hora + testes todos verdes (feito)
 
