@@ -222,29 +222,6 @@ main { position: relative; z-index: 2; }
 /* casa pronta: céu azul da paisagem atrás do 3D (degradê em CSS — leve) */
 .casa__ceu::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #ffffff; opacity: var(--paisagem, 0); } /* casa pronta: fundo branco (leve) */
 /* pontos estratégicos: etiquetas nas margens (fora do 3D), linha em svg até o ponto da casa, bolinha pulsando */
-.casa__pontos { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity 0.35s; }
-.casa__pontos.on { opacity: 1; }
-.casa__linhas { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.casa__linhas path { fill: none; stroke: rgba(20, 22, 26, 0.72); stroke-width: 0.8; }
-/* etiqueta minimalista: texto pequeno e leve, sublinhado por um fio fino até um ponto discreto na casa */
-.casa__ponto { position: absolute; left: 0; top: 0; max-width: 110px; padding: 0 1px 3px; border: 0; background: none; color: #14161a; font: inherit; font-size: 0.68rem;
-  font-weight: 600; line-height: 1.2; letter-spacing: 0.04em; text-transform: uppercase; text-align: left; cursor: pointer; opacity: 0; will-change: transform;
-  transition: transform 0.18s ease-out; text-shadow: 0 0 4px rgba(251, 250, 247, 0.9); }
-.casa__ponto--d { text-align: right; }
-.casa__ponto:hover { color: var(--azul); }
-@media (max-width: 759px) {
-  .casa__ponto { max-width: 88px; font-size: 0.6rem; }
-}
-/* área de toque maior que o texto e o ponto: fácil de acertar com o dedo */
-.casa__ponto::before { content: ""; position: absolute; inset: -10px -8px; }
-.casa__linha-toque { fill: none; stroke: transparent; stroke-width: 22; stroke-linecap: round; pointer-events: none; cursor: pointer; }
-.casa__pontos.on .casa__linha-toque { pointer-events: stroke; }
-.casa__ponto-dot { position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px; border-radius: 50%; background: #14161a; box-shadow: 0 0 0 1.5px rgba(251, 250, 247, 0.9);
-  opacity: 0; pointer-events: auto; cursor: pointer; will-change: transform; }
-.casa__ponto-dot::before { content: ""; position: absolute; inset: -16px; border-radius: 50%; }
-.casa__ponto-dot::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1px solid rgba(20, 22, 26, 0.45); animation: ponto-pulsa 2.2s ease-out infinite; }
-@keyframes ponto-pulsa { from { transform: scale(0.5); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
-.casa__pontos:not(.on) .casa__ponto, .casa__pontos:not(.on) .casa__ponto-dot { pointer-events: none !important; }
 /* cartão da vantagem (no lugar do texto, nunca na frente da casa) */
 .casa__vantagem { margin: 0 0 10px; padding: 14px 16px; border-radius: 14px; background: rgba(251, 250, 247, 0.97); border: 1px solid var(--linha); box-shadow: 0 10px 26px -16px rgba(20, 22, 26, 0.5); }
 .casa__vantagem[hidden] { display: none; }
@@ -253,12 +230,8 @@ main { position: relative; z-index: 2; }
 .casa__vantagem-texto { margin: 0 0 6px; font-size: 0.98rem; line-height: 1.45; color: var(--texto); }
 .casa__vantagem-dica { margin: 0; font-size: 0.8rem; color: var(--texto-suave); }
 .casa__vantagem-passo { margin: 0 0 2px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texto-suave); }
-/* passo a passo: anterior / próxima (texto minimalista, sem caixinha) */
-.casa__vantagem-nav { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0 6px; }
-.casa__vantagem-nav button { padding: 6px 0; border: 0; background: none; font: inherit; font-size: 0.84rem; font-weight: 800; color: #14161a; cursor: pointer; }
-.casa__vantagem-nav button:hover { color: var(--azul); }
-/* no tour o drone anda sozinho: sem anterior/próxima nem dica; no fim, o cartão chama pra comprar */
-.casa--tourpontos .casa__vantagem-nav, .casa--tourpontos .casa__vantagem-dica, .casa__vantagem--fim .casa__vantagem-nav, .casa__vantagem--fim .casa__vantagem-dica { display: none; }
+/* no fim do tour o cartão chama pra comprar */
+.casa__vantagem--fim .casa__vantagem-dica { display: none; }
 .casa__vantagem--fim .casa__vantagem-titulo { color: #14161a; }
 .casa--fimtour .casa__txt .sobretitulo, .casa--fimtour .casa__txt h2, .casa--fimtour .casa__etapas, .casa--fimtour .casa__dica, .casa--fimtour .casa__tipos, .casa--fimtour .casa__nota { display: none; }
 .casa--foco .casa__txt .sobretitulo, .casa--foco .casa__txt h2, .casa--foco .casa__etapas, .casa--foco .casa__dica { display: none; }

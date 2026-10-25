@@ -197,7 +197,26 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await rolar(1);
   await expect.poll(() => page.evaluate(() => { const b = window.ImperioCasa3D.blocos(); return b.assentados === b.total; }), { timeout: 15000 }).toBe(true);
   const caixaP = await page.locator("[data-casa-palco]").boundingBox();
-  const caixaPalco = () => ({ x: caixaP.x + caixaP.width * 0.6, y: caixaP.y + caixaP.height * 0.55 });
+  const cx = { x: caixaP.x + caixaP.width * 0.6, y: caixaP.y + caixaP.height * 0.55 };
+  // maquete pronta = o tour do drone começa SOZINHO (sem clique), com o passo a passo das vantagens
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 15000 }).toBe(true);
+  await expect(page.locator("[data-vantagem-passo]")).toContainText("de 6", { timeout: 15000 });
+  await expect(page.locator(".casa__ponto")).toHaveCount(0); // sem etiquetas na maquete: o tour mostra tudo
+  // durante o tour a página não rola...
+  const yTour = await page.evaluate(() => scrollY);
+  await page.mouse.move(cx.x, cx.y);
+  await page.mouse.wheel(0, 900);
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => scrollY)).toBe(yTour);
+  // ...e o dedo gira a vista sem parar o drone
+  await page.mouse.down();
+  await page.mouse.move(cx.x - 140, cx.y, { steps: 6 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.ImperioCasa3D.olharTour())).not.toBe(0);
+  expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(true);
+  // ≤ 20 s: termina sozinho com a chamada pra comprar, e o site continua
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 40000 }).toBe(false);
+  await expect(page.locator("[data-casa-vantagem]")).toContainText("Gostou?");
   await expect(page.locator(".casa__cta")).toBeVisible();
   await expect(page.locator("[data-casa-contador]")).not.toHaveText("0");
   // os 3 tipos: casa simples (térrea, 5 etapas), casa média e casarão — cada um com o seu total de blocos
@@ -220,48 +239,13 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   expect(await page.evaluate(() => window.ImperioCasa3D.internas())).toBeGreaterThan(0);
   // arrastar pro lado gira a casa (e não tira parede)
   const antesGiro = await page.evaluate(() => window.ImperioCasa3D.giro());
-  const cx = caixaPalco();
   await page.mouse.move(cx.x, cx.y);
   await page.mouse.down();
   await page.mouse.move(cx.x - 160, cx.y, { steps: 8 });
   await page.mouse.up();
   expect(await page.evaluate(() => window.ImperioCasa3D.giro())).not.toBe(antesGiro);
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
-  // pontos estratégicos: etiquetas nas margens com linha até a casa; clicou = zoom + a vantagem do Blocão
-  await expect.poll(() => page.locator(".casa__ponto").evaluateAll((l) => l.filter((b) => getComputedStyle(b).opacity === "1").length), { timeout: 15000 }).toBeGreaterThan(2);
-  await expect(page.locator("[data-casa] button:not([data-casa-tipo]):not(.casa__ponto):not([data-vantagem-ir])")).toHaveCount(0);
-  const visivel = await page.locator(".casa__ponto").evaluateAll((l) => l.findIndex((b) => getComputedStyle(b).opacity === "1"));
-  await page.locator(".casa__ponto").nth(visivel).dispatchEvent("click"); // a etiqueta desliza enquanto o 3D assenta: clique direto nela
-  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();
-  await expect(page.locator("[data-casa-vantagem]")).toBeVisible();
-  await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
-  // arrastar no zoom gira a câmera em volta do ponto, sem sair do zoom
-  const giroFoco = await page.evaluate(() => window.ImperioCasa3D.focoGiro());
-  await page.mouse.move(cx.x, cx.y);
-  await page.mouse.down();
-  await page.mouse.move(cx.x - 120, cx.y, { steps: 6 });
-  await page.mouse.up();
-  expect(await page.evaluate(() => window.ImperioCasa3D.focoGiro())).not.toBe(giroFoco);
-  expect(await page.evaluate(() => window.ImperioCasa3D.emFoco())).not.toBeNull();
-  // passo a passo: "Próxima" leva pra vantagem seguinte (o cartão mostra "N de 6")
-  const antesPasso = await page.evaluate(() => window.ImperioCasa3D.emFoco());
-  await expect(page.locator("[data-vantagem-passo]")).toContainText("de 6");
-  await page.click('[data-vantagem-ir="1"]');
-  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBe(antesPasso);
-  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).not.toBeNull();
-  // tocar na casa volta pra vista inteira
-  await page.evaluate(() => window.ImperioCasa3D.tocar(innerWidth / 2, innerHeight / 2));
-  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emFoco()), { timeout: 30000 }).toBeNull();
-  await expect(page.locator("[data-casa-vantagem]")).toBeHidden({ timeout: 30000 });
-  // tour do drone pelos pontos: começa sozinho (aqui chamado direto), mostra "1 de 6" e o dedo interrompe
-  expect(await page.evaluate(() => window.ImperioCasa3D.tourPontos())).toBe(true);
-  expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(true);
-  await expect(page.locator("[data-vantagem-passo]")).toContainText("1 de 6", { timeout: 15000 });
-  await page.mouse.move(cx.x, cx.y);
-  await page.mouse.down();
-  await page.mouse.move(cx.x - 80, cx.y, { steps: 4 });
-  await page.mouse.up();
-  expect(await page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(false);
+  await expect(page.locator("[data-casa] button:not([data-casa-tipo])")).toHaveCount(0);
   // voltar pro "L": as fichas reaparecem
   await page.evaluate(() => { const el = document.querySelector("#por-dentro"); const j = window.ImperioMotion.jornada(); scrollTo({ top: el.offsetTop + 0.9 * j.fim * (el.offsetHeight - innerHeight), behavior: "instant" }); });
   await expect(page.locator("html")).not.toHaveClass(/fase-casa/);

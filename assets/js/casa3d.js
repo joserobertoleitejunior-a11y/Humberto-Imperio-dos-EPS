@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261030e";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261031a";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -900,6 +900,7 @@ function posicionarCamera() {
     fov = r.fov;
     off = r.off;
     rolagemCam = voo.roll;
+    if (voo.tourPontos) olharTour(camera.position, alvo);
   }
   if (saidaFoco && !foco && !voo) {
     const k = suave(Math.min(1, (agora() - saidaFoco.t0) / DUR_SAIDA));
@@ -1385,19 +1386,38 @@ function fecharPonto() {
   requestAnimationFrame(animar);
 }
 
-/** passo a passo: vai pra vantagem seguinte (+1) ou anterior (-1) na ORDEM */
-function passoPonto(delta) {
-  const i = foco ? ORDEM.indexOf(foco.id) : -1;
-  const n = ORDEM.length;
-  return irPonto(ORDEM[(((i < 0 ? (delta > 0 ? -1 : 0) : i) + delta) % n + n) % n]);
-}
-
 /**
  * Tour da maquete (sem botão, quando a casa termina na rolagem): um drone filmando que passa por TODOS os pontos na
  * ORDEM, sem parar nunca — perto de cada ponto ele só desacelera (contorna devagar o corte enquanto o cartão conta a
  * vantagem) e acelera no caminho até o próximo. Volta pra vista da maquete inteira e termina chamando pra comprar.
- * ≤ 20 s do início ao fim. Qualquer toque, arrasto ou rolagem devolve o controle (voltarPonto).
+ * ≤ 20 s do início ao fim. O dedo só gira a vista em volta do que o drone filma (olharTour); o drone não para.
  */
+/**
+ * Dedo durante o tour: gira a vista em volta do que o drone está filmando (o drone NÃO para); ao soltar, a vista
+ * volta devagar pro enquadramento do drone.
+ */
+const olhoTour = { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false };
+function olharTour(pos, alvo) {
+  const t = agora();
+  const dt = olhoTour.t ? Math.min(0.1, (t - olhoTour.t) / 1000) : 0.016;
+  olhoTour.t = t;
+  if (!olhoTour.dedo) {
+    const volta = Math.exp(-dt / 1.1);
+    olhoTour.giroAlvo *= volta;
+    olhoTour.elevAlvo *= volta;
+  }
+  const k = 1 - Math.exp(-dt / 0.14);
+  olhoTour.giro += (olhoTour.giroAlvo - olhoTour.giro) * k;
+  olhoTour.elev += (olhoTour.elevAlvo - olhoTour.elev) * k;
+  if (Math.abs(olhoTour.giro) < 1e-4 && Math.abs(olhoTour.elev) < 1e-4) return;
+  const dx = pos.x - alvo.x;
+  const dz = pos.z - alvo.z;
+  const h = Math.hypot(dx, dz);
+  const R = Math.hypot(h, pos.y - alvo.y);
+  const ang = Math.atan2(dx, dz) + olhoTour.giro;
+  const el = limitarEntre(Math.atan2(pos.y - alvo.y, h) + olhoTour.elev, 0.05, 1.3);
+  pos.set(alvo.x + Math.sin(ang) * Math.cos(el) * R, alvo.y + Math.sin(el) * R, alvo.z + Math.cos(ang) * Math.cos(el) * R);
+}
 const TOUR_LER = 1.7;      // s contornando cada ponto (devagar: dá pra ler)
 const TOUR_IR = 0.85;      // s entre um ponto e outro (rápido)
 function tourPontos() {
@@ -1426,6 +1446,7 @@ function tourPontos() {
   for (const k of [...fora.keys()]) fora.set(k, { de: estadoParede(k), para: 0, t0: agora() });
   saidaFoco = null;
   pRemocao = pAlvo;
+  Object.assign(olhoTour, { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false });
   iniciarVoo(criarVoo(pts, alvos, vels, {
     fov: [de.fov, 30], off: [de.off, de.off], tour: true, ponto: true, tourPontos: true,
     aoTrecho: (i) => {
@@ -1440,7 +1461,11 @@ function tourPontos() {
       }
       if (i === pts.length - 2 && ouvintePonto) ouvintePonto({ ativo: false, fim: true, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
     },
-    aoFim: () => { fecharPonto(); animarOrbita(); },
+    aoFim: () => {
+      fecharPonto();
+      animarOrbita();
+      if (ouvintePonto) ouvintePonto({ ativo: false, fim: true, acabou: true, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
+    },
   }));
   return true;
 }
@@ -1974,7 +1999,8 @@ window.ImperioCasa3D = {
       return true;
     }
     // por fora: com um ponto em foco, tocar na casa volta pra vista inteira (não entra mais na casa)
-    if (foco || (voo && voo.tourPontos)) { voltarPonto(); return true; } // com ponto aberto ou no tour: volta pra maquete inteira
+    if (voo && voo.tourPontos) return true; // tour: tocar não faz nada (só o arraste gira a vista)
+    if (foco) { voltarPonto(); return true; } // com ponto aberto: volta pra maquete inteira
     return false;
   },
   recolocar() { recolocarParedes(); },
@@ -2002,8 +2028,13 @@ girar(dx, dy = 0, dtMs = 16) {
       pedir();
       return;
     }
-    if (voo && voo.tourPontos) voltarPonto(); // arrastou durante o tour: o controle volta pro dedo (gira a maquete)
-    else if (voo && voo.ponto) return; // chegando no ponto (0,8 s): o dedo gira assim que a câmera pousa
+    if (voo && voo.tourPontos) { // tour: o dedo gira a vista em volta do que o drone filma — o drone segue o trajeto
+      olhoTour.dedo = true;
+      olhoTour.giroAlvo = limitarEntre(olhoTour.giroAlvo - dx * 0.008, -2.6, 2.6);
+      olhoTour.elevAlvo = limitarEntre(olhoTour.elevAlvo + dy * 0.004, -0.5, 0.7);
+      return;
+    }
+    if (voo && voo.ponto) return; // chegando no ponto (0,8 s): o dedo gira assim que a câmera pousa
     if (foco && foco.R) { // no zoom de um ponto: o dedo gira a câmera em volta do corte (sem sair do zoom)
       arrastando = true;
       giroVel = giroVel * 0.5 + ((-dx * 0.008) / (Math.max(8, dtMs) / 1000)) * 0.5;
@@ -2023,6 +2054,7 @@ girar(dx, dy = 0, dtMs = 16) {
   /** dedo saiu da tela: a maquete continua o giro e vai parando — inércia */
   soltar() {
     arrastando = false;
+    olhoTour.dedo = false;
     if (interior || tour) return;
     giroVel = Math.abs(giroVel) < 0.05 ? 0 : limitarEntre(giroVel, -4, 4);
     animarOrbita(); // a câmera termina de alcançar o dedo, desinclina e plana até parar
@@ -2064,11 +2096,11 @@ girar(dx, dy = 0, dtMs = 16) {
   /** pontos estratégicos: posição na tela, ir até um, voltar, ouvir */
   pontosNaTela: () => pontosNaTela(),
   irPonto: (id) => irPonto(id),
-  /** passo a passo: +1 próxima vantagem, -1 anterior */
-  passoPonto: (d) => passoPonto(d),
   /** tour do drone pelos pontos (sozinho, ≤ 20 s); devolve false se não deu pra começar agora */
   tourPontos: () => tourPontos(),
   emTourPontos: () => !!(voo && voo.tourPontos),
+  /** testes: quanto o dedo girou a vista durante o tour */
+  olharTour: () => olhoTour.giroAlvo,
   /** "Blocão aparente": true tira a pintura das paredes (mostra o Blocão cru), false pinta de novo */
   semTinta: (on) => definirSemTinta(on),
   /** celular: px ocupados em cima e embaixo da tela (a maquete é enquadrada no espaço livre entre eles) */

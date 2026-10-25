@@ -70,12 +70,9 @@ botão de andar, sobe/desce voando. O site continua aparecendo (título, botão,
 rolar de verdade sai da casa. "↺ Sair da casa" (ou Esc) volta. Motor: `criarVoo`/`posVoo` (Catmull-Rom com
 aceleração/frenagem em `casa3d.js`), sem física por quadro (leve no celular).
 
-**Pontos estratégicos** (casa pronta, sem entrar na casa): 6 pontos — Casa mais fresca, Mais silêncio, Obra rápida,
-Bem mais leve, Acabamento fácil, Sem mofo. Cada ponto existe dos 2 lados da casa (espelhado); aparece o lado virado
-pra câmera, então girando 360° as vantagens nunca somem. Etiqueta minimalista = texto pequeno, leve e em caixa alta (halo claro pra ler sobre o cenário) nas margens, fora do
-3D, sublinhado por um fio fino (0,8 px) que segue até um ponto discreto (7 px) na casa.
-Fácil de clicar: o texto, a linha inteira (faixa invisível de 24 px por cima) e a bolinha abrem a vantagem.
-Clicou: voo rápido (~0,8 s, tempo fixo, `criarVoo(..., { duracao })`) até um **corte no meio da parede**: ~2 blocos
+**Pontos estratégicos** (motor do tour; sem etiquetas na tela): 6 pontos — Casa mais fresca, Mais silêncio, Obra
+rápida, Bem mais leve, Acabamento fácil, Sem mofo (`montarPontos`, `VANTAGENS`).
+Em cada ponto (tour ou `irPonto`): voo rápido (~0,8 s, tempo fixo, `criarVoo(..., { duracao })`) até um **corte no meio da parede**: ~2 blocos
 × 3 fiadas saem da parede e os blocos da volta perdem a tinta — o miolo do Blocão (concreto + EPS + concreto) fica
 exposto (`montarCorte`). A câmera olha o corte de ~40° de lado, pra borda mostrar a espessura (`poseDestaque`), no
 lugar mais perto do ponto que ela vê inteiro (raios pro meio e pros 4 cantos — sem telhado de garagem ou varanda na
@@ -90,16 +87,17 @@ Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamen
 **Toque livre pro giro:** a faixa de toque da linha fica só sob o texto (a parte que cruza a casa não segura o dedo);
 bolinhas escondidas e a bolinha do ponto em foco (no meio da tela) deixam o dedo passar pra maquete.
 
-**Passo a passo e tour do drone (sem botão):** o cartão do ponto mostra "N de 6" e ‹ Anterior · Próxima › (minimalista),
-na ordem `ORDEM` de `casa3d.js` (Obra rápida → Bem mais leve → Casa mais fresca → Mais silêncio → Sem mofo → Acabamento
-fácil). Quando a maquete termina na rolagem e a página fica parada, o drone faz sozinho o tour por todos os pontos
-(`tourPontos`): nunca para — desacelera contornando cada corte (1,7 s) enquanto o cartão conta a vantagem e acelera até
-o próximo (0,85 s); volta pra maquete inteira e termina com "Gostou? A sua pode ser assim." + o botão "Quero construir
-a minha". ~17,7 s no total (medido). Uma vez por visita; não começa se a pessoa já tocou na casa; qualquer toque,
-arrasto ou rolagem devolve o controle na hora.
+**Tour do drone = o passo a passo da maquete (sem clique):** assim que a maquete termina de ser construída na rolagem,
+o drone começa sozinho a filmar todas as vantagens na ordem `ORDEM` de `casa3d.js` (Obra rápida → Bem mais leve → Casa
+mais fresca → Mais silêncio → Sem mofo → Acabamento fácil): nunca para — desacelera contornando cada corte (1,7 s)
+enquanto o cartão "N de 6" conta a vantagem e acelera até o próximo (0,85 s); volta pra maquete inteira e termina com
+"Gostou? A sua pode ser assim." + o botão "Quero construir a minha". ~17,7 s no total (medido). Durante o tour a página
+NÃO rola (`travarRolagem` em `casa.js`) e a única coisa possível é arrastar o dedo: gira a vista em volta do que o drone
+filma, sem parar o drone; ao soltar, a vista volta devagar pro enquadramento (`olharTour`). Acabou, o site continua.
+Uma vez por visita. As etiquetas de pontos na maquete saíram (o tour mostra tudo).
 
 **Celular — maquete livre:** título, etapa, dica, tipos de casa, botão/contador e a nota ficam todos embaixo, no bloco
-de texto; na frente da maquete só as etiquetas minimalistas. A câmera enquadra a casa no espaço livre entre o
+de texto; na frente da maquete, nada. A câmera enquadra a casa no espaço livre entre o
 cabeçalho e o bloco de texto, medido de verdade (`ImperioCasa3D.margens`, `ligarMargens` em `casa.js`).
 
 **Cenário leve (fundo branco):** casa pronta = fundo branco (`.casa__ceu::before`); cor só em volta da casa (gramado
