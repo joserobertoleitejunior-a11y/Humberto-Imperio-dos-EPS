@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103d`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104a`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -45,11 +45,40 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - **Para testes:** `ImperioCasa3D.corteAberto()` diz se a parede ao lado do quadro está aberta (0..1).
 - **Como conferir o tour quadro a quadro:** usar o relógio falso do Playwright (`page.clock.install()` + `runFor`). Com o WebGL por software, o tempo real pula quadros e as capturas enganam.
 
-## Texturas em todo aparelho com 3D
+## Texturas em todo celular (corrigido de verdade)
 
-- Antes, celular com 4 núcleos ou menos (muitos iPhones informam 4) caía em "baixa" e ficava **sem** foto nenhuma.
-- Agora todo aparelho com 3D recebe as fotos. O "baixa" recebe só o mapa de cor, sem relevo nem rugosidade, porque pesam no celular antigo (`ligarTexturas(true, soCor)`).
-- O relevo foi reforçado: de longe ficava sutil.
+- **Por que não apareciam no celular:**
+  - as fotos só eram aplicadas com a tela parada e sem voo do drone. No celular elas chegam com o tour já rodando, então esperavam o tour acabar;
+  - uma foto que falhasse derrubava todas.
+- **Agora** (`texturas.js`):
+  - o material já nasce com os mapas, numa imagem provisória de 4 px com a cor média da foto (`MEDIA`). O shader compila uma vez só;
+  - quando a foto chega, só a imagem é trocada, uma por quadro, sem recompilar. Funciona com tour, rolagem ou voo;
+  - foto que falha fica na cor média e não afeta as outras;
+  - as fotos começam a baixar assim que o 3D fica pronto.
+- **Memória:**
+  - celular: cor 512 e relevo/rugosidade 256;
+  - PC forte: 1024 / 512 / 256;
+  - "baixa": só a cor.
+- **Teste:** `ImperioCasa3D.texturas()` conta os mapas já na GPU. Com 4G lento emulado, as 51 chegaram em cerca de 20 s, durante o tour.
+
+## Rolagem fluida (feito)
+
+- **Nada prende a rolagem:**
+  - saiu a trava de rolagem do tour (`travarRolagem`);
+  - saiu o `touch-action: none` da maquete pronta: no celular ela ocupa a tela e prendia o dedo.
+- **Tour:**
+  - só começa com a página parada (0,7 s);
+  - para se a casa sair da tela;
+  - interrompido, volta à maquete em 0,9 s (antes, ~3 s sem responder).
+- **Medidas forçadas a cada quadro, removidas:**
+  - `motion.js` lê a posição dos títulos ANTES de escrever os transforms da jornada;
+  - `cena.js` guarda o fundo do palco da abertura em cache;
+  - `casa3d.js` e `bloco3d.js` guardam o tamanho do canvas (`telaW`/`telaH`).
+- **Shaders pré-compilados num pixel, em momento ocioso:**
+  - `aquecerShaders()` no bloco: antes, pular para a casa pelo menu e subir compilava no meio da rolagem;
+  - `aquecerExtras()` nos móveis e na paisagem: o tour não engasga ao entrar.
+- **Medição (perfil da CPU, rolagem rápida para cima no celular):** a compilação no meio da rolagem caiu de 3,8 s para 0. Os testes rodam com WebGL por software, então o tempo de GPU daqui não vale para um aparelho real.
+- **Ainda dá para melhorar:** no celular, o canvas do bloco muda de tamanho ao entrar e sair da fase da casa (`conferirFaseCasa` em `cena.js`). Isso realoca a imagem uma vez a cada passagem.
 
 ## Decisão pendente com o cliente: duração do tour
 

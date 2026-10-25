@@ -150,6 +150,7 @@
     var total = j.alturaSecao - vh;
     var bruto = total > 0 ? limitar(-topo / total) : 0;
     j.pTotal = bruto;
+    j.passou = total > 0 ? Math.max(0, -topo - total) / vh : 0; // telas já roladas depois do fim da seção
     j.casa = j.fim < 1 ? limitar((bruto - j.fim) / (1 - j.fim)) : 0; // 0..1 da fase da casa
     var p = limitar(bruto / j.fim);                                    // 0..1 do "L" (como sempre foi)
     j.p = p;
@@ -210,16 +211,21 @@
     agendado = false;
     vh = alturaTela();
     var y = window.scrollY;
-    if (jornada) pintarJornada();
+    // 1) só leituras (ANTES de qualquer escrita: ler a posição depois de mexer no transform da jornada obrigava o
+    //    navegador a recalcular a página inteira a cada quadro — era o que travava a rolagem rápida)
+    var ativos = [];
     if (!parado) {
-      var ativos = [];
       titulos.forEach(function (t) {
         if (!t.visivel) return;
-        if (t.faixa && jornada) {
-          var f = t.faixa.split(",").map(Number);
-          ativos.push([t, limitar((jornada.p - f[0]) / (f[1] - f[0]))]);
-        } else {
-          ativos.push([t, t.el.getBoundingClientRect()]); // 1) só leituras
+        ativos.push([t, t.faixa && jornada ? null : t.el.getBoundingClientRect()]);
+      });
+    }
+    if (jornada) pintarJornada();
+    if (!parado) {
+      ativos.forEach(function (par) {
+        if (par[1] === null) { // título preso à jornada: segue o progresso dela (sem ler layout)
+          var f = par[0].faixa.split(",").map(Number);
+          par[1] = limitar((jornada.p - f[0]) / (f[1] - f[0]));
         }
       });
       ativos.forEach(function (par) {                      // 2) só escritas

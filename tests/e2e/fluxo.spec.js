@@ -202,13 +202,8 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos()), { timeout: 15000 }).toBe(true);
   expect(await page.evaluate(() => window.ImperioCasa3D.placasTour())).toBe(6);
   await expect(page.locator("[data-casa] button:not([data-casa-tipo])")).toHaveCount(0); // nenhum botão na maquete
-  // durante o tour a página não rola...
-  const yTour = await page.evaluate(() => scrollY);
+  // o dedo gira a vista sem parar o drone
   await page.mouse.move(cx.x, cx.y);
-  await page.mouse.wheel(0, 900);
-  await page.waitForTimeout(300);
-  expect(await page.evaluate(() => scrollY)).toBe(yTour);
-  // ...e o dedo gira a vista sem parar o drone
   await page.mouse.down();
   await page.mouse.move(cx.x - 140, cx.y, { steps: 6 });
   await page.mouse.up();
@@ -236,9 +231,20 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.click('[data-casa-tipo="simples"]');
   await expect(page.locator("[data-casa] [data-etapa]")).toHaveCount(5);
   await expect(page.locator("[data-casa-ficha]")).toContainText("49 m²");
-  // casa completa na tela: o dedo na maquete mexe só nela (a página não rola por cima)
+  // casa completa na tela: o dedo na vertical continua rolando a página (nada prende a rolagem)
   await expect(page.locator("[data-casa]")).toHaveClass(/casa--maquete/);
-  expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("none");
+  expect(await page.locator("[data-casa-palco]").evaluate((e) => getComputedStyle(e).touchAction)).toBe("pan-y");
+  // rolar durante o tour: a página rola (não trava) e o drone para
+  expect(await page.evaluate(() => window.ImperioCasa3D.tourPontos())).toBe(true);
+  const yTour = await page.evaluate(() => scrollY);
+  await page.mouse.move(cx.x, cx.y);
+  await page.mouse.wheel(0, -900);
+  await expect.poll(() => page.evaluate(() => scrollY)).not.toBe(yTour);
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(false);
+  await rolar(1);
+  await page.waitForTimeout(1500); // a câmera termina de voltar pra maquete
+  // texturas realistas (fotos) chegaram
+  expect(await page.evaluate(() => window.ImperioCasa3D.texturas())).toBeGreaterThan(0);
   // paredes internas (também de Blocão) em todas as casas
   expect(await page.evaluate(() => window.ImperioCasa3D.internas())).toBeGreaterThan(0);
   // arrastar pro lado gira a casa (e não tira parede)
@@ -247,7 +253,7 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.mouse.down();
   await page.mouse.move(cx.x - 160, cx.y, { steps: 8 });
   await page.mouse.up();
-  expect(await page.evaluate(() => window.ImperioCasa3D.giro())).not.toBe(antesGiro);
+  await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.giro())).not.toBe(antesGiro);
   await expect(page.locator("[data-casa]")).not.toHaveClass(/casa--dentro/);
   await expect(page.locator("[data-casa] button:not([data-casa-tipo])")).toHaveCount(0);
   // voltar pro "L": as fichas reaparecem

@@ -552,9 +552,8 @@ function desenhar() {
 
 /** Onde está o topo de cada camada NA TELA (px) — as etiquetas de medida seguem as peças. */
 function avisarPosicoes() {
-  const el = renderer.domElement;
-  const w = el.clientWidth;
-  const h = el.clientHeight;
+  const w = telaW;
+  const h = telaH;
   const pos = ["peleA", "miolo", "peleB"].map((nome) => {
     let x = 0;
     let y = 0;
@@ -624,11 +623,15 @@ function laco(t) {
 }
 
 let tamAntes = "";
+let telaW = 0;             // tamanho do canvas em px, em cache (medido só no resize/troca de lugar)
+let telaH = 0;
 function redimensionar() {
   const tela = renderer.domElement;
   const w = tela.clientWidth;
   const h = tela.clientHeight;
   if (!w || !h) return;
+  telaW = w;
+  telaH = h;
   if (`${w}x${h}` === tamAntes) { sujo = true; return; } // mesmo tamanho (canvas só mudou de lugar): não realoca a imagem
   tamAntes = `${w}x${h}`;
   renderer.setSize(w, h, false);
@@ -666,6 +669,29 @@ function melhorarTexturas(anis) {
   ];
   const proximo = () => { const f = passos.shift(); if (!f) return; f(); if (passos.length) ocioso(proximo); };
   setTimeout(() => ocioso(proximo), 1200);
+}
+
+/**
+ * Compila de antemão, num momento ocioso, os materiais das peças que ainda não apareceram (camadas afastadas,
+ * partículas…): desenha UMA vez num pixel só, com tudo visível (o navegador só termina de compilar no 1º uso).
+ * Quem pula direto pra casa pelo menu e depois sobe a página não pega a compilação no meio da rolagem.
+ */
+function aquecerShaders() {
+  const ocioso = (fn) => (window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500));
+  ocioso(() => {
+    const escondidos = [];
+    cena.traverse((o) => { if (!o.visible) { escondidos.push(o); o.visible = true; } });
+    const w = renderer.domElement.width;
+    const h = renderer.domElement.height;
+    renderer.setScissorTest(true);
+    renderer.setScissor(0, 0, 1, 1);
+    renderer.setViewport(0, 0, 1, 1);
+    renderer.render(cena, camera);
+    renderer.setScissorTest(false);
+    renderer.setViewport(0, 0, w / renderer.getPixelRatio(), h / renderer.getPixelRatio());
+    escondidos.forEach((o) => { o.visible = false; });
+    sujo = true; // o próximo quadro redesenha a tela inteira
+  });
 }
 
 function iniciar(canvas) {
@@ -760,6 +786,7 @@ function iniciar(canvas) {
     if (ativo && !antes) requestAnimationFrame(laco);
   });
   desenhar();
+  if (!window.__gravandoVideo) aquecerShaders();
   // No gravador do vídeo quem manda desenhar é o vídeo (renderAgora a cada quadro): sem laço próprio
   if (window.__gravandoVideo) ativo = false;
   else requestAnimationFrame(laco);

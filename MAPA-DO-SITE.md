@@ -98,8 +98,10 @@ dele pelo caminho livre e desliza devagar 2 s pra dar tempo de ler (`TOUR_LER`).
 paredes, móveis e escada), só dentro da casa e no mesmo andar (nunca corta janela nem laje); os pontos de leitura dos
 quadros nunca saem do caminho. A curva do voo limita cada ponto vizinho a 1,5× o trecho atual (`vizinho()`): saindo da maquete lá do alto, o
 drone não "embala" e não mergulha abaixo do piso ao entrar. Móveis e paisagem são montados em duas etapas, só com a
-tela parada (`prepararExtrasOcioso`), e o aquecimento inicial desenha num pixel só (a obra não trava nem pisca). Sem legenda, sem cartão, nenhum botão: durante o tour a página não rola (`travarRolagem` em
-`casa.js`) e só o dedo funciona — gira a vista em volta do que o drone filma, sem parar o drone (`olharTour`). No fim
+tela parada (`prepararExtrasOcioso`), e o aquecimento inicial desenha num pixel só (a obra não trava nem pisca). Sem legenda, sem cartão, nenhum botão. O tour só começa com a página PARADA na maquete pronta (~0,7 s,
+`ligarTourAuto` em `casa.js`) e **nada prende a rolagem**: rolar durante o tour para o drone (volta à maquete em
+0,9 s) e o site segue; a casa saindo da tela também para. Interrompido, recomeça se a pessoa sair da casa e voltar;
+assistido até o fim, não repete. O dedo pro lado gira a vista em volta do que o drone filma, sem parar o drone (`olharTour`). No fim
 volta pra maquete inteira com "Gostou? A sua pode ser assim." + "Quero construir a minha", e o site continua.
 Os móveis são montados num momento ocioso, antes de a casa ficar pronta (`garantirExtras`).
 Quadros de verdade: moldura grafite com profundidade + passe-partout claro, número "0N / 06", título azul e o texto
@@ -158,8 +160,8 @@ Piso de madeira em cada andar e paredes internas com tinta areia.
 **Escada** (sobrado e casarão): degraus de concreto com piso de madeira e guarda-corpo de vidro; a laje e o piso de
 cima têm o vão da escada (`furo`) com guarda-corpo em volta (`guarda`).
 **Garagem coberta com carro** em cada casa (aparece na maquete também).
-**Maquete completa na tela** (`casa--maquete`, a partir de 97% da obra): o dedo na maquete só gira e inclina ela —
-a página não rola por cima (rola pelo texto); antes disso a rolagem continua montando a casa.
+**Maquete completa na tela** (`casa--maquete`, a partir de 97% da obra): o dedo na VERTICAL continua rolando a
+página (`touch-action: pan-y`), pro lado gira a casa; no mouse, arrastar gira e inclina.
 **Zoom só no 3D**: por fora, a pinça (ou Ctrl + roda / pinça do touchpad) aproxima e afasta a maquete; o giro por fora também tem inércia.
 
 **Paredes móveis**: com a casa de pé (a partir de 88% da obra), tocar numa parede externa tira ela (desliza pra fora e

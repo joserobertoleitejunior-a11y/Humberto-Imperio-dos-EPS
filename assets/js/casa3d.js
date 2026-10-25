@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103d";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261103d";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104a";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104a";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -602,7 +602,7 @@ function criarMateriais() {
   const tSan = texSanduiche(128);
   const tMad = texMadeira(Math.max(128, nivel.tex / 2));
   const real = true; // fotos realistas em todo aparelho com 3D (o fraco recebe só a cor, sem relevo)
-  ligarTexturas(real, nivel === NIVEIS.baixa);
+  ligarTexturas(real, nivel === NIVEIS.baixa, nivel !== NIVEIS.alta);
   mats = {
     concreto: new MeshStandardMaterial({ map: tCon, roughness: 0.92, color: "#cfcac1" }),
     topo: new MeshStandardMaterial({ map: tSan, roughness: 0.9, color: "#e2ded6" }),
@@ -859,9 +859,9 @@ function montar(id) {
 
 /* ---------- câmera: gira em volta da maquete; distância calculada pra caber inteira em qualquer tela ---------- */
 function posicionarCamera() {
-  const el = renderer.domElement;
-  const w = el.clientWidth;
-  const h = el.clientHeight;
+  if (!telaW) redimensionar();
+  const w = telaW;
+  const h = telaH;
   const asp = w / Math.max(1, h);
   const largaTela = asp > 1.15;
   const vfov = MathUtils.degToRad(camera.fov);
@@ -959,9 +959,8 @@ function moverGuia() {
   const e = suave(faixa(p, 0, 0.12));
   guia.visible = e < 1 && !blocoDoSite;
   if (!guia.visible) return;
-  const el = renderer.domElement;
-  const w = el.clientWidth;
-  const h = el.clientHeight;
+  const w = telaW;
+  const h = telaH;
   const D = 9;
   const tan = Math.tan(MathUtils.degToRad(camera.fov) / 2);
   camera.getWorldDirection(_dir);
@@ -1560,6 +1559,7 @@ function iniciarTour(site = false) {
 
 function fimTour() {
   const site = tour && tour.site;
+  const inteiro = !(tour && tour.interrompido);
   tour = null;
   for (const id of [...fora.keys()]) fora.set(id, { de: estadoParede(id), para: 0, t0: agora() });
   requestAnimationFrame(animar);
@@ -1570,20 +1570,21 @@ function fimTour() {
   fecharPonto();
   animarOrbita();
   // acabou o tour do site: a chamada pra comprar e o site continua
-  if (ouvintePonto) ouvintePonto({ ativo: false, fim: true, acabou: true, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
+  if (ouvintePonto) ouvintePonto({ ativo: false, fim: true, acabou: inteiro, id: "fim", titulo: FIM_TOUR[0], texto: FIM_TOUR[1] });
 }
 
 /** parar no meio: volta voando pra vista de fora */
 function pararTour() {
   if (!tour) return;
+  tour.interrompido = true; // rolou a página: não conta como assistido até o fim
   const ini = tour.ini;
   const de = camera.position.clone();
   const deA = ultimoAlvo.clone();
   const meio = de.clone().lerp(ini.pos, 0.5);
   meio.y = Math.max(de.y, ini.pos.y) + 1.5;
-  voo = null;
+  // volta rápida (0,9 s): quem rolou a página quer seguir, não esperar o drone (sem zerar o voo: um laço só)
   iniciarVoo(criarVoo([de, meio, ini.pos.clone()], [deA, deA.clone().lerp(ini.alvo, 0.6), ini.alvo.clone()], [0, 5, 5], {
-    fov: [camera.fov, ini.fov], off: [0, ini.off], aoFim: () => fimTour(),
+    fov: [camera.fov, ini.fov], off: [0, ini.off], duracao: 0.9, aoFim: () => fimTour(),
   }));
 }
 
@@ -1929,6 +1930,7 @@ function montarPaisagem() {
   obra.add(paisagem);
   extrasProntos = true;
   pDesenhado = -1;
+  aquecerExtras();
 }
 
 /**
@@ -1936,11 +1938,7 @@ function montarPaisagem() {
  * um voo (montar tudo de uma vez, forçado pelo prazo, travava a casa logo no começo da construção).
  */
 let ultimaRolagem = 0;
-/** fn num momento sem voo nem rolagem (trocar texturas recompila os materiais) */
-function quandoParado(fn) {
-  if (voo || agora() - ultimaRolagem < 400) setTimeout(() => quandoParado(fn), 300);
-  else fn();
-}
+
 function prepararExtrasOcioso() {
   const proj = projeto;
   const agendar = () => (window.requestIdleCallback ? window.requestIdleCallback(passo, { timeout: 3000 }) : setTimeout(passo, 700));
@@ -2187,7 +2185,7 @@ let timerHD = 0;
 function usarRatio(r) {
   if (renderer.getPixelRatio() === r) return;
   renderer.setPixelRatio(r);
-  renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
+  renderer.setSize(telaW || renderer.domElement.clientWidth, telaH || renderer.domElement.clientHeight, false);
 }
 
 function desenhar(hd) {
@@ -2200,10 +2198,14 @@ function desenhar(hd) {
 }
 
 let tamAntes = "";
+let telaW = 0;             // tamanho do canvas em px (em cache: medido só no resize — ler a cada quadro forçava layout)
+let telaH = 0;
 function redimensionar() {
   const el = renderer.domElement;
   const w = el.clientWidth;
   const h = el.clientHeight;
+  telaW = w;
+  telaH = h;
   if (!w || !h || `${w}x${h}` === tamAntes) return; // mesmo tamanho: não realoca a imagem
   tamAntes = `${w}x${h}`;
   renderer.setSize(w, h, false);
@@ -2266,6 +2268,27 @@ async function aquecer() {
   p = pAntes;
 }
 
+/** móveis e paisagem compilados num pixel só, num momento ocioso: o tour não engasga ao entrar na casa */
+function aquecerExtras() {
+  if (window.__gravandoVideo) return;
+  const ocioso = (fn) => (window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 800));
+  ocioso(() => {
+    if (!mobilia || !paisagem || tour) return;
+    const antes = [mobilia.visible, paisagem.visible];
+    mobilia.visible = paisagem.visible = true;
+    const tam = renderer.getSize(_tamTela);
+    renderer.setScissorTest(true);
+    renderer.setScissor(0, 0, 1, 1);
+    renderer.setViewport(0, 0, 1, 1);
+    renderer.render(cena, camera);
+    renderer.setScissorTest(false);
+    renderer.setViewport(0, 0, tam.x, tam.y);
+    [mobilia.visible, paisagem.visible] = antes;
+    pDesenhado = -1;
+    pedir();
+  });
+}
+
 /**
  * Preparação em etapas curtas (cada uma num intervalo ocioso), em vez de um bloco único:
  * renderer → reflexo de ambiente (só PC/celular bom) → texturas + casa → materiais compilados → placa "aquecida".
@@ -2303,6 +2326,8 @@ async function iniciar(canvas) {
   }
   cena.add(sol);
   criarMateriais();
+  // as fotos descem já (entram 1 por quadro, sem travar); antes de a casa existir, só guardam a imagem
+  carregarTexturas(() => { if (!projeto) return; pDesenhado = -1; pedir(); });
   await respirar(); // etapas curtas: a animação do bloco não congela enquanto a casa é preparada
   montar(tipoAtual);
   redimensionar();
@@ -2318,7 +2343,6 @@ window.ImperioCasa3D = {
   progresso(novo) {
     novo = limitar(novo);
     if (novo !== pAlvo) ultimaRolagem = agora();
-    if (novo > 0) carregarTexturas(quandoParado, () => { pDesenhado = -1; pedir(); }); // a obra começou: as fotos descem agora
     // rolar DE VERDADE (não um tremidinho do dedo ou da barra do navegador) recoloca as paredes e tira a câmera
     if (Math.abs(novo - pRemocao) > 0.03) {
       if (tour) pararTour();
@@ -2464,6 +2488,8 @@ girar(dx, dy = 0, dtMs = 16) {
   emTourPontos: () => !!(voo && voo.tourPontos),
   /** testes: quantos quadros abrem a parede ao lado (os outros: acabamento tira a tinta) */
   cortesTour: () => (tourAcoes ? tourAcoes.acoes.filter((x) => x && x.iBloco >= 0).length : 0),
+  /** fotos realistas já na GPU (testes) */
+  texturas: () => texturasCarregadas(),
   /** parede aberta ao lado de um quadro agora (0..1) — testes e vídeo */
   corteAberto: () => (destaque ? estadoDestaque() : 0),
   /** testes: quantos quadros de vantagem o tour pendurou nas paredes */
@@ -2547,9 +2573,8 @@ girar(dx, dy = 0, dtMs = 16) {
     blocoDoSite = true;
     posicionarCamera();
     camera.updateMatrixWorld();
-    const el = renderer.domElement;
-    const w = el.clientWidth;
-    const h = el.clientHeight;
+    const w = telaW;
+    const h = telaH;
     const bl = lista[primeiro];
     _proj.set(bl.x, bl.y, bl.z);
     camera.getWorldDirection(_dir);

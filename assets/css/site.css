@@ -277,7 +277,7 @@ main { position: relative; z-index: 2; }
 .casa__ico--traco { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .casa__botao--desce .casa__ico { transform: rotate(180deg); }
 /* casa completa na tela: o dedo mexe só na maquete (gira/inclina); a página rola pelo texto */
-.casa--maquete:not(.casa--dentro) .casa__palco { touch-action: none; }
+/* maquete pronta: o dedo na vertical continua rolando a página (pro lado gira a casa) — nada prende a rolagem */
 /* tour: legenda de cinema (embaixo da escolha de casa) + parar; aviso do corte ao tirar parede por dentro */
 .casa__tour { margin-top: 8px; margin-left: 6px; opacity: 0; pointer-events: none; transition: opacity 0.35s; background: var(--grafite); color: #fff; }
 .casa--pronta .casa__tour { opacity: 1; pointer-events: auto; }

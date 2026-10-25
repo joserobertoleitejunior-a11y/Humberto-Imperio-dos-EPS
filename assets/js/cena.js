@@ -94,6 +94,7 @@
   var fixo = null;
   var palcoVisivel = true;
   var tamPalco = null;      // medidas em cache (só mudam no resize)
+  var fundoPalco = null;    // fundo do palco da hero, em px da página (cache: ler a posição a cada quadro travava)
 
   function modoCelular() { return window.innerWidth < 760; }
 
@@ -139,7 +140,10 @@
 
   function atualizarCelular(j) {
     // confere a posição de verdade (o observador às vezes não avisa quando a página rola logo depois de abrir)
-    if (palco && j && j.dentro) palcoVisivel = palco.getBoundingClientRect().bottom > 56;
+    if (palco && j && j.dentro) {
+      if (fundoPalco === null) fundoPalco = palco.getBoundingClientRect().bottom + window.scrollY; // 1× por resize
+      palcoVisivel = fundoPalco - window.scrollY > 56;
+    }
     var naJornada = j && j.dentro && j.entrada > 0 && !palcoVisivel;
     morarEm(naJornada ? fixo : palco);
     var alvo;
@@ -242,7 +246,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261103d")
+    import("./bloco3d.js?v=20261104a")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);
@@ -265,7 +269,8 @@
             atualizar(window.ImperioMotion && window.ImperioMotion.jornada());
           }, { rootMargin: "-56px 0px 0px 0px" }).observe(palco);
         }
-        window.addEventListener("resize", function () { tamPalco = null; }, { passive: true });
+        window.addEventListener("resize", function () { tamPalco = null; fundoPalco = null; }, { passive: true });
+        window.addEventListener("load", function () { fundoPalco = null; }, { once: true });
         celular = !modoCelular(); // força a primeira arrumação em atualizar()
         B.aoPosicionar(posicionarRotulos);
         if (window.ImperioMotion) window.ImperioMotion.aoRolar(atualizar);

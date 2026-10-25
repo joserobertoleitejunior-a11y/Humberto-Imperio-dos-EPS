@@ -8,7 +8,7 @@
  * - "estatica": imagem pronta da casa + etapas em lista, depois do "L". Sem WebGL: a fase da casa sai (seção volta ao "L").
  * Casa pronta: tocar numa parede tira ela e a câmera entra pela abertura (corte mostra o EPS dentro do Blocão).
  * Sempre (depois do voo do Blocão): arrastar o dedo pro lado gira a casa e a pinça aproxima — zoom SÓ no 3D
- * (a página continua sem zoom). Com a casa completa na tela, o dedo na maquete só gira/inclina ela (a página rola pelo texto).
+ * (a página continua sem zoom). Dedo na vertical SEMPRE rola a página (nada prende a rolagem, nem o tour).
  * Por dentro: a câmera entra num arco (sobrevoo) pela parede aberta e anda por TOQUE — tocou no chão/num móvel, ela voa
  * (rasante) até lá e para mostrando o lugar; tocou numa parede, a parede sai e mostra o Blocão por dentro; botão troca
  * de andar; "Sair da casa" (ou Esc) volta. "Tour pela casa": sobrevoo automático com legendas (o cliente só assiste).
@@ -66,7 +66,7 @@
     var kc = limitar((p - 0.9) / 0.08);
     camada.style.setProperty("--paisagem", (kc * kc * (3 - 2 * kc)).toFixed(3)); // céu da paisagem (CSS, leve)
     camada.classList.toggle("casa--pronta", p > 0.88); // igual ao PRONTA do casa3d.js (dá pra tirar parede)
-    camada.classList.toggle("casa--maquete", p > 0.97); // casa completa: o dedo na maquete não rola a página
+    camada.classList.toggle("casa--maquete", p > 0.97); // casa completa (o tour pode começar)
   }
 
   /** Etapas e ficha do tipo atual (simples tem 5 etapas: não tem 2º andar). */
@@ -99,7 +99,6 @@
       camada.classList.toggle("casa--tourpontos", !!(e.tour || (e.ativo && C3.emTourPontos())));
       camada.classList.toggle("casa--fimtour", !!e.fim);
       clearTimeout(timerFim);
-      if (!C3.emTourPontos()) travarRolagem(false); // tour acabou (ou foi interrompido): o site continua
       if (!card) return;
       var mostrar = !!(e.ativo || e.fim);
       card.hidden = !mostrar;
@@ -115,7 +114,7 @@
       }
       if (!mostrar) card.removeAttribute("data-id");
       // fim do tour: a chamada fica um tempo com o botão "Quero construir a minha" logo abaixo e some sozinha
-      if (e.fim && e.acabou) timerFim = setTimeout(fecharFim, 9000);
+      if (e.fim && e.acabou) { tourVisto = true; timerFim = setTimeout(fecharFim, 9000); }
     });
     function fecharFim() {
       if (!camada.classList.contains("casa--fimtour") || C3.emTourPontos()) return;
@@ -130,35 +129,26 @@
   }
 
   /**
-   * Durante o tour a página não rola (é o "vídeo" da maquete, ≤ 20 s): só o dedo na maquete, que gira a vista.
-   * Acabou o tour, a rolagem volta e o site continua.
+   * O tour começa sozinho quando a maquete termina de ser construída E a página para ali (~0,7 s sem rolar).
+   * A rolagem nunca fica presa: rolar durante o tour para o tour e o site segue (antes a página travava no tour e
+   * quem passava rápido ficava preso na casa). Interrompido, ele só recomeça se a pessoa sair da casa e voltar;
+   * assistido até o fim, não repete.
    */
-  var rolagemTravada = false;
-  var TECLAS_ROLAGEM = { ArrowDown: 1, ArrowUp: 1, PageDown: 1, PageUp: 1, Home: 1, End: 1, " ": 1 };
-  function bloquearRolagem(ev) {
-    if (ev.type === "keydown" && !TECLAS_ROLAGEM[ev.key]) return;
-    ev.preventDefault();
-  }
-  function travarRolagem(sim) {
-    if (sim === rolagemTravada) return;
-    rolagemTravada = sim;
-    ["wheel", "touchmove", "keydown"].forEach(function (tipo) {
-      if (sim) window.addEventListener(tipo, bloquearRolagem, { passive: false });
-      else window.removeEventListener(tipo, bloquearRolagem, { passive: false });
-    });
-  }
-
-  /** O tour começa sozinho assim que a maquete termina de ser construída na rolagem — uma vez por visita. */
+  var tourVisto = false;
   function ligarTourAuto() {
-    var feito = false;
+    var podeDeNovo = true;
+    var timer = 0;
     var tentar = function () {
-      if (feito || !camada.classList.contains("casa--maquete")) return;
-      if (!C3.tourPontos()) return;
-      feito = true;
-      travarRolagem(true);
-      setTimeout(function () { if (!C3.emTourPontos()) travarRolagem(false); }, 25000); // segurança: nunca prende a página
+      var j = window.ImperioMotion && window.ImperioMotion.jornada();
+      if (tourVisto || !podeDeNovo || C3.emTour() || !camada.classList.contains("casa--maquete") || !j || !j.dentro || j.passou > 0.25) return;
+      if (C3.tourPontos()) podeDeNovo = false;
     };
-    if (window.ImperioMotion) window.ImperioMotion.aoRolar(function () { if (!feito) requestAnimationFrame(tentar); });
+    if (window.ImperioMotion) window.ImperioMotion.aoRolar(function () {
+      if (tourVisto) return;
+      if (!camada.classList.contains("casa--maquete")) podeDeNovo = true; // saiu da casa pronta: na volta, de novo
+      clearTimeout(timer);
+      timer = setTimeout(tentar, 700);
+    });
   }
 
   function aoDesenhar(info) {
@@ -179,6 +169,7 @@
   function atualizar(j) {
     if (!camada || parado || !j) return;
     posicionarAncora(j);
+    if (C3 && (!j.dentro || j.passou > 0.25) && C3.emTour()) C3.pararTour(); // a casa saindo da tela: o drone para
     var q = j.dentro ? j.casa : j.pTotal >= 1 ? 1 : 0;
     if (q === ultimoQ) return;
     ultimoQ = q;
@@ -200,7 +191,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261103d")
+    import("./casa3d.js?v=20261104a")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -301,8 +292,6 @@
     var pts = {};          // dedos/mouse na tela: id → { x, y }
     var x0 = 0, y0 = 0, xa = 0, ya = 0, ta = 0, girando = false, vertical = false, pinca = false, distA = 0, cyA = 0, tipoPt = "";
     var dentro = function () { return camada.classList.contains("casa--dentro"); };
-    // maquete pronta na tela: o dedo mexe SÓ na maquete (gira e inclina), a página não rola por cima dela
-    var maquete = function () { return camada.classList.contains("casa--maquete"); };
     var nPts = function () { return Object.keys(pts).length; };
     function centroY() {
       var l = Object.keys(pts).map(function (k) { return pts[k].y; });
@@ -333,14 +322,13 @@
       }
       var dx = e.clientX - x0, dy = e.clientY - y0;
       if (!girando && !vertical && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
-        // por dentro qualquer arrasto vira o olhar; por fora, na vertical a página rola (a obra anda)
         // arrastar pro lado gira (por fora a maquete, por dentro a vista em volta do ponto); na vertical a página rola
-        // (com a maquete completa na tela, o dedo mexe só nela)
-        if ((maquete() && !dentro()) || tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true;
+        // (vale também com a maquete completa: nada prende a rolagem)
+        if (tipoPt === "mouse" || Math.abs(dx) > Math.abs(dy)) girando = true;
         else vertical = true;
         if (girando) camada.classList.add("casa--girando");
       }
-      if (girando) C3.girar(e.clientX - xa, (maquete() && !dentro()) || tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
+      if (girando) C3.girar(e.clientX - xa, tipoPt === "mouse" ? e.clientY - ya : 0, e.timeStamp - ta);
       xa = e.clientX; ya = e.clientY; ta = e.timeStamp;
     });
     function soltar(e, cancelado) {
