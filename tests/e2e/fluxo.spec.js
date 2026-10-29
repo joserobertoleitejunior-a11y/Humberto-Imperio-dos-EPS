@@ -245,6 +245,8 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.mouse.wheel(0, -900);
   await expect.poll(() => page.evaluate(() => scrollY)).not.toBe(yTour);
   await expect.poll(() => page.evaluate(() => window.ImperioCasa3D.emTourPontos())).toBe(false);
+  // (espera o gesto da roda "esfriar": um salto logo depois dele conta como rolagem rápida, que volta pro tour)
+  await page.waitForTimeout(4200);
   await rolar(1);
   await page.waitForTimeout(1500); // a câmera termina de voltar pra maquete
   // texturas realistas (fotos) chegaram

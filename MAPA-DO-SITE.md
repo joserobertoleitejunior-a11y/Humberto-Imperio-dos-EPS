@@ -87,6 +87,7 @@ Tamanho das etiquetas medido uma vez (não lê layout a cada quadro); espaçamen
 **Toque livre pro giro:** a faixa de toque da linha fica só sob o texto (a parte que cruza a casa não segura o dedo);
 bolinhas escondidas e a bolinha do ponto em foco (no meio da tela) deixam o dedo passar pra maquete.
 
+**Tour (hoje em CORTES — ver `PROXIMA-SESSAO.md`: a tela some e corta pra frente de cada quadro, sem voar; `iniciarTourCortes`).** Histórico:
 **Tour do drone pela casa (sem botão, sem clique):** assim que a maquete termina de ser construída na rolagem, o drone
 entra na casa pela parede da frente (que sai) e percorre os cômodos mobiliados — o mesmo caminho do vídeo (`tour` de
 cada projeto em `PROJETOS`), só até sair da casa. As 6 vantagens do Blocão ficam escritas em **quadros nas paredes**

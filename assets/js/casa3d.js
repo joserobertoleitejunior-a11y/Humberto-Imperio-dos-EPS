@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261104f";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261104f";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261105a";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261105a";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -1095,9 +1095,9 @@ function posVoo(v, pos, olhar) {
     v.seg = i;
     if (v.aoTrecho) for (let k = Math.min(de + 1, i); k <= i; k++) v.aoTrecho(k);
   }
-  // inclina na curva (como drone): rola pro lado em que está virando
+  // inclina na curva (como drone): rola pro lado em que está virando — no tour, não (câmera estável, sem balanço)
   const yaw = Math.atan2(olhar.x - pos.x, olhar.z - pos.z);
-  if (v.yawAntes !== null && e > v.tAntes) {
+  if (!v.tour && v.yawAntes !== null && e > v.tAntes) {
     const taxa = anguloEntre(yaw - v.yawAntes) / Math.max(0.008, e - v.tAntes);
     v.roll += (limitarEntre(-taxa * 0.09, -0.16, 0.16) - v.roll) * 0.12;
   }
@@ -1196,13 +1196,12 @@ function avisar() { if (ouvinteInterior) ouvinteInterior({ dentro: !!interior, r
 
 /* ---------- TOUR: sobrevoo automático pela casa (o cliente só assiste) ---------- */
 /**
- * Tour do SITE (sem botão, começa quando a maquete fica pronta): o mesmo voo do vídeo — entra na casa, passa pelos
- * cômodos e sai — no ritmo de um drone de verdade (VEL_DENTRO dentro da casa), com as vantagens do Blocão em quadros nas paredes do
- * caminho (placas). Sem legenda nem cartão; o dedo só gira a vista (olharTour) e o drone não para.
+ * Tour do SITE (sem botão, começa quando a maquete fica pronta): em CORTES, como um vídeo editado — sem voar pela
+ * casa. A tela clareia/escurece rapidinho, corta pra frente de cada quadro (inteiro na tela, nada no meio) e a câmera
+ * só se aproxima bem devagar enquanto dá pra ler. Sem legenda nem cartão; o dedo gira a vista (olharTour).
  */
-const TOUR_LER = 2.0;      // s deslizando devagar em frente a cada quadro (tempo de ler)
-const VEL_DENTRO = 2.6;    // m/s entre um quadro e outro, dentro da casa (drone de verdade, voo tranquilo)
-const VEL_FORA = 4.5;      // m/s chegando e saindo da casa (do lado de fora pode correr)
+const TOUR_QUADRO = 3.2;   // s em frente a cada quadro (lendo; a câmera só se aproxima um pouquinho)
+const TOUR_CORTE = 0.35;   // s da tela sumindo/voltando entre um quadro e outro
 let placas = null;
 
 /**
@@ -1364,18 +1363,37 @@ function montarPlacas() {
       if (centro) break;
     }
     if (!centro) continue;
+    // encosta o quadro na superfície REAL da parede no ponto dele (onde os blocos não estão no mesmo plano, o quadro
+    // ficava alguns cm atrás da parede e sumia)
+    _raycast.set(centro.clone().addScaledVector(n, 0.6), _b.copy(n).negate());
+    _raycast.far = 1.2;
+    const sup = _raycast.intersectObject(blocosMesh, false)[0];
+    _raycast.far = Infinity;
+    if (sup) centro.copy(sup.point).addScaledVector(n, 0.03).setY(centro.y);
     const k = usados.length;
     usados.push(centro);
     const placa = criarQuadro(k, LARG, ALT);
     placa.position.copy(centro).addScaledVector(n, -0.02);
     placa.rotation.y = Math.atan2(n.x, n.z);
     placas.add(placa);
-    // o drone chega pelo caminho livre (o raio até a parede) e desliza devagar enquanto dá pra ler. As paredes não
-    // abrem no tour: depois dele, tocar numa parede é que mostra a casa por dentro
-    const visto = centro.clone().sub(cam).normalize();
-    const d = Math.min(cam.distanceTo(centro) - 0.1, 2.6);
-    const olho = (k) => centro.clone().addScaledVector(visto, -d * k).setY(centro.y - 0.08);
-    paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver: [olho(1), olho(0.88)] }));
+    // de onde a câmera lê: DE FRENTE pro quadro, até 2,4 m (quadro inteiro na tela até no celular em pé), parando
+    // antes de móvel/parede que estiver na frente; sem espaço de frente, lê de onde o caminho passava (de viés)
+    _raycast.set(centro.clone().addScaledVector(n, 0.05), n);
+    _raycast.far = 4;
+    const frente = _raycast.intersectObjects([blocosMesh].concat(mobilia ? [mobilia] : [], solidos), true)[0];
+    _raycast.far = Infinity;
+    const dF = Math.min((frente ? frente.distance : 4) - 0.4, 2.4);
+    let ver;
+    if (dF >= 1.5) {
+      const olhoF = (f) => centro.clone().addScaledVector(n, dF * f).setY(centro.y - 0.05);
+      ver = [olhoF(1), olhoF(0.88)];
+    } else {
+      const visto = centro.clone().sub(cam).normalize();
+      const d = Math.min(cam.distanceTo(centro) - 0.1, 2.8);
+      const olho = (f) => centro.clone().addScaledVector(visto, -d * f).setY(centro.y - 0.08);
+      ver = [olho(1), olho(0.9)];
+    }
+    paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver, k }));
   }
   return paradas;
 }
@@ -1384,6 +1402,7 @@ function iniciarTour(site = false) {
   if (!renderer || !projeto.tour || p < PRONTA) return false;
   if (site && (voo || foco || interior || tour)) return false;
   garantirExtras();
+  if (site) return iniciarTourCortes();
   if (interior || fora.size) { fora.clear(); revelados = new Set(); interior = null; passeio = null; }
   const ini = capturarPose();
   const V = (x, y, z) => new Vector3(x, y, z);
@@ -1391,82 +1410,19 @@ function iniciarTour(site = false) {
   const alvos = [ini.alvo.clone()];
   const vels = [0];
   const legendas = [null];
-  if (site) {
-    // site: o drone desliza devagar em frente a cada quadro (dá pra ler) e voa entre eles na velocidade de um drone real
-    const paradas = montarPlacas();
-    placas.visible = true;
-    Object.assign(olhoTour, { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false });
-    const ler = [false];
-    // só até sair da casa (o resto do voo do vídeo, pelo alto, gastaria o tempo do tour)
-    const caixas = [projeto.A, projeto.B].filter(Boolean);
-    const naCasa = ([x, , z]) => caixas.some((c) => x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1);
-    let ultimo = 0;
-    projeto.tour.forEach((w, i) => { if (naCasa(w)) ultimo = i; });
-    const fixo = [true]; // os pontos de leitura de cada quadro nunca saem do caminho
-    projeto.tour.slice(0, ultimo + 2).forEach(([x, y, z, lx, ly, lz], i) => {
-      const pa = paradas.get(i);
-      // chega (ver[0]) → desliza devagar lendo (ver[1])
-      if (pa) pa.forEach((q) => { pts.push(...q.ver); alvos.push(q.pos, q.pos); ler.push(false, true); fixo.push(true, true); });
-      else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); fixo.push(false); }
-    });
-    pts.push(ini.pos.clone());
-    alvos.push(ini.alvo.clone());
-    ler.push(false);
-    fixo.push(true);
-    // atalho: o drone pula os desvios do caminho do vídeo quando a reta até mais adiante está livre (sem parede nem
-    // móvel, com folga pros lados) — voa devagar como um drone de verdade sem o tour ficar longo
-    const livre = (a, b) => {
-      const d = a.distanceTo(b);
-      if (d < 0.05) return true;
-      // só dentro da casa e no mesmo andar: por fora cortaria pela janela, entre andares pela laje
-      if (!naCasa([a.x, 0, a.z]) || !naCasa([b.x, 0, b.z]) || Math.abs(a.y - b.y) > 0.4) return false;
-      const dir = b.clone().sub(a).divideScalar(d);
-      const lado = new Vector3(-dir.z, 0, dir.x).normalize().multiplyScalar(0.3);
-      const alvosRaio = [blocosMesh].concat(mobilia ? [mobilia] : [], solidos);
-      return [[0, 0], [1, 0], [-1, 0], [0, -0.3]].every(([k, dy]) => {
-        _raycast.set(a.clone().addScaledVector(lado, k).setY(a.y + dy), dir);
-        _raycast.far = d;
-        const h = _raycast.intersectObjects(alvosRaio, true).find((x) => x.object !== blocosMesh || (lista[x.instanceId] && lista[x.instanceId].parede !== 0));
-        _raycast.far = Infinity;
-        return !h;
-      });
-    };
-    const fica = [0];
-    for (let i = 0; i < pts.length - 1;) {
-      let j = i + 1;
-      for (let k = i + 2; k < pts.length; k++) {
-        if (fixo[k - 1] || !livre(pts[i], pts[k])) break;
-        j = k;
-      }
-      fica.push(j);
-      i = j;
-    }
-    const pegar = (l) => fica.map((i) => l[i]);
-    pts.splice(0, pts.length, ...pegar(pts));
-    alvos.splice(0, alvos.length, ...pegar(alvos));
-    ler.splice(0, ler.length, ...pegar(ler));
-    const dist = (i) => Math.max(pts[i].distanceTo(pts[i - 1]), alvos[i].distanceTo(alvos[i - 1]) * 0.3, 0.35);
-    // dentro da casa o drone voa devagar como um de verdade; do lado de fora pode correr
-    const dentroDaCasa = (v) => caixas.some((c) => v.x > c.x0 && v.x < c.x1 && v.z > c.z0 && v.z < c.z1);
-    for (let i = 1; i < pts.length; i++) {
-      const dentro = dentroDaCasa(pts[i]) && dentroDaCasa(pts[i - 1]);
-      vels.push(ler[i] ? dist(i) / TOUR_LER : dentro ? Math.min(VEL_DENTRO, dist(i) / 0.5) : Math.max(VEL_FORA, dist(i) / 2.2));
-    }
-    legendas.push(...pts.slice(1).map(() => null)); // sem legenda: as vantagens estão nos quadros
-  } else {
-    projeto.tour.forEach(([x, y, z, lx, ly, lz, v, leg]) => { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); vels.push(v || 1.5); legendas.push(leg || null); });
-    pts.push(ini.pos.clone());
-    alvos.push(ini.alvo.clone());
-    vels.push(4);
-    legendas.push(null);
-  }
+  // tour com legendas (botão "Tour pela casa"): o mesmo voo do vídeo pela casa
+  projeto.tour.forEach(([x, y, z, lx, ly, lz, v, leg]) => { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); vels.push(v || 1.5); legendas.push(leg || null); });
+  pts.push(ini.pos.clone());
+  alvos.push(ini.alvo.clone());
+  vels.push(4);
+  legendas.push(null);
   // a parede da frente sai (o corte mostra o Blocão por dentro) e volta no fim
   fora.set(0, { de: 0, para: 1, t0: agora() });
   atualizarRevelados();
   pRemocao = pAlvo;
   tour = { legendas, legenda: null, ini, site };
   iniciarVoo(criarVoo(pts, alvos, vels, {
-    tour: true, fov: [ini.fov, site ? 56 : 62], off: [ini.off, 0], tourPontos: site, rampa: site ? 0.6 : undefined,
+    tour: true, fov: [ini.fov, 62], off: [ini.off, 0],
     aoTrecho: (i) => {
       const l = legendas[i + 1] !== undefined && legendas[i + 1] !== null ? legendas[i + 1] : tour && tour.legenda;
       if (!tour || l === tour.legenda) return;
@@ -1480,10 +1436,48 @@ function iniciarTour(site = false) {
   return true;
 }
 
+/** a tela some (cor do fundo do site) ou volta — o "corte" entre um quadro e outro (CSS em casa.js/site.css) */
+function corteTela(some) {
+  if (ouvinteTour) ouvinteTour({ ativo: true, site: true, escuro: some });
+}
+
+function iniciarTourCortes() {
+  const quadros = [...montarPlacas().values()].flat().sort((a, b) => a.k - b.k); // na ordem dos quadros (01 → 06)
+  if (!quadros.length) return false;
+  if (interior || fora.size) { fora.clear(); revelados = new Set(); interior = null; passeio = null; }
+  placas.visible = true;
+  Object.assign(olhoTour, { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false });
+  tour = { legendas: [], legenda: null, ini: capturarPose(), site: true, passo: -1, timer: 0 };
+  if (ouvinteTour) ouvinteTour({ ativo: true, legenda: null, site: true });
+  const parado = (pos, alvo) => iniciarVoo(criarVoo([pos.clone(), pos.clone()], [alvo.clone(), alvo.clone()], [0, 1], {
+    tour: true, tourPontos: true, fov: [camera.fov, camera.fov], off: [0, 0], duracao: TOUR_CORTE + 0.2,
+  }));
+  const proximo = () => {
+    if (!tour) return;
+    tour.passo++;
+    const q = quadros[tour.passo];
+    corteTela(true);
+    // enquanto a tela some, a câmera fica parada onde está (a maquete não aparece no meio do corte)
+    if (tour.passo > 0) parado(camera.position, ultimoAlvo);
+    tour.timer = setTimeout(() => {
+      if (!tour) return;
+      if (!q) { voo = null; fimTour(); return; } // acabou: volta pra maquete (a tela volta junto)
+      // corta pra frente do quadro e se aproxima devagar enquanto dá pra ler
+      iniciarVoo(criarVoo([q.ver[0], q.ver[1]], [q.pos, q.pos], [0, 1], {
+        tour: true, tourPontos: true, fov: [56, 56], off: [0, 0], duracao: TOUR_QUADRO, aoFim: proximo,
+      }));
+      corteTela(false);
+    }, TOUR_CORTE * 1000);
+  };
+  proximo();
+  return true;
+}
+
 /** silencioso = troca de casa no meio do tour: encerra sem a chamada "Gostou?" (o tour recomeça na casa nova) */
 function fimTour(silencioso = false) {
   const site = tour && tour.site;
   const inteiro = !(tour && tour.interrompido);
+  if (tour && tour.timer) clearTimeout(tour.timer);
   tour = null;
   for (const id of [...fora.keys()]) fora.set(id, { de: estadoParede(id), para: 0, t0: agora() });
   requestAnimationFrame(animar);
@@ -1502,6 +1496,7 @@ function fimTour(silencioso = false) {
 function pararTour() {
   if (!tour) return;
   tour.interrompido = true; // rolou a página: não conta como assistido até o fim
+  if (tour.site) { voo = null; fimTour(); pDesenhado = -1; desenhar(true); return; } // tour em cortes: volta já pra maquete
   const ini = tour.ini;
   const de = camera.position.clone();
   const deA = ultimoAlvo.clone();
@@ -2326,7 +2321,7 @@ window.ImperioCasa3D = {
       return true;
     }
     // por fora: com um ponto em foco, tocar na casa volta pra vista inteira
-    if (voo && voo.tourPontos) return true; // tour: tocar não faz nada (só o arraste gira a vista)
+    if (tour && tour.site) return true; // tour: tocar não faz nada (só o arraste gira a vista)
     if (foco) { voltarPonto(); return true; } // com ponto aberto: volta pra maquete inteira
     if (voo) return false;
     // casa pronta (fora do tour): tocou numa parede de fora = ela sai e mostra os cômodos, vistos de cima (a câmera fica fora)
@@ -2363,7 +2358,7 @@ window.ImperioCasa3D = {
   /** arrasto do dedo/mouse (px): gira a casa em volta; dentro dela, vira o olhar */
 girar(dx, dy = 0, dtMs = 16) {
     if (!renderer || p < 0.12) return;
-    if (voo && voo.tourPontos) { // tour do site: o dedo gira a vista em volta do que o drone filma — o drone segue
+    if (tour && tour.site) { // tour do site: o dedo gira a vista em volta do que a câmera filma — o tour segue
       olhoTour.dedo = true;
       olhoTour.giroAlvo = limitarEntre(olhoTour.giroAlvo - dx * 0.008, -2.6, 2.6);
       olhoTour.elevAlvo = limitarEntre(olhoTour.elevAlvo + dy * 0.004, -0.5, 0.7);
@@ -2452,7 +2447,7 @@ girar(dx, dy = 0, dtMs = 16) {
   irPonto: (id) => irPonto(id),
   /** tour do drone pelos pontos (sozinho, ≤ 20 s); devolve false se não deu pra começar agora */
   tourPontos: () => iniciarTour(true),
-  emTourPontos: () => !!(voo && voo.tourPontos),
+  emTourPontos: () => !!(tour && tour.site),
   /** testes: quantos quadros abrem a parede ao lado (os outros: acabamento tira a tinta) */
   /** paredes tiradas por fora agora (testes) */
   paredesFora: () => [...fora.values()].filter((a) => a.para === 1).length,

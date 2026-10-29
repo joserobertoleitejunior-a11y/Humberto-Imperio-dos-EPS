@@ -287,7 +287,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261104f")
+    import("./casa3d.js?v=20261105a")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -470,6 +470,7 @@
     var barra = camada.querySelector("[data-casa-tourbarra]");
     C3.aoTour(function (e) {
       camada.classList.toggle("casa--tour", e.ativo);
+      camada.classList.toggle("casa--corte", !!(e.ativo && e.escuro)); // tour em cortes: a tela some e volta
       if (barra) barra.hidden = !e.ativo || !!e.site; // tour do site: as vantagens estão nos quadros, sem legenda
       if (!legenda || e.site) return;
       if (!e.ativo || !e.legenda) { legenda.hidden = !e.ativo; if (!e.ativo) legenda.textContent = ""; return; }

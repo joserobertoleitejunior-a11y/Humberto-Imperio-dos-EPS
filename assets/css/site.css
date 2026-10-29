@@ -243,6 +243,9 @@ html.com-parada { scroll-snap-type: y proximity; }
 .casa__tipos, .casa__cta { transition: opacity 0.3s, transform 0.35s var(--ease); }
 .casa__palco { position: absolute; inset: 0; }
 .casa__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* tour em cortes (casa3d.js): entre um quadro e outro a tela some na cor do fundo e volta — 0,35 s cada lado */
+.casa__palco::after { content: ""; position: absolute; inset: 0; background: var(--cal, #f3f1ec); opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+.casa--corte .casa__palco::after { opacity: 1; }
 .casa__estatica { display: none; }
 .casa__txt { position: absolute; z-index: 2; left: max(16px, calc((100vw - 1200px) / 2)); top: calc(var(--cabecalho) + 6vh); width: min(26rem, 100% - 32px); }
 .casa__txt h2 { font-size: clamp(1.6rem, 3.2vw, 3rem); margin-bottom: 0.6em; }

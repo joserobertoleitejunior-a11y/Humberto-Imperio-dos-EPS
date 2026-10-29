@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261104f`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261105a`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -30,6 +30,22 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 5. **Tour sem quadros (0 em vez de 6)**
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
+
+## Tour em CORTES (mais simples, sem voar pela casa) — feito
+
+- **Pedido do cliente:** "tour sem muito movimento, mais direto e que mostre exatamente".
+- **O voo pelo caminho do vídeo saiu.** No casarão, os quadros ficam dos dois lados e nos dois andares: o drone cruzava a casa várias vezes, encostava em parede e um quadro ficava escondido.
+- **Agora** (`iniciarTourCortes` em `casa3d.js`):
+  1. a tela some na cor do fundo (0,35 s, `.casa--corte` em `site.css`);
+  2. corta para a frente do quadro;
+  3. a câmera se aproxima bem devagar por 3,2 s (`TOUR_QUADRO`);
+  4. some de novo e corta para o próximo, na ordem 01 → 06;
+  5. no fim, volta para a maquete.
+  - Durante o corte, a câmera fica parada (a maquete não pisca).
+- **Leitura de frente:** a câmera fica até 2,4 m na frente do quadro, parando antes de móvel ou parede. Sem espaço, lê de viés como antes.
+- **Quadro encostado na superfície real da parede:** antes um ficava 4 cm atrás e sumia.
+- **Duração:** 21,6 s no casarão, perto dos 20 s pedidos. O tour com legendas (botão, não usado no site) continua com o voo.
+- **Saiu também a inclinação de "drone" da câmera no tour.**
 
 ## Rolagem rápida → para na maquete e mostra o tour (corrigido para iPhone)
 
