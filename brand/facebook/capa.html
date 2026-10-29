@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Capa e foto de perfil — Império do EPS (Facebook)</title>
+<!--
+  ?peca=capa   → capa da Página: 1640 × 624 (o Facebook mostra 820 × 312 no PC; no celular corta as laterais e
+                 mostra só o meio, ~1110 px — tudo que importa fica nessa faixa central, marcada em ?guias=1)
+  ?peca=perfil → foto de perfil 720 × 720 (o Facebook recorta em círculo). Provisória: o Blocão em corte, até
+                 sair o logo definitivo (brand/LOGO.md).
+-->
+<style>
+  @font-face { font-family: "Archivo"; src: url("../../assets/fonts/archivo-latin.woff2") format("woff2"); font-weight: 400 900; font-stretch: 62% 125%; }
+  :root { --cal: #f3f1ec; --cal-2: #eae6de; --concreto-esc: #a8a39a; --grafite: #1e2023; --texto-suave: #57554f; --linha: #d9d4ca; --azul: #1f4bd8; --azul-no-escuro: #9db6ff; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; color: var(--grafite); -webkit-font-smoothing: antialiased; background: #888; }
+  .capa { position: relative; width: 1640px; height: 624px; overflow: hidden; background: var(--cal); }
+  /* faixa central segura (celular): 1110 px no meio */
+  .miolo { position: absolute; left: 265px; width: 1110px; top: 0; bottom: 92px; display: grid; grid-template-columns: 1.08fr 0.92fr; align-items: center; gap: 24px; }
+  .sobre { display: flex; align-items: center; gap: 12px; font-size: 19px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--texto-suave); margin-bottom: 14px; }
+  .sobre::before { content: ""; width: 34px; height: 14px; background: linear-gradient(var(--concreto-esc) 0 28%, #fff 28% 72%, var(--concreto-esc) 72%); border: 1px solid var(--linha); border-radius: 2px; }
+  h1 { font-size: 54px; line-height: 1.02; font-weight: 900; font-stretch: 125%; text-transform: uppercase; }
+  h1 em { font-style: normal; color: var(--azul); }
+  .bloco { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 24px rgba(30, 32, 35, 0.12)); }
+  .faixa { position: absolute; left: 0; right: 0; bottom: 0; height: 92px; background: var(--grafite); color: var(--cal); display: flex; align-items: center; justify-content: center; gap: 46px; font-size: 22px; font-weight: 850; font-stretch: 125%; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .faixa i { display: inline-block; width: 16px; height: 44px; vertical-align: middle; margin-right: 14px; background: linear-gradient(90deg, var(--concreto-esc) 0 28%, #fff 28% 72%, var(--concreto-esc) 72%); border-radius: 2px; }
+  .faixa b { color: var(--azul-no-escuro); }
+  .faixa .ponto { opacity: 0.45; }
+  .guia { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed #e5484d; }
+  /* foto de perfil */
+  .perfil { width: 720px; height: 720px; background: var(--grafite); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; color: var(--cal); }
+  .perfil svg { width: 260px; height: 190px; }
+  .perfil p { font-size: 64px; line-height: 0.98; font-weight: 900; font-stretch: 125%; text-transform: uppercase; text-align: center; letter-spacing: 0.01em; }
+  .perfil p span { color: var(--azul-no-escuro); }
+</style>
+</head>
+<body>
+<div class="capa" id="capa" hidden>
+  <div class="miolo">
+    <div>
+      <p class="sobre">Fábrica do Blocão · Itapetininga-SP</p>
+      <h1>A parede que <em>sobe rápido</em> e deixa a casa <em>mais fresca.</em></h1>
+    </div>
+    <img class="bloco" src="../../assets/img/bloco-desmontado.webp" alt="">
+  </div>
+  <div class="faixa">
+    <span><i></i>Concreto <b>+ EPS +</b> concreto</span>
+    <span class="ponto">•</span>
+    <span>WhatsApp (15) 99121-2917</span>
+  </div>
+</div>
+<div class="perfil" id="perfil" hidden>
+  <!-- o Blocão em corte (o mesmo do favicon do site): concreto | EPS | concreto — + o nome, como no logo do site -->
+  <svg viewBox="10 10 44 44" preserveAspectRatio="none" aria-hidden="true"><rect x="10" y="10" width="44" height="10.27" rx="1.5" fill="#A8A39A"/><rect x="10" y="20.27" width="44" height="23.47" fill="#fff"/><rect x="10" y="43.73" width="44" height="10.27" rx="1.5" fill="#A8A39A"/></svg>
+  <p>Império<br><span>do EPS</span></p>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const peca = q.get("peca") === "perfil" ? "perfil" : "capa";
+  document.getElementById(peca).hidden = false;
+  if (q.get("guias") && peca === "capa") {
+    for (const x of [265, 1375]) { const g = document.createElement("div"); g.className = "guia"; g.style.left = x + "px"; document.getElementById("capa").appendChild(g); }
+  }
+  window.pecaPronta = document.fonts.ready.then(() => Promise.all([...document.images].map((i) => i.decode().catch(() => {}))));
+</script>
+</body>
+</html>

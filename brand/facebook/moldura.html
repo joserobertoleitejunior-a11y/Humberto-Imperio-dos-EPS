@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Moldura de postagem — Império do EPS</title>
+<!--
+  Moldura das postagens (Facebook e Instagram), no estilo do site: cal + grafite + azul técnico, Archivo larga.
+  O "buraco" do meio é transparente: a foto/vídeo entra por baixo (brand/scripts/emoldurar.js).
+  Parâmetros (?): formato = quadrado | retrato | vertical | paisagem  ·  titulo = texto (opcional; *palavra* = azul)
+                  sobre = linha pequena acima do título (opcional)  ·  exemplo = 1 (mostra uma foto de exemplo)
+-->
+<style>
+  @font-face { font-family: "Archivo"; src: url("../../assets/fonts/archivo-latin.woff2") format("woff2"); font-weight: 400 900; font-stretch: 62% 125%; }
+  :root {
+    --cal: #f3f1ec; --cal-2: #eae6de; --concreto-esc: #a8a39a; --grafite: #1e2023; --texto-suave: #57554f;
+    --linha: #d9d4ca; --azul: #1f4bd8; --azul-no-escuro: #9db6ff; --verde-whats: #1fa855;
+    --u: 1px; /* unidade: 1px a cada 1080px de largura (escala tudo pelo formato) */
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: transparent; }
+  body { font-family: "Archivo", system-ui, sans-serif; color: var(--grafite); -webkit-font-smoothing: antialiased; }
+  .arte { position: relative; width: var(--w); height: var(--h); overflow: hidden; display: flex; flex-direction: column; }
+  /* o buraco da foto: cantos arredondados, e o "resto" da arte é a sombra gigante na cor cal */
+  .janela { position: relative; flex: 1; min-height: 0; margin: 0 calc(var(--u) * 40); border-radius: calc(var(--u) * 18); box-shadow: 0 0 0 calc(var(--u) * 3000) var(--cal); outline: calc(var(--u) * 2) solid var(--linha); outline-offset: 0; z-index: 0; }
+  .janela img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+  .topo, .titulo, .rodape { position: relative; z-index: 1; }
+  .topo { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 20); padding: calc(var(--u) * 34) calc(var(--u) * 40) calc(var(--u) * 26); }
+  .topo img { height: calc(var(--u) * 48); width: auto; display: block; }
+  .local { font-size: calc(var(--u) * 19); font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texto-suave); white-space: nowrap; }
+  .titulo { padding: 0 calc(var(--u) * 40) calc(var(--u) * 26); }
+  .sobre { display: flex; align-items: center; gap: calc(var(--u) * 12); font-size: calc(var(--u) * 20); font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--texto-suave); margin-bottom: calc(var(--u) * 10); }
+  .sobre::before { content: ""; width: calc(var(--u) * 34); height: calc(var(--u) * 14); background: linear-gradient(var(--concreto-esc) 0 28%, #fff 28% 72%, var(--concreto-esc) 72%); border: 1px solid var(--linha); border-radius: 2px; }
+  .titulo h1 { font-size: calc(var(--u) * 62); line-height: 1.02; font-weight: 900; font-stretch: 125%; text-transform: uppercase; letter-spacing: -0.005em; }
+  .titulo em { font-style: normal; color: var(--azul); }
+  .rodape { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 20); margin-top: calc(var(--u) * 30); padding: calc(var(--u) * 26) calc(var(--u) * 40); background: var(--grafite); color: var(--cal); }
+  .corte { display: flex; align-items: center; gap: calc(var(--u) * 14); font-size: calc(var(--u) * 21); font-weight: 850; font-stretch: 125%; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .corte i { display: block; width: calc(var(--u) * 16); height: calc(var(--u) * 46); background: linear-gradient(90deg, var(--concreto-esc) 0 28%, #fff 28% 72%, var(--concreto-esc) 72%); border-radius: 2px; }
+  .corte b { color: var(--azul-no-escuro); font-weight: 850; }
+  .whats { display: flex; align-items: center; gap: calc(var(--u) * 12); font-size: calc(var(--u) * 27); font-weight: 800; white-space: nowrap; }
+  .whats svg { width: calc(var(--u) * 40); height: calc(var(--u) * 40); flex: none; }
+  /* vertical (Reels/Stories): a faixa de cima e a de baixo ficam fora das áreas que o app cobre */
+  .vertical .topo { padding-top: calc(var(--u) * 120); }
+  .vertical .rodape { margin-bottom: calc(var(--u) * 190); border-radius: calc(var(--u) * 18); margin-left: calc(var(--u) * 40); margin-right: calc(var(--u) * 40); }
+  .vertical .titulo h1 { font-size: calc(var(--u) * 70); }
+</style>
+</head>
+<body>
+<div class="arte" id="arte">
+  <header class="topo">
+    <img src="../../assets/img/marca.svg" alt="Império do EPS">
+    <span class="local">Fábrica do Blocão · Itapetininga-SP</span>
+  </header>
+  <div class="titulo" id="titulo" hidden>
+    <p class="sobre" id="sobre" hidden></p>
+    <h1 id="h1"></h1>
+  </div>
+  <div class="janela" id="janela"></div>
+  <footer class="rodape">
+    <span class="corte"><i></i><span>Concreto <b>+ EPS +</b> concreto</span></span>
+    <span class="whats">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1fa855"/><path fill="#fff" d="M12 4.6a7.4 7.4 0 0 0-6.4 11.2l-1 3.6 3.7-1A7.4 7.4 0 1 0 12 4.6Zm3.9 10.4c-.2.5-1 .9-1.4.9-.4.1-.8.1-2.5-.5-2.1-.8-3.4-3-3.5-3.1-.1-.1-.8-1.1-.8-2.1s.5-1.5.7-1.7c.2-.2.4-.2.5-.2h.4c.1 0 .3 0 .4.4l.6 1.5c.1.1.1.2 0 .4l-.3.4-.3.3c-.1.1-.2.2-.1.4.1.2.6 1 1.3 1.6.9.8 1.6 1 1.8 1.1.2.1.4.1.5-.1l.7-.8c.1-.2.3-.1.5-.1l1.4.7c.2.1.4.1.4.2.1.2.1.6-.1 1Z"/></svg>
+      (15) 99121-2917
+    </span>
+  </footer>
+</div>
+<script>
+  // tamanho de cada formato (px de exportação) — Facebook/Instagram
+  const FORMATOS = { quadrado: [1080, 1080], retrato: [1080, 1350], vertical: [1080, 1920], paisagem: [1920, 1080] };
+  const q = new URLSearchParams(location.search);
+  const formato = FORMATOS[q.get("formato")] ? q.get("formato") : "retrato";
+  const [w, h] = FORMATOS[formato];
+  const arte = document.getElementById("arte");
+  arte.classList.add(formato);
+  arte.style.setProperty("--w", w + "px");
+  arte.style.setProperty("--h", h + "px");
+  // paisagem: a escala segue a altura (senão as faixas ficariam enormes)
+  document.documentElement.style.setProperty("--u", (formato === "paisagem" ? h : w) / 1080 + "px");
+  const titulo = q.get("titulo");
+  if (titulo) {
+    document.getElementById("titulo").hidden = false;
+    const h1 = document.getElementById("h1");
+    // *palavra* = destaque em azul (como os títulos do site)
+    titulo.split(/(\*[^*]+\*)/).forEach((parte) => {
+      if (!parte) return;
+      if (parte.startsWith("*")) { const em = document.createElement("em"); em.textContent = parte.slice(1, -1); h1.appendChild(em); }
+      else h1.appendChild(document.createTextNode(parte));
+    });
+  }
+  const sobre = q.get("sobre");
+  if (sobre) { const s = document.getElementById("sobre"); s.hidden = false; s.textContent = sobre; }
+  if (q.get("exemplo")) {
+    const img = document.createElement("img");
+    img.src = q.get("exemplo") === "1" ? "../../assets/img/obra-paredes-blocao.webp" : q.get("exemplo");
+    document.getElementById("janela").appendChild(img);
+  }
+  // onde fica a janela da foto (px) — lido pelo emoldurar.js
+  window.molduraPronta = document.fonts.ready.then(() => {
+    const r = document.getElementById("janela").getBoundingClientRect();
+    return { w, h, janela: { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), raio: parseFloat(getComputedStyle(document.getElementById("janela")).borderRadius) } };
+  });
+</script>
+</body>
+</html>

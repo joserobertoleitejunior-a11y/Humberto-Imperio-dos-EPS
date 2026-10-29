@@ -31,6 +31,16 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
 
+## Facebook: moldura de postagem + kit da Página (feito) — USAR SEMPRE
+
+- **Guia completo:** `brand/FACEBOOK.md` (Página, bio, status, configurações, publicações). Peças em `brand/facebook/`.
+- **Regra do cliente:** toda foto ou vídeo da produção que o José mandar sai **sempre** na moldura:
+  `node brand/scripts/emoldurar.js <arquivos> [--titulo "Texto *azul*"] [--sobre "Obra real"] [--formato retrato|quadrado|vertical|paisagem]`
+  - Sem `--formato`, escolhe pela proporção. Vídeo sai em MP4 com o áudio.
+  - Neste ambiente o script usa sozinho o Chromium de `/opt/pw-browsers` (ou o `CHROMIUM_PATH`).
+- **Mudou a moldura ou a capa** (`brand/facebook/*.html`)? Rodar `node brand/scripts/gerar_facebook.js`.
+- **Pendências do Vinicius:** endereço, horário, e-mail, "do" × "dos" no nome, @ da Página, logo definitivo (a foto de perfil é provisória).
+
 ## Tour em CORTES (mais simples, sem voar pela casa) — feito
 
 - **Pedido do cliente:** "tour sem muito movimento, mais direto e que mostre exatamente".

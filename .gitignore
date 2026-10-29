@@ -7,3 +7,6 @@ node_modules/
 test-results/
 playwright-report/
 .tmp/
+
+# saídas do brand/scripts/emoldurar.js (fotos/vídeos prontos pra postar)
+emoldurados/
