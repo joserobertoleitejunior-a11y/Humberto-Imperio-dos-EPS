@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261105a`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261105b`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -56,6 +56,11 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - **Quadro encostado na superfície real da parede:** antes um ficava 4 cm atrás e sumia.
 - **Duração:** 21,6 s no casarão, perto dos 20 s pedidos. O tour com legendas (botão, não usado no site) continua com o voo.
 - **Saiu também a inclinação de "drone" da câmera no tour.**
+- **Texto do quadro em tela** (pedido: "mostre exatamente o que está escrito"):
+  - durante cada quadro aparece em cima um cartão (`[data-casa-quadro]`) com "N de 6", o título e a frase, **letra por letra iguais à arte** (`TEXTO_ARTE` em `casa3d.js`);
+  - sem a arte, usa os textos de `VANTAGENS`, que são os desenhados no quadro;
+  - o cartão some nos cortes;
+  - **se trocar a arte dos quadros, atualizar `TEXTO_ARTE`.**
 
 ## Rolagem rápida → para na maquete e mostra o tour (corrigido para iPhone)
 

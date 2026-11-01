@@ -287,7 +287,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261105a")
+    import("./casa3d.js?v=20261105b")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
@@ -464,6 +464,21 @@
     timerAviso = setTimeout(function () { a.hidden = true; }, 3200);
   }
 
+  /** tour do site: o texto do quadro em tela (exatamente o escrito no quadro); some nos cortes */
+  var quadroEl = null;
+  function mostrarQuadro(q) {
+    if (!quadroEl) quadroEl = camada.querySelector("[data-casa-quadro]");
+    if (!quadroEl) return;
+    if (!q) { quadroEl.hidden = true; return; }
+    quadroEl.querySelector("[data-quadro-passo]").textContent = q.passo + " de " + q.total;
+    quadroEl.querySelector("[data-quadro-titulo]").textContent = q.titulo;
+    quadroEl.querySelector("[data-quadro-texto]").textContent = q.texto;
+    quadroEl.hidden = false;
+    quadroEl.classList.remove("entra");
+    void quadroEl.offsetWidth;
+    quadroEl.classList.add("entra");
+  }
+
   /** Tour: botão "Tour pela casa" (casa pronta), legendas do sobrevoo e "Parar o tour" */
   function ligarTour() {
     var legenda = camada.querySelector("[data-casa-legenda]");
@@ -472,6 +487,7 @@
       camada.classList.toggle("casa--tour", e.ativo);
       camada.classList.toggle("casa--corte", !!(e.ativo && e.escuro)); // tour em cortes: a tela some e volta
       if (barra) barra.hidden = !e.ativo || !!e.site; // tour do site: as vantagens estão nos quadros, sem legenda
+      mostrarQuadro(e.ativo && e.site ? e.quadro : null);
       if (!legenda || e.site) return;
       if (!e.ativo || !e.legenda) { legenda.hidden = !e.ativo; if (!e.ativo) legenda.textContent = ""; return; }
       legenda.hidden = false;

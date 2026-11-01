@@ -25,8 +25,8 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261105a";
-import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261105a";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261105b";
+import { carregarTexturas, comFoto, LADO, ligarTexturas, texturasCarregadas, texturasLigadas, uvMetros, uvNaCaixa } from "./texturas.js?v=20261105b";
 
 const BLOCO_UV = 2.2; // UV da frente do bloco por metro (geoBloco)
 
@@ -1466,7 +1466,8 @@ function iniciarTourCortes() {
       iniciarVoo(criarVoo([q.ver[0], q.ver[1]], [q.pos, q.pos], [0, 1], {
         tour: true, tourPontos: true, fov: [56, 56], off: [0, 0], duracao: TOUR_QUADRO, aoFim: proximo,
       }));
-      corteTela(false);
+      // a tela volta mostrando o quadro E o texto dele em tela, exatamente o que está escrito
+      if (ouvinteTour) ouvinteTour({ ativo: true, site: true, escuro: false, quadro: { ...textoQuadro(q.k), passo: tour.passo + 1, total: quadros.length } });
     }, TOUR_CORTE * 1000);
   };
   proximo();
@@ -1519,6 +1520,20 @@ const VANTAGENS = {
 };
 /** passo a passo e tour: a ordem em que as vantagens são mostradas (o "Acabamento" tira a tinta: fecha o tour) */
 const ORDEM = ["rapida", "leve", "fresca", "silencio", "mofo", "acabamento"];
+/** o que está escrito em cada quadro da arte (quadros-vantagens.webp), letra por letra — o tour mostra igual em tela */
+const TEXTO_ARTE = {
+  rapida: ["Obra rápida", "A parede sobe em poucos dias"],
+  leve: ["Bem mais leve", "Menos peso na laje e na fundação"],
+  fresca: ["Casa mais fresca", "O EPS segura o calor do sol"],
+  silencio: ["Mais silêncio", "O EPS abafa o barulho da rua"],
+  mofo: ["Sem mofo", "Parede seca, sem infiltração"],
+  acabamento: ["Acabamento fácil", "Parede reta, menos massa"],
+};
+/** texto do quadro k como ele aparece na parede (arte do Gemini ou, sem ela, o quadro desenhado com VANTAGENS) */
+function textoQuadro(k) {
+  const [titulo, texto] = (artesQuadros ? TEXTO_ARTE : VANTAGENS)[ORDEM[k]];
+  return { titulo, texto };
+}
 const FIM_TOUR = ["Gostou? A sua pode ser assim.", "Toque numa parede e veja a casa por dentro. Obra rápida, casa fresca e silenciosa, sem mofo: construa com o Blocão do Império do EPS."];
 
 /** pontos nas faces que aparecem de frente pra câmera (frente e lado direito), calculados pela planta de cada casa */
