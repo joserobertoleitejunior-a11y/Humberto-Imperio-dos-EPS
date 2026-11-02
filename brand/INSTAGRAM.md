@@ -65,3 +65,17 @@ Padrão visual dos posts (o mesmo do site): fundo **cal** `#F3F1EC` ou foto real
 7. **Calcule sua obra no site** (CTA pra calculadora)
 8. **Depoimento** de cliente
 9. **Promoção de lançamento** (Loteamento Pacaembu ou outra)
+
+## 6. Posts prontos (1080×1350, feed 4:5) — `brand/instagram/posts/`
+Gerados por `node brand/scripts/gerar_posts.js` (textos editáveis no próprio script; HTML-fonte em `posts/src/`).
+| Arquivo | Post do plano |
+|---|---|
+| `01-nova-fase` | 1 · Nova fase |
+| `02-o-que-e-o-blocao` | 2 · O que é o Blocão |
+| `03-ficha-tecnica` | 3 · Ficha técnica (4 espessuras) |
+| `04-blocao-x-tijolo` | 4 · Comparativo (só afirmações qualitativas) |
+| `05a/b/c-isopor-pega-fogo` | 5 · Carrossel de 3 slides (capa, resposta, WhatsApp) |
+| `07-calcule-sua-obra` | 7 · CTA da calculadora (link na bio) |
+
+**Antes de publicar (confirmar com o Vinicius):** "dispensa reboco", "térmico e acústico" e a resposta do post 5 (EPS protegido por concreto; ideal ter o laudo/ficha técnica de comportamento ao fogo). Nenhum número de % ou °C foi usado.
+**Ainda faltam (dependem de material real):** 6 · obra real (Reels), 8 · depoimento, 9 · promoção de lançamento.
