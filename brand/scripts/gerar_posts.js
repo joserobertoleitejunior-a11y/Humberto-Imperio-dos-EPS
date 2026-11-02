@@ -128,6 +128,50 @@ const POSTS = {
     </div>
     ${pe()}</body>`,
 
+  "08-o-blocao-por-dentro": `
+    <body>${topo(false, "Foto real · nossa fábrica")}
+    <div style="position:absolute;left:72px;top:150px;width:500px;height:790px;border-radius:22px;overflow:hidden;box-shadow:0 24px 50px rgba(30,32,35,.22)">
+      <img src="${A("brand/instagram/midia/corte-peca.jpg")}" style="width:100%;height:100%;object-fit:cover" alt="">
+      ${[[157, "1"], [256, "2"], [343, "3"]].map(([x, n]) => `<i style="position:absolute;left:${x - 22}px;top:98px;width:44px;height:44px;border-radius:50%;background:var(--azul);color:#fff;display:grid;place-items:center;font:700 24px Archivo;font-style:normal;box-shadow:0 0 0 4px #fff">${n}</i>`).join("")}
+    </div>
+    <div style="position:absolute;left:620px;right:72px;top:150px">
+      <h1 class="exp" style="font-size:62px">O Blocão<br>por dentro.</h1>
+      <div style="margin-top:56px;display:grid;gap:34px">
+        ${[["1", "Concreto", "Face externa: resistência e acabamento."], ["2", "EPS", "O miolo que isola o calor e o barulho."], ["3", "Concreto", "Face interna: parede lisa, pronta pra receber acabamento."]].map(([n, t, d]) => `
+          <div style="display:grid;grid-template-columns:52px 1fr;gap:18px;align-items:start">
+            <i style="width:44px;height:44px;border-radius:50%;background:var(--azul);color:#fff;display:grid;place-items:center;font:700 24px Archivo;font-style:normal">${n}</i>
+            <div><b class="exp" style="font-size:30px">${t}</b><p style="font-size:25px;line-height:1.35;color:var(--suave);margin-top:6px">${d}</p></div>
+          </div>`).join("")}
+      </div>
+    </div>
+    <div style="position:absolute;left:72px;right:72px;top:1000px;background:var(--graf);color:#fff;border-radius:20px;padding:38px 44px;display:flex;justify-content:space-between;align-items:center">
+      <span class="exp" style="font-size:38px;line-height:1.1">Peça real,<br><span style="color:#9DB6FF">da nossa fábrica.</span></span>
+      <span style="font-size:27px;line-height:1.4;text-align:right">Fabricado em Itapetininga-SP<br><b>Peça seu orçamento</b></span>
+    </div>
+    ${pe("Fábrica do Blocão · Itapetininga-SP")}</body>`,
+
+  "09-fabricado-em-itapetininga": `
+    <body>${topo(false, "Direto da fábrica")}
+    <div style="position:absolute;left:72px;right:72px;top:140px">
+      <h1 class="exp" style="font-size:78px">Fabricado em<br><span class="az">Itapetininga.</span></h1>
+    </div>
+    <div style="position:absolute;left:72px;right:72px;top:420px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="height:430px;border-radius:20px;overflow:hidden;box-shadow:0 18px 40px rgba(30,32,35,.18)"><img src="${A("brand/instagram/midia/camadas-peca.jpg")}" style="width:100%;height:100%;object-fit:cover;object-position:60% 50%" alt=""></div>
+      <div style="height:430px;border-radius:20px;overflow:hidden;box-shadow:0 18px 40px rgba(30,32,35,.18)"><img src="${A("brand/instagram/midia/face-peca.jpg")}" style="width:100%;height:100%;object-fit:cover" alt=""></div>
+    </div>
+    <div style="position:absolute;left:72px;right:72px;top:890px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+      ${[["Térmico", "<circle cx='24' cy='14' r='7' fill='none' stroke='currentColor' stroke-width='3'/><path d='M24 21v18' stroke='currentColor' stroke-width='3'/>"],
+         ["Acústico", "<path d='M8 20h8l10-8v28l-10-8H8z' fill='currentColor'/><path d='M32 16q6 8 0 16M37 11q10 13 0 26' fill='none' stroke='currentColor' stroke-width='3'/>"],
+         ["Obra mais rápida", "<circle cx='24' cy='24' r='15' fill='none' stroke='currentColor' stroke-width='3'/><path d='M24 14v11l7 5' fill='none' stroke='currentColor' stroke-width='3'/>"],
+         ["Sem reboco", "<rect x='6' y='10' width='36' height='8' fill='currentColor'/><rect x='6' y='20' width='36' height='8' fill='none' stroke='currentColor' stroke-width='3'/><rect x='6' y='30' width='36' height='8' fill='currentColor'/>"]]
+        .map(([t, svg]) => `<div style="background:var(--azul);color:#fff;border-radius:16px;padding:24px 12px 22px;text-align:center"><svg viewBox="0 0 48 48" width="62" height="62">${svg}</svg><p class="exp" style="font-size:21px;margin-top:12px;line-height:1.1">${t}</p></div>`).join("")}
+    </div>
+    <div style="position:absolute;left:72px;right:72px;top:1110px;background:var(--graf);color:#fff;border-radius:18px;padding:26px 36px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:27px;line-height:1.35"><b class="exp" style="font-size:25px;color:#9DB6FF">Espessuras</b><br>10 · 13 · 15 · 20 cm</span>
+      <span class="exp" style="font-size:36px;text-align:right;line-height:1.1">Faça seu<br>orçamento</span>
+    </div>
+    <div class="pe"><span>Itapetininga-SP e região</span><span>WhatsApp ${WHATS}</span></div></body>`,
+
   "07-calcule-sua-obra": `
     <body class="azul">${topo(true, "No site")}
     <div style="position:absolute;left:72px;right:72px;top:160px">

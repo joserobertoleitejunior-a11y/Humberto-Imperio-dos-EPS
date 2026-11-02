@@ -79,3 +79,12 @@ Gerados por `node brand/scripts/gerar_posts.js` (textos editáveis no próprio s
 
 **Antes de publicar (confirmar com o Vinicius):** "dispensa reboco", "térmico e acústico" e a resposta do post 5 (EPS protegido por concreto; ideal ter o laudo/ficha técnica de comportamento ao fogo). Nenhum número de % ou °C foi usado.
 **Ainda faltam (dependem de material real):** 6 · obra real (Reels), 8 · depoimento, 9 · promoção de lançamento.
+
+## 7. Material real (vídeos do WhatsApp de 02/11) — `brand/instagram/midia/`
+- Os 6 vídeos chegaram em **472×630 px úteis** (o WhatsApp comprime e põe tarja preta). Por isso a foto real entra **pequena, dentro de um layout** (nunca como imagem de fundo em tela cheia).
+- Aproveitado: só o que mostra a **peça do Blocão** (corte concreto | EPS | concreto, camadas, face). Rostos, fala e o fundo bagunçado ficaram de fora. Áudio removido.
+- `midia/corte-peca.jpg`, `camadas-peca.jpg`, `face-peca.jpg`: quadros recortados (nitidez e contraste leves, sem alterar a peça).
+- `posts/08-o-blocao-por-dentro` e `posts/09-fabricado-em-itapetininga`: posts com a foto real.
+- `reel-peca-real.mp4` (9,7 s, 1080×1920): `node brand/scripts/gerar_reel.js <video> <saida.mp4>`.
+- **Para ficar nível "empresa grande":** gravar de novo com o celular na horizontal/vertical em 4K, luz natural, fundo limpo (lona/parede lisa), peça apoiada e câmera parada ou em movimento lento; enviar o ARQUIVO ORIGINAL (WhatsApp → "Documento"), não o encaminhado.
+- Antes de usar rosto/fala dos vídeos (WA0014–WA0016): autorização de quem aparece.
