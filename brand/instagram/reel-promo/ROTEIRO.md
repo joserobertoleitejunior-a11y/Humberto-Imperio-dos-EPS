@@ -24,12 +24,15 @@ Os tempos abaixo batem com as imagens do vídeo: a narração de cada linha tem 
 2. Um **locutor** (Fiverr / Workana, de 50 a 150 reais), mandando este roteiro.
 3. Uma **voz sintética genérica** (Gemini, ElevenLabs, etc.), com o prompt abaixo.
 
-### Prompt da voz (colar no Gemini / ferramenta de voz)
+### Prompt da voz — locutor do interior paulista, sério e descontraído (colar no Gemini / ferramenta de voz)
 ```
-Leia o texto abaixo em português do Brasil. Voz de homem jovem, tom seco e irônico (deadpan),
-ritmo rápido e natural, com pequenas pausas de comédia depois das reticências. Sem gritar,
-sem tom de propaganda de rádio. Não imite nenhuma pessoa ou personagem existente.
-Cada linha tem que caber no tempo indicado.
+Narre o texto abaixo em português do Brasil, como um LOCUTOR HOMEM, de uns 40 anos, do interior de São Paulo
+(região de Itapetininga / Sorocaba). Sotaque do interior paulista, natural, com o "r" caipira suave (sem exagerar
+nem fazer caricatura). Tom sério e descontraído ao mesmo tempo: voz grave e calma, firme como quem fala de obra
+com conhecimento, mas relaxada, de conversa de fim de tarde, com um sorriso leve na voz. Ritmo médio-rápido,
+pausas curtas e secas nas reticências, sem gritar e sem tom de propaganda de rádio. Termine a última frase
+com confiança, descendo o tom. Não imite nenhuma pessoa ou personagem existente.
+Cada linha tem que caber no tempo indicado (leia no ritmo; não alongue as vogais).
 
 [0–4 s]   Obra normal: tijolo, reboco, entulho… e nada de acabar.
 [4–8 s]   Aí eu conheci o Blocão. Mudou meu jogo.
@@ -38,6 +41,9 @@ Cada linha tem que caber no tempo indicado.
 [20–24 s] Feito aqui em Itapetininga, direto da fábrica.
 [24–28 s] Quer a sua obra assim? Chama no WhatsApp! Império do EPS.
 ```
+Dicas: peça a voz **uma linha por vez** (fica mais fácil encaixar no tempo) ou tudo de uma vez e eu corto. Se o resultado
+sair "paulistano de capital" ou "carioca", repita pedindo "sotaque caipira do interior paulista, não do Rio".
+Gravação própria (sua ou do Vinicius, que é da região) também funciona e é ainda mais autêntica.
 
 ## Prompt da música (colar no Gemini → "Criar música")
 ```
