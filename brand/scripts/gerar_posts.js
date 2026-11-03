@@ -181,9 +181,10 @@ const POSTS = {
     <div style="position:absolute;left:72px;right:72px;top:640px;background:var(--cal);border-radius:28px;padding:30px;height:430px;display:flex;align-items:center;justify-content:center">
       <img src="${A("assets/img/casa-media.webp")}" style="height:100%;mix-blend-mode:multiply" alt="">
     </div>
-    <div style="position:absolute;left:72px;right:72px;bottom:60px;display:flex;justify-content:space-between;align-items:center">
+    <div style="position:absolute;left:72px;right:72px;bottom:70px;display:flex;justify-content:space-between;align-items:center">
       <span class="exp" style="font-size:44px">Link na bio ↗</span><span style="font-size:25px;font-weight:600">WhatsApp ${WHATS}</span>
-    </div></body>`,
+    </div>
+    <div style="position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.7">Feito por VIBE CODING PROCESS</div></body>`,
 };
 
 (async () => {
