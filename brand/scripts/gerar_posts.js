@@ -40,6 +40,14 @@ const corte = (c, e, alto, esc = false) => {
     <i style="flex:${c * k};background:#A8A39A"></i><i style="flex:${e * k};background:${esc ? "#F3F1EC" : "#fff"};box-shadow:inset 0 0 0 1.5px #cfcac0"></i><i style="flex:${c * k};background:#A8A39A"></i></div>`;
 };
 
+
+/* Posts que dependem de dado REAL do cliente. Enquanto "pronto" for false, saem como MODELO (com a faixa de aviso e os
+ * campos tracejados). Preencha os textos, troque pronto para true e rode o script: a faixa e o tracejado somem. */
+const DEPOIMENTO = { pronto: false, texto: "Escreva aqui o depoimento do cliente, nas palavras dele.", nome: "Nome do cliente", obra: "Cidade · tipo de obra" };
+const PROMO = { pronto: false, tag: "Condição de lançamento", titulo: "Nome da oferta", destaque: "Condição ou valor", validade: "Válido até dd/mm", obs: "Sujeito à disponibilidade. Consulte condições." };
+const campo = (ok, t) => (ok ? t : `<span style="outline:3px dashed currentColor;outline-offset:8px;border-radius:4px">${t}</span>`);
+const faixaModelo = (ok) => (ok ? "" : `<div style="position:absolute;left:0;right:0;top:0;background:#B42318;color:#fff;text-align:center;padding:10px;font-size:22px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;z-index:9">Modelo · preencher antes de publicar</div>`);
+
 const POSTS = {
   "01-nova-fase": `
     <body>${topo(false, "Nova fase")}
@@ -172,6 +180,36 @@ const POSTS = {
     </div>
     <div class="pe"><span>Itapetininga-SP e região</span><span>WhatsApp ${WHATS}</span></div>
     <div style="position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--suave);opacity:.65">Feito por VIBE CODING PROCESS</div></body>`,
+
+  "10-depoimento": `
+    <body>${faixaModelo(DEPOIMENTO.pronto)}${topo(false, "Quem construiu com a gente")}
+    <div style="position:absolute;left:72px;right:72px;top:200px">
+      <div class="exp az" style="font-size:300px;line-height:.7;height:150px">“</div>
+      <p style="font-size:58px;line-height:1.22;font-weight:700;margin-top:30px;letter-spacing:-.01em">${campo(DEPOIMENTO.pronto, DEPOIMENTO.texto)}</p>
+      <div style="display:flex;align-items:center;gap:26px;margin-top:70px">
+        <i style="width:96px;height:96px;border-radius:50%;background:var(--azulc);color:var(--azul);display:grid;place-items:center;font:900 40px Archivo;font-style:normal">${DEPOIMENTO.nome.trim().charAt(0).toUpperCase()}</i>
+        <div><b class="exp" style="font-size:34px">${campo(DEPOIMENTO.pronto, DEPOIMENTO.nome)}</b><p style="font-size:27px;color:var(--suave);margin-top:8px">${campo(DEPOIMENTO.pronto, DEPOIMENTO.obra)}</p></div>
+      </div>
+    </div>
+    <div style="position:absolute;left:72px;right:72px;bottom:150px;background:var(--azul);color:#fff;border-radius:20px;padding:34px 44px;display:flex;justify-content:space-between;align-items:center">
+      <span class="exp" style="font-size:36px;line-height:1.1">Quer uma obra<br>assim?</span><span style="font-size:28px;text-align:right;line-height:1.4"><b>Chama no WhatsApp</b><br>${WHATS}</span>
+    </div>
+    ${pe()}</body>`,
+
+  "11-promocao": `
+    <body class="azul">${faixaModelo(PROMO.pronto)}${topo(true, "Promoção")}
+    <div style="position:absolute;left:72px;right:72px;top:210px">
+      <span class="tag" style="color:#fff">${PROMO.tag}</span>
+      <h1 class="exp" style="font-size:104px;margin-top:44px">${campo(PROMO.pronto, PROMO.titulo)}</h1>
+      <div style="margin-top:60px;background:var(--cal);color:var(--graf);border-radius:26px;padding:50px 52px">
+        <p class="exp az" style="font-size:78px;line-height:1.05">${campo(PROMO.pronto, PROMO.destaque)}</p>
+        <p style="font-size:34px;font-weight:700;margin-top:28px">${campo(PROMO.pronto, PROMO.validade)}</p>
+      </div>
+      <p style="font-size:44px;line-height:1.3;margin-top:56px;font-weight:600">Chama no WhatsApp e garanta a sua.</p>
+      <p class="exp" style="font-size:60px;margin-top:26px">${WHATS}</p>
+    </div>
+    <div style="position:absolute;left:72px;right:72px;bottom:112px;font-size:22px;opacity:.8">${PROMO.obs}</div>
+    ${pe("Itapetininga-SP e região")}</body>`,
 
   "07-calcule-sua-obra": `
     <body class="azul">${topo(true, "No site")}

@@ -88,3 +88,6 @@ Gerados por `node brand/scripts/gerar_posts.js` (textos editáveis no próprio s
 - `reel-peca-real.mp4` (9,7 s, 1080×1920): `node brand/scripts/gerar_reel.js <video> <saida.mp4>`.
 - **Para ficar nível "empresa grande":** gravar de novo com o celular na horizontal/vertical em 4K, luz natural, fundo limpo (lona/parede lisa), peça apoiada e câmera parada ou em movimento lento; enviar o ARQUIVO ORIGINAL (WhatsApp → "Documento"), não o encaminhado.
 - Antes de usar rosto/fala dos vídeos (WA0014–WA0016): autorização de quem aparece.
+
+## 8. Depoimento e promoção (modelos) — `posts/10-depoimento` e `posts/11-promocao`
+Dependem de dado real do cliente: nada foi inventado. No topo de `brand/scripts/gerar_posts.js`, preencha `DEPOIMENTO` e `PROMO`, troque `pronto: true` e rode `node brand/scripts/gerar_posts.js` (a faixa vermelha "MODELO" e o tracejado somem).
