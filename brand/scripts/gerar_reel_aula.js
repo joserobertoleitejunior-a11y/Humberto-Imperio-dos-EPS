@@ -38,7 +38,8 @@ for (let k = 1; k < T.s.length; k++) if (!(T.s[k] > T.s[k - 1])) throw new Error
 // ---- legendas: pedaços curtos, cortados na pontuação; aparecem na 1ª palavra do pedaço ----
 const chunks = [];
 let cur = [];
-const fecha = () => { if (cur.length) { chunks.push({ t0: Math.max(0, cur[0].ini - 0.04), texto: cur.map((p, k) => p.w + (k === cur.length - 1 ? p.p : p.p)).join(" ") }); cur = []; } };
+// a voz soletra "É-Pê-Ésse"; a legenda escreve EPS
+const fecha = () => { if (cur.length) { chunks.push({ t0: Math.max(0, cur[0].ini - 0.04), texto: cur.map((p) => p.w + p.p).join(" ").replace(/É-Pê-Ésse/g, "EPS") }); cur = []; } };
 P.forEach((p, k) => {
   cur.push(p);
   const len = cur.reduce((s, q) => s + q.w.length + q.p.length + 1, 0);
