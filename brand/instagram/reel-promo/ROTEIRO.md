@@ -44,3 +44,15 @@ Crie uma música instrumental de 30 segundos para um Reels de construção civil
 ```
 
 Gerar o vídeo: node brand/scripts/gerar_reel_promo.js <quadros-3d> <video-da-peca-real.mp4> <saida.mp4>
+
+
+## Versão "drone" (reel-drone-com-voz.mp4 · 54,5 s · com a voz)
+Mesma narração e mesmas legendas, com o **tour do drone pela maquete** no miolo do vídeo e **tudo animado** (nada de foto parada):
+- 0–3,6 s: **maquete de tijolo × maquete de Blocão**, casas de verdade montadas peça por peça em 3D (paredes com vãos, varanda com colunas, telhado de 4 águas, janelas com caixilho, porta, jardim). O tijolo sobe devagar (peça pequena), o Blocão sobe rápido.
+- 3,6–10,6 s: o bloco gira e as 3 camadas se afastam nas palavras "concreto · isopor · concreto".
+- 10,6–50,5 s: **tour do drone** pela casa pronta (capturado do próprio site, sem móveis: só paredes, janelas e portas), com cartões animados em SVG por cima: pesos caindo (força), raios de calor e ondas de som parando no isopor, gotas escorrendo (sem mofo), parede subindo + relógio girando (leve), tubo elétrico se desenhando e prateleira entrando (fixação), barras das 4 espessuras.
+- 50,5–54,5 s: cartão final azul com o WhatsApp.
+Fundo da página: verde-acinzentado `#C8D2C8` (escolha do cliente).
+
+Gerar: `node brand/scripts/gerar_reel_drone.js <tempos.json> <audio.mp3> <pasta-quadros-do-tour> <saida.mp4>` (precisa do site servido em http://localhost:8765).
+Capturar os quadros do tour: `node cap3dB.cjs <pasta> media 24 0.79 600 654 1.5 <k0> <k1>` com o site aberto em `?qualidade=media&semmoveis=1` (958 quadros ≈ 40 s de tour).

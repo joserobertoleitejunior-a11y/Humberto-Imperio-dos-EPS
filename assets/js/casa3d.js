@@ -2047,9 +2047,17 @@ function garantirExtras() {
 }
 
 // móveis, eletros e quadros: o tour do drone entra na casa
+const SEM_MOVEIS = new URLSearchParams(location.search).has("semmoveis"); // ?semmoveis=1: maquete só com paredes, janelas e portas (vídeos)
 function montarMoveis() {
   const P = projeto;
   const Y2 = CHAO + PE + LAJE;
+  if (SEM_MOVEIS) {
+    mobilia = new Group();
+    mobilia.visible = false;
+    obra.add(mobilia);
+    pDesenhado = -1;
+    return;
+  }
   mobilia = fundirPorMaterial(mobiliar(P, [CHAO + 0.022, Y2 + 0.022], BE, [CHAO + PE, P.B ? Y2 + PE : CHAO + PE]));
   mobilia.visible = false;
   obra.add(mobilia);
