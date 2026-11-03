@@ -1,40 +1,46 @@
-# Reel promocional — Império do EPS (20,5 s · 1080×1920 · sem áudio, legendas grandes)
+# Reel promocional "mini aula" — Império do EPS (29,5 s · 1080x1920 · sem áudio · legendas grandes)
 
 ## Roteiro (fala e legenda iguais)
 | Tempo | Na tela | Fala |
 |---|---|---|
-| 0 – 2 s | Tijolos caem e a pilha some | Esquece o tijolo. |
-| 2 – 4,5 s | O Blocão 3D aparece e se abre | A parede do futuro já existe. |
-| 4,5 – 8,5 s | Foto real do corte da peça (1 · 2 · 3) | Se chama Blocão. Concreto, isopor, concreto. |
-| 8,5 – 13,5 s | Tour 3D da casa de Blocão | Obra rápida, casa que esquenta menos, e o barulho da rua fica lá fora. |
-| 13,5 – 16,5 s | Peça real na fábrica | Feito aqui, em Itapetininga. |
-| 16,5 – 20,5 s | Cartão final azul + WhatsApp | Quer na sua obra? Chama no WhatsApp. Império do É-Pê-Ésse. |
+| 0 - 2 s | Tijolos caem e a pilha some | Esquece o tijolo. |
+| 2 - 4,5 s | O Blocão 3D aparece | A parede do futuro já existe. |
+| 4,5 - 9 s | Foto real do corte da peça (1 · 2 · 3) | Se chama Blocão: concreto com isopor no meio. |
+| 9 - 13 s | As 3 camadas separadas, com os nomes | Concreto, isopor, concreto. Um sanduíche de parede. |
+| 13 - 18 s | Cartões: Concreto "dá a força" · Isopor "segura calor e barulho" | O concreto dá força. O isopor segura calor e barulho. |
+| 18 - 22,5 s | Tour 3D da casa (quadro "Obra rápida") | E o bloco é leve: a parede sobe rápido. |
+| 22,5 - 25,5 s | Peça real na fábrica | Feito aqui, em Itapetininga. |
+| 25,5 - 29,5 s | Cartão final azul + WhatsApp | Quer na sua obra? Chama no WhatsApp. Império do É-Pê-Ésse. |
 
-**Confirmar com o Vinicius:** "casa que esquenta menos" e "o barulho da rua fica lá fora". Nenhum número de % ou °C.
-**Não usar a voz do Chris nem de pessoa real** (direito de voz e propaganda enganosa).
+**Confirmar com o Vinicius:** "o isopor segura calor e barulho" e "o bloco é leve". Nenhum número de % ou °C.
+**Não usar a voz do Chris nem de pessoa real.**
 
-## Voz (ElevenLabs → Voice Design)
+## Voz (ElevenLabs, Voice Design)
 ```
-Homem brasileiro de uns 40 anos, locutor do interior de São Paulo, sotaque caipira suave e natural, sem caricatura. Voz grave e calma, séria e ao mesmo tempo descontraída, com um sorriso leve. Ritmo médio-rápido, dicção clara, sem tom de rádio e sem gritar.
+Homem brasileiro de uns 40 anos, locutor, voz natural de conversa, como alguém explicando algo para um amigo. Grave e calma, sem tom de propaganda, sem empostar a voz, sem exagerar na emoção. Respiração e pausas naturais, pequenas variações de ritmo, sorriso leve na voz. Sotaque do interior de São Paulo, suave.
 ```
-Gere **uma linha por vez** (Stability 35–45, Speed 1.0, idioma Português do Brasil) e escolha a melhor de 2–3 versões:
+Modelo Eleven v3 · Stability 30-40 · Similarity 70-75 · Style 0-15 · Speed 1.0. Gere uma linha por vez, 3 versões de cada, e escolha a mais natural:
 ```
 Esquece o tijolo.
 
-A parede do futuro já existe.
+A parede do futuro... já existe.
 
-Se chama Blocão. Concreto, isopor, concreto.
+Se chama Blocão: concreto, com isopor no meio.
 
-Obra rápida, casa que esquenta menos, e o barulho da rua fica lá fora.
+Concreto, isopor, concreto. Um sanduíche de parede.
+
+O concreto dá força. O isopor segura calor e barulho.
+
+E o bloco é leve: a parede sobe rápido.
 
 Feito aqui, em Itapetininga.
 
 Quer na sua obra? Chama no WhatsApp. Império do É-Pê-Ésse.
 ```
 
-## Música (Gemini → Criar música)
+## Música (Gemini, Criar música)
 ```
-Crie uma música instrumental de 20 segundos para um Reels de construção civil. Groove funk animado e bem-humorado, 104 BPM, baixo marcado, guitarra curta, metais, bateria leve e palmas. Médios abertos, para a voz ficar por cima. Sem vocal. Começa com um impacto seco, termina numa batida final, sem fade.
+Crie uma música instrumental de 30 segundos para um Reels de construção civil. Groove funk animado e bem-humorado, 104 BPM, baixo marcado, guitarra curta, metais, bateria leve e palmas. Médios abertos, para a voz ficar por cima. Sem vocal. Começa com um impacto seco, termina numa batida final, sem fade.
 ```
 
-Gerar o vídeo: `node brand/scripts/gerar_reel_promo.js <quadros-3d> <video-da-peca-real.mp4> <saida.mp4>`
+Gerar o vídeo: node brand/scripts/gerar_reel_promo.js <quadros-3d> <video-da-peca-real.mp4> <saida.mp4>

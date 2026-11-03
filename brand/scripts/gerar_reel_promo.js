@@ -1,4 +1,4 @@
-/* Reel promocional (9:16, ~20 s, sem áudio) — as legendas seguem o roteiro em brand/instagram/reel-promo/ROTEIRO.md.
+/* Reel promocional (9:16, ~30 s, sem áudio) — as legendas seguem o roteiro em brand/instagram/reel-promo/ROTEIRO.md.
  * Passos: 1) camada de gráficos/legendas (PNG com transparência, 24 quadros/s, desenhada por tempo)
  *         2) mistura com a base + a maquete 3D (quadros em <3d>) + o vídeo da peça real e gera o MP4.
  * Uso: node brand/scripts/gerar_reel_promo.js <pasta-dos-quadros-3d> <video-da-peca-real.mp4> <saida.mp4> [quadro-unico-em-segundos]
@@ -11,21 +11,23 @@ const path = require("path");
 const [dir3d, clipe, saida, soUm] = process.argv.slice(2);
 const RAIZ = path.resolve(__dirname, "../..");
 const FPS = 24;
-const DUR = 20.5;
+const DUR = 29.5;
 const W = 900; // janela de imagem
-const H = 1100;
-const Y0 = 420;
+const H = 980;
+const Y0 = 410;
 const TMP = fs.mkdtempSync("/tmp/reel-promo-");
 const A = (p) => "file://" + path.join(RAIZ, p);
 
 const CENAS = [
   { t0: 0, t1: 2, h: ["Esquece o", "tijolo."], sub: "Esquece o tijolo." },
   { t0: 2, t1: 4.5, h: ["A parede do", "futuro."], sub: "A parede do futuro já existe." },
-  { t0: 4.5, t1: 8.5, h: ["Se chama", "Blocão."], sub: "Se chama Blocão. Concreto, isopor, concreto." },
-  { t0: 8.5, t1: 13.5, h: ["Obra rápida,", "casa fresca."], sub: "Obra rápida, casa que esquenta menos, e o barulho da rua fica lá fora." },
-  { t0: 13.5, t1: 16.5, h: ["Feito em", "Itapetininga."], sub: "Feito aqui, em Itapetininga." },
+  { t0: 4.5, t1: 9, h: ["Se chama", "Blocão."], sub: "Se chama Blocão: concreto com isopor no meio." },
+  { t0: 9, t1: 13, h: ["Um sanduíche", "de parede."], sub: "Concreto, isopor, concreto. Um sanduíche de parede." },
+  { t0: 13, t1: 18, h: ["Cada camada", "tem função."], sub: "O concreto dá força. O isopor segura calor e barulho." },
+  { t0: 18, t1: 22.5, h: ["Leve e", "rápido."], sub: "E o bloco é leve: a parede sobe rápido." },
+  { t0: 22.5, t1: 25.5, h: ["Feito em", "Itapetininga."], sub: "Feito aqui, em Itapetininga." },
 ];
-const FIM = 16.5;
+const FIM = 25.5;
 
 const html = `<!doctype html><meta charset="utf-8"><style>
 @font-face{font-family:Archivo;src:url("${A("assets/fonts/archivo-latin.woff2")}");font-weight:400 900;font-stretch:62% 125%}
@@ -33,10 +35,10 @@ const html = `<!doctype html><meta charset="utf-8"><style>
 body{font-family:Archivo,sans-serif;color:#1E2023;position:relative}
 .exp{font-stretch:125%;font-weight:900;text-transform:uppercase;line-height:1.03;letter-spacing:-.01em}.az{color:#1F4BD8}
 #logo{position:absolute;left:90px;top:96px;height:48px}
-.h{position:absolute;left:90px;top:196px;width:900px;font-size:80px}.h div{white-space:nowrap}
-#jan{position:absolute;left:90px;top:420px;width:900px;height:1100px;border-radius:8px;overflow:hidden}
-#mol{position:absolute;left:82px;top:412px;width:916px;height:1116px;border:8px solid #1F4BD8;border-radius:12px;pointer-events:none}
-.sub{position:absolute;left:70px;width:940px;top:1566px;height:300px;display:flex;align-items:center;justify-content:center;font-size:70px;line-height:1.12;font-weight:800;text-align:center;letter-spacing:-.01em}
+.h{position:absolute;left:90px;top:190px;width:900px;font-size:76px}.h div{white-space:nowrap}
+#jan{position:absolute;left:90px;top:410px;width:900px;height:980px;border-radius:8px;overflow:hidden}
+#mol{position:absolute;left:82px;top:402px;width:916px;height:996px;border:8px solid #1F4BD8;border-radius:12px;pointer-events:none}
+.sub{position:absolute;left:50px;width:980px;top:1410px;height:440px;display:flex;align-items:center;justify-content:center;font-size:92px;line-height:1.06;font-weight:800;text-align:center;letter-spacing:-.015em}
 .tag{position:absolute;left:28px;bottom:28px;white-space:nowrap;background:#1E2023;color:#F3F1EC;padding:14px 26px;border-radius:999px;font-size:28px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .cena{position:absolute;inset:0}
 .tij{position:absolute;width:128px;height:52px;border-radius:5px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.14)}
@@ -48,7 +50,7 @@ body{font-family:Archivo,sans-serif;color:#1E2023;position:relative}
 </style><body>
 <img id="logo" src="${A("assets/img/marca.svg")}">
 <div id="hs"></div>
-<div id="jan"><div id="c1" class="cena"></div><div id="c2" class="cena"></div><div id="c3" class="cena"></div><div id="c4" class="cena"></div><div id="c5" class="cena"></div></div>
+<div id="jan"><div id="c1" class="cena"></div><div id="c2" class="cena"></div><div id="c3" class="cena"></div><div id="c4" class="cena"></div><div id="c5" class="cena"></div><div id="c6" class="cena"></div><div id="c7" class="cena"></div></div>
 <div id="mol"></div>
 <div id="subs"></div>
 <div id="fim"><img src="${A("assets/img/marca-clara.svg")}">
@@ -79,20 +81,26 @@ const cores = ["#B9644A", "#A8553D", "#C37457", "#B05A41"];
 const pilha = []; let n = 0;
 for (let r = 0; r < 6; r++) for (let k = 0; k < 6 - r; k++) {
   const e = document.createElement("div"); e.className = "tij"; e.style.background = cores[(n + r) % 4];
-  const x = 450 - (6 - r) * 66 + k * 132 + (r % 2 ? 4 : -4), y = 1100 - 56 - r * 56 - (r % 2);
+  const x = 450 - (6 - r) * 66 + k * 132 + (r % 2 ? 4 : -4), y = 980 - 56 - r * 56 - (r % 2);
   $("c1").appendChild(e); pilha.push({ e, x, y, d: 0.05 + n * 0.045 }); n++;
 }
 const piso = document.createElement("div"); piso.style.cssText = "position:absolute;left:0;right:0;bottom:0;height:70px;background:#D6D1C7"; $("c1").appendChild(piso);
 const c1bg = document.createElement("div"); c1bg.style.cssText = "position:absolute;inset:0;background:#EAE6DE;z-index:-1"; $("c1").prepend(c1bg);
 // (sem selos: a cena dura 2 s, só a pilha caindo e sumindo)
 // cena 2: bloco 3D (imagem) fechado -> desmontado
-$("c2").innerHTML = '<div style="position:absolute;inset:0;background:#EAE6DE"></div><img id="b1" src="${A("assets/img/bloco-fechado.webp")}" style="position:absolute;left:-60px;top:210px;width:1020px"><img id="b2" src="${A("assets/img/bloco-desmontado.webp")}" style="position:absolute;left:-60px;top:210px;width:1020px;opacity:0"><div class="tag" id="t2" style="left:50%;transform:translateX(-50%);bottom:60px">Concreto · EPS · Concreto</div>';
+$("c2").innerHTML = '<div style="position:absolute;inset:0;background:#EAE6DE"></div><img id="b1" src="${A("assets/img/bloco-fechado.webp")}" style="position:absolute;left:-60px;top:210px;width:1020px"><img id="b2" src="${A("assets/img/bloco-desmontado.webp")}" style="position:absolute;left:-60px;top:210px;width:1020px;opacity:0">';
 // cena 3: foto real do corte da peça
-$("c3").innerHTML = '<img src="${A("brand/instagram/midia/corte-peca.jpg")}" style="position:absolute;inset:0;width:900px;height:1100px;object-fit:cover">' +
-  [[284, 60, "1"], [460, 60, "2"], [617, 60, "3"]].map(([x, y, t], i) => '<div class="dot" id="d' + i + '" style="left:' + (x - 31) + "px;top:" + y + 'px">' + t + "</div>").join("") +
+$("c3").innerHTML = '<img src="${A("brand/instagram/midia/corte-peca.jpg")}" style="position:absolute;inset:0;width:900px;height:980px;object-fit:cover">' +
+  [[284, 40, "1"], [460, 40, "2"], [617, 40, "3"]].map(([x, y, t], i) => '<div class="dot" id="d' + i + '" style="left:' + (x - 31) + "px;top:" + y + 'px">' + t + "</div>").join("") +
   [[14, "1 Concreto"], [338, "2 EPS"], [506, "3 Concreto"]].map(([x, t], i) => '<div class="rot" id="r' + i + '" style="left:' + x + 'px">' + t + "</div>").join("");
-$("c4").innerHTML = '<div class="tag">Maquete 3D · casa de Blocão</div>';
-$("c5").innerHTML = '<div class="tag">Peça real · nossa fábrica</div>';
+// cena 4: as 3 camadas separadas, com os nomes
+$("c4").innerHTML = '<div style="position:absolute;inset:0;background:#EAE6DE"></div><img src="${A("assets/img/bloco-desmontado.webp")}" style="position:absolute;left:-70px;top:120px;width:1040px">' +
+  ["Concreto", "Isopor", "Concreto"].map((t, i) => '<div class="rot" id="p' + i + '" style="left:' + [40, 340, 590][i] + 'px;bottom:70px;font-size:36px">' + t + "</div>").join("");
+// cena 5: o que cada camada faz
+const card = (cor, fundo, tit, txt, icone) => '<div style="height:470px;border-radius:22px;padding:36px 40px;background:' + fundo + ';color:' + cor + ';display:flex;gap:34px;align-items:center"><svg viewBox="0 0 48 48" width="150" height="150" style="flex:none">' + icone + '</svg><div><div class="exp" style="font-size:62px">' + tit + '</div><div style="font-size:48px;font-weight:700;line-height:1.1;margin-top:12px">' + txt + "</div></div></div>";
+$("c5").innerHTML = '<div id="k0" style="position:absolute;left:0;right:0;top:0">' + card("#fff", "#1F4BD8", "Concreto", "dá a força", "<rect x='6' y='10' width='36' height='8' fill='currentColor'/><rect x='6' y='20' width='36' height='8' fill='none' stroke='currentColor' stroke-width='3'/><rect x='6' y='30' width='36' height='8' fill='currentColor'/>") + '</div><div id="k1" style="position:absolute;left:0;right:0;top:500px">' + card("#1E2023", "#fff", "Isopor", "segura calor e barulho", "<circle cx='20' cy='14' r='6' fill='none' stroke='currentColor' stroke-width='3'/><path d='M20 20v16' stroke='currentColor' stroke-width='3'/><path d='M30 18q5 6 0 12M35 13q9 11 0 22' fill='none' stroke='currentColor' stroke-width='3'/>") + "</div>";
+$("c6").innerHTML = '<div class="tag">Maquete 3D · casa de Blocão</div>';
+$("c7").innerHTML = '<div class="tag">Peça real · nossa fábrica</div>';
 
 function render(t) {
   CENAS.forEach((c, i) => {
@@ -112,12 +120,17 @@ function render(t) {
   const l2 = t - 2; const e2 = out(l2 / 0.5);
   $("b1").style.opacity = 1 - clamp((l2 - 1.0) / 0.4); $("b2").style.opacity = clamp((l2 - 1.0) / 0.4);
   $("b1").style.transform = $("b2").style.transform = "scale(" + (0.8 + 0.2 * e2) + ") rotate(" + (1 - e2) * -6 + "deg)";
-  $("t2").style.opacity = clamp((l2 - 1.4) / 0.3);
   // cena 3: foto real do corte
   const l3 = t - 4.5;
   [0, 1, 2].forEach((i) => { const d = $("d" + i), r = $("r" + i), k = back((l3 - (0.3 + i * 0.45)) / 0.3); d.style.opacity = clamp((l3 - (0.3 + i * 0.45)) / 0.12); d.style.transform = "scale(" + k + ")"; r.style.opacity = clamp((l3 - (0.4 + i * 0.45)) / 0.15); r.style.transform = "translateY(" + 20 * (1 - out((l3 - (0.4 + i * 0.45)) / 0.25)) + "px)"; });
-  // cenas 4 e 5: etiqueta entra
-  $("c4").firstChild.style.opacity = clamp((t - 9.2) / 0.3); $("c5").firstChild.style.opacity = clamp((t - 13.9) / 0.3);
+  // cena 4: nomes das camadas entram
+  const l4 = t - 9;
+  [0, 1, 2].forEach((i) => { const e = $("p" + i), k = back((l4 - (0.4 + i * 0.5)) / 0.3); e.style.opacity = clamp((l4 - (0.4 + i * 0.5)) / 0.12); e.style.transform = "scale(" + (0.4 + 0.6 * k) + ")"; });
+  // cena 5: dois cartões entram um depois do outro
+  const l5 = t - 13;
+  [0, 1].forEach((i) => { const e = $("k" + i), k = out((l5 - (0.15 + i * 1.3)) / 0.45); e.style.opacity = k; e.style.transform = "translateX(" + 120 * (1 - k) + "px)"; });
+  // cenas 6 e 7: etiqueta entra
+  $("c6").firstChild.style.opacity = clamp((t - 18.4) / 0.3); $("c7").firstChild.style.opacity = clamp((t - 22.9) / 0.3);
   // cena 6: cartão final azul cobre tudo
   const lf = t - FIM; $("fim").style.display = t >= FIM ? "block" : "none"; $("fim").style.opacity = clamp(lf / 0.2);
   $("logo").style.display = t < FIM ? "block" : "none";
@@ -146,16 +159,16 @@ window.render = render;
   await b.close();
   const n3 = fs.readdirSync(dir3d).filter((f) => f.endsWith(".jpg")).length;
   console.log("quadros 3D:", n3);
-  const tcena4 = 8.5, tcena5 = 13.5;
+  const tcena6 = 18, tcena7 = 22.5;
   execFileSync("ffmpeg", ["-v", "error", "-y",
     "-f", "lavfi", "-i", `color=c=0xF3F1EC:s=1080x1920:r=${FPS}:d=${DUR}`,
-    "-framerate", String(FPS), "-start_number", "8", "-i", path.join(dir3d, "f-%04d.jpg"), // os 8 primeiros quadros têm o céu transparente (preto)
+    "-framerate", String(FPS), "-start_number", "14", "-i", path.join(dir3d, "f-%04d.jpg"), // começa já dentro da casa, com o 1º quadro quase na tela
     "-ss", "0", "-t", "3", "-i", clipe,
     "-framerate", String(FPS), "-i", `${TMP}/o-%04d.png`,
     "-filter_complex",
-    `[1:v]trim=0:5,setpts=PTS-STARTPTS,crop=675:825:0:187,scale=${W}:${H}:flags=lanczos,setpts=PTS+${tcena4}/TB[a3];` +
-    `[2:v]crop=472:577:0:136,scale=${W}:${H}:flags=lanczos,unsharp=5:5:0.8,eq=contrast=1.05:saturation=0.95,fps=${FPS},setpts=PTS+${tcena5}/TB[a5];` +
-    `[0:v][a3]overlay=90:${Y0}:enable='between(t,${tcena4},${tcena5})':eof_action=repeat[x];[x][a5]overlay=90:${Y0}:enable='between(t,${tcena5},${FIM})':eof_action=pass[y];[y][3:v]overlay=0:0:format=auto,format=yuv420p[o]`,
+    `[1:v]trim=0:4.5,setpts=PTS-STARTPTS,crop=675:735:0:232,scale=${W}:${H}:flags=lanczos,setpts=PTS+${tcena6}/TB[a3];` +
+    `[2:v]crop=472:514:0:168,scale=${W}:${H}:flags=lanczos,unsharp=5:5:0.8,eq=contrast=1.05:saturation=0.95,fps=${FPS},setpts=PTS+${tcena7}/TB[a5];` +
+    `[0:v][a3]overlay=90:${Y0}:enable='between(t,${tcena6},${tcena7})':eof_action=repeat[x];[x][a5]overlay=90:${Y0}:enable='between(t,${tcena7},${FIM})':eof_action=pass[y];[y][3:v]overlay=0:0:format=auto,format=yuv420p[o]`,
     "-map", "[o]", "-t", String(DUR), "-c:v", "libx264", "-crf", "17", "-preset", "slow", "-movflags", "+faststart", saida]);
   console.log("ok:", saida);
 })();
