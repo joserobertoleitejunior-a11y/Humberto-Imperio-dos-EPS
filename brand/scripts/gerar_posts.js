@@ -170,7 +170,8 @@ const POSTS = {
       <span style="font-size:27px;line-height:1.35"><b class="exp" style="font-size:25px;color:#9DB6FF">Espessuras</b><br>10 · 13 · 15 · 20 cm</span>
       <span class="exp" style="font-size:36px;text-align:right;line-height:1.1">Faça seu<br>orçamento</span>
     </div>
-    <div class="pe"><span>Itapetininga-SP e região</span><span>WhatsApp ${WHATS}</span></div></body>`,
+    <div class="pe"><span>Itapetininga-SP e região</span><span>WhatsApp ${WHATS}</span></div>
+    <div style="position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--suave);opacity:.65">Feito por VIBE CODING PROCESS</div></body>`,
 
   "07-calcule-sua-obra": `
     <body class="azul">${topo(true, "No site")}
