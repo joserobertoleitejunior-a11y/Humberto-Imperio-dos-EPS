@@ -415,14 +415,21 @@ window.render = render; window.__pronto = true;
   }
   await br.close(); fs.unlinkSync(arq);
   const t0 = T.s[3], t1 = T.s[12];
-  execFileSync("ffmpeg", ["-v", "error", "-y",
-    "-f", "lavfi", "-i", `color=c=0xC8D2C8:s=1080x1920:r=${FPS}:d=${DUR}`,
-    "-framerate", String(FPS), "-i", path.join(dirTour, "f-%04d.png"),
-    "-framerate", String(FPS), "-i", `${tmp}/o-%04d.png`,
-    "-i", audio,
-    "-filter_complex",
-    `[1:v]trim=0:${(t1 - t0).toFixed(3)},setpts=PTS-STARTPTS,scale=${W}:${H}:flags=lanczos,setpts=PTS+${t0.toFixed(3)}/TB[tour];` +
-    `[0:v][tour]overlay=90:${Y0}:enable='between(t,${t0.toFixed(3)},${t1.toFixed(3)})':eof_action=repeat[x];[x][2:v]overlay=0:0:format=auto,format=yuv420p[o];[3:a]apad,atrim=0:${DUR.toFixed(3)}[au]`,
+  // vídeos reais da fábrica por cima do tour: peça real (4 espessuras) e blocos prontos (Itapetininga)
+  const PECA = process.env.PECA, BLOCOS = process.env.BLOCOS;
+  const e10 = [T.s[10], T.s[11]], e11 = [T.s[11], T.s[12]];
+  const reais = [PECA && { f: PECA, j: e10 }, BLOCOS && { f: BLOCOS, j: e11 }].filter(Boolean);
+  const ent = ["-f", "lavfi", "-i", `color=c=0xC8D2C8:s=1080x1920:r=${FPS}:d=${DUR}`,
+    "-framerate", String(FPS), "-i", path.join(dirTour, "f-%04d.png")];
+  reais.forEach((r) => ent.push("-ss", "0", "-t", String(r.j[1] - r.j[0] + 0.2), "-i", r.f));
+  ent.push("-framerate", String(FPS), "-i", `${tmp}/o-%04d.png`, "-i", audio);
+  const iTxt = 2 + reais.length, iAud = iTxt + 1;
+  let fc = `[1:v]trim=0:${(t1 - t0).toFixed(3)},setpts=PTS-STARTPTS,scale=${W}:${H}:flags=lanczos,setpts=PTS+${t0.toFixed(3)}/TB[tour];`;
+  reais.forEach((r, k) => { fc += `[${2 + k}:v]crop=472:514:0:168,scale=${W}:${H}:flags=lanczos,unsharp=5:5:0.8,eq=contrast=1.05:saturation=0.97,fps=${FPS},setpts=PTS+${r.j[0].toFixed(3)}/TB[r${k}];`; });
+  fc += `[0:v][tour]overlay=90:${Y0}:enable='between(t,${t0.toFixed(3)},${t1.toFixed(3)})':eof_action=repeat[v0];`;
+  reais.forEach((r, k) => { fc += `[v${k}][r${k}]overlay=90:${Y0}:enable='between(t,${r.j[0].toFixed(3)},${r.j[1].toFixed(3)})':eof_action=repeat[v${k + 1}];`; });
+  fc += `[v${reais.length}][${iTxt}:v]overlay=0:0:format=auto,format=yuv420p[o];[${iAud}:a]apad,atrim=0:${DUR.toFixed(3)}[au]`;
+  execFileSync("ffmpeg", ["-v", "error", "-y", ...ent, "-filter_complex", fc,
     "-map", "[o]", "-map", "[au]", "-t", String(DUR), "-c:v", "libx264", "-crf", "17", "-preset", "slow", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", saida]);
   console.log("ok:", saida, DUR.toFixed(2), "s");
 })();
