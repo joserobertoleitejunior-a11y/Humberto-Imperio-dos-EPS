@@ -243,3 +243,7 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 - Vídeo: locução contínua (`FALA_CONTINUA=1`) gerada; o corte das cenas ainda escorrega até 1 palavra em algumas
   cenas (conferido com reconhecimento de voz) — ajustar e então regravar o vídeo com a transformação do Blocão
   em casa (mais lenta) + o tour (cenas tour1–tour8 em `video/blocao.html`).
+
+
+## Seção Instagram (`#instagram`, entre Obras e Promoções)
+Fundo grafite (`.secao--grafite`, novo). O vídeo da peça real (`video/reel-peca-real.mp4` + capa `reel-peca-real-capa.jpg`, `preload="none"`) e 6 posts do Instagram (`assets/img/insta/*.webp`, 720×900, `loading="lazy"`). Os posts e o botão levam ao Instagram pelo `data-link-instagram` (URL em `config.js`). Celular: a fileira de posts desliza de lado; a partir de 640 px vira grade de 3 colunas, e a partir de 900 px o vídeo fica ao lado. Para trocar um post: gerar de novo com `brand/scripts/gerar_posts.js` e converter para WebP 720×900 na mesma pasta.

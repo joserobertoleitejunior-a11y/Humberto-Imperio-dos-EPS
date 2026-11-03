@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261102b`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261103a`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
