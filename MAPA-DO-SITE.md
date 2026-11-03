@@ -247,3 +247,10 @@ brand/                         LOGO.md (recomendação + briefing), INSTAGRAM.md
 
 ## Seção Instagram (`#instagram`, entre Obras e Promoções)
 Fundo grafite (`.secao--grafite`, novo). O vídeo da peça real (`video/reel-peca-real.mp4` + capa `reel-peca-real-capa.jpg`, `preload="none"`) e 6 posts do Instagram (`assets/img/insta/*.webp`, 720×900, `loading="lazy"`). Os posts e o botão levam ao Instagram pelo `data-link-instagram` (URL em `config.js`). Celular: a fileira de posts desliza de lado; a partir de 640 px vira grade de 3 colunas, e a partir de 900 px o vídeo fica ao lado. Para trocar um post: gerar de novo com `brand/scripts/gerar_posts.js` e converter para WebP 720×900 na mesma pasta.
+
+
+## Tour sem travar e parada obrigatória na maquete (desempenho)
+- **Parada obrigatória:** ao terminar a obra, a rolagem fica PRESA na frente da maquete (`ligarTourAuto` em `casa.js`): antes do tour não deixa passar da maquete pronta e, durante o tour, a posição é exata (rolagem por código, embalo do dedo e seta pra cima também voltam). Rolagem instantânea (o CSS tem `scroll-behavior: smooth`). Solta ao fim do tour, num clique no menu/Orçamento (`#...`) ou após 75 s de segurança.
+- **Texto igual ao quadro:** `VANTAGENS` (`casa3d.js`) repete palavra por palavra a arte `quadros-vantagens.webp`; o cartão do tour (`anunciarQuadro`) mostra o texto do quadro diante do qual o drone está.
+- **Tour planejado no ocioso:** quadros + caminho com atalhos + cortes de parede são calculados em fatias curtas (`planejarTourOcioso`/`planoTourGen`) enquanto a obra ainda sobe; ao iniciar o tour só falta montar o voo. Raios nos blocos pela grade espacial (`raioBlocos`, não dependem da animação). Os quadros e shaders são aquecidos na GPU (`aquecerQuadros`). Medido a 6× mais lento que o PC: maior fatia ≈ 110 ms (antes um bloqueio de ~1,3 s).
+- **Aparelho fraco:** resolução adaptativa também na casa (`adaptarResolucao`: baixa de 0,25 em 0,25 até 0,75× se os quadros passam de 34 ms), nível `baixa` sem antialias, texturas de canvas com paleta pronta (3–4× mais rápidas), largura da tela em cache (`ImperioTela.largura()`: ler `innerWidth` no meio da rolagem forçava layout).

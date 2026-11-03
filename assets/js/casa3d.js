@@ -25,14 +25,14 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103a";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261103b";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
   // resolução FIXA (sem trocar entre rolar/parar — a troca realocava a imagem na GPU e travava)
   alta: { hd: 2, leve: 2, min: 1, tex: 1024, sombra: true, mapa: 2048, aa: true, ambiente: true },
   media: { hd: 1.5, leve: 1.5, min: 1, tex: 512, sombra: false, mapa: 1024, aa: true, ambiente: true },
-  baixa: { hd: 1.25, leve: 1.25, min: 1, tex: 256, sombra: false, mapa: 1024, aa: true, ambiente: false },
+  baixa: { hd: 1.25, leve: 1.25, min: 1, tex: 256, sombra: false, mapa: 1024, aa: false, ambiente: false }, // sem antialias: aparelho fraco
 };
 
 const R90 = Math.PI / 2;
@@ -65,23 +65,20 @@ function telaTex(tam, desenhar) {
   return t;
 }
 
-/** Concreto: base cinza com manchas e poros. */
+/** Concreto: base cinza com manchas e poros. (tons sorteados de uma paleta pronta: pintar com cor nova a cada grão pesava) */
 function texConcreto(tam) {
   return telaTex(tam, (c, n) => {
     const r = aleatorio(7);
     c.fillStyle = "#a9a59d";
     c.fillRect(0, 0, n, n);
+    const tons = Array.from({ length: 10 }, (_, k) => { const v = Math.round(140 + (k / 9) * 50); return `rgba(${v},${v - 3},${v - 8},.35)`; });
     for (let i = 0; i < n * 1.6; i++) {
-      const v = 140 + r() * 50;
-      c.fillStyle = `rgba(${v},${v - 3},${v - 8},.35)`;
+      c.fillStyle = tons[(r() * 10) | 0];
       c.fillRect(r() * n, r() * n, 1 + r() * (n / 40), 1 + r() * (n / 40));
     }
-    for (let i = 0; i < n / 2; i++) {
-      c.fillStyle = "rgba(70,68,64,.45)";
-      c.beginPath();
-      c.arc(r() * n, r() * n, 0.5 + r() * (n / 400), 0, 7);
-      c.fill();
-    }
+    c.fillStyle = "rgba(70,68,64,.45)";
+    const poro = Math.max(1, n / 400);
+    for (let i = 0; i < n / 2; i++) c.fillRect(r() * n, r() * n, poro, poro); // poro: quadradinho (um círculo desse tamanho é igual e custa muito mais)
   });
 }
 
@@ -105,14 +102,15 @@ function texPonta(tam) {
     c.fillRect(0, 0, n, n);
     c.fillStyle = "#f3f1eb";
     c.fillRect(a, 0, n - 2 * a, n);
-    for (let i = 0; i < n * 3; i++) { // pérolas do EPS
-      c.fillStyle = `rgba(${205 + r() * 30},${203 + r() * 30},${196 + r() * 30},.7)`;
-      c.beginPath();
-      c.arc(a + r() * (n - 2 * a), r() * n, 0.8 + r() * (n / 90), 0, 7);
-      c.fill();
+    const perolas = Array.from({ length: 6 }, (_, k) => `rgba(${205 + k * 5},${203 + k * 5},${196 + k * 5},.7)`);
+    const pedras = Array.from({ length: 6 }, (_, k) => `rgba(${120 + k * 10},${118 + k * 10},${112 + k * 10},.5)`);
+    for (let i = 0; i < n * 1.5; i++) { // pérolas do EPS
+      c.fillStyle = perolas[(r() * 6) | 0];
+      const d = 1.6 + r() * (n / 45);
+      c.fillRect(a + r() * (n - 2 * a), r() * n, d, d);
     }
     for (let i = 0; i < n; i++) { // agregado do concreto
-      c.fillStyle = `rgba(${120 + r() * 50},${118 + r() * 50},${112 + r() * 50},.5)`;
+      c.fillStyle = pedras[(r() * 6) | 0];
       const x = r() < 0.5 ? r() * a : n - a + r() * a;
       c.fillRect(x, r() * n, 1 + r() * 2, 1 + r() * 2);
     }
@@ -818,6 +816,9 @@ function montar(id) {
   voo = null;
   tour = null;
   foco = null;
+  tourPlano = null;
+  planoCurso = null;
+  grade = null;
   montarPontos();
   prepararExtrasOcioso();
   J.gente.forEach(([x, z], i) => {
@@ -1184,10 +1185,13 @@ let tourAcoes = null;       // tour do site: o que cada trecho faz na parede (ab
  */
 let artesQuadros = null;   // { tex: [6 texturas], aspecto } quando a imagem carregou
 let arteCarregando = false;
+let arteEstado = "nao"; // nao | carregando | pronta | falhou (o plano do tour espera a arte, pra medir o quadro certo)
 function carregarArteQuadros() {
   const url = (window.IMPERIO_CONFIG || {}).quadrosVantagens;
-  if (!url || arteCarregando) return;
+  if (!url) { arteEstado = "pronta"; return; }
+  if (arteCarregando) return;
   arteCarregando = true;
+  arteEstado = "carregando";
   const img = new Image();
   img.decoding = "async";
   img.onload = () => {
@@ -1208,7 +1212,9 @@ function carregarArteQuadros() {
       tex.push(t);
     }
     artesQuadros = { tex, aspecto: pw / ph };
+    arteEstado = "pronta";
   };
+  img.onerror = () => { arteEstado = "falhou"; };
   img.src = url;
 }
 
@@ -1294,11 +1300,94 @@ function blocoAoLado(centro, n, larg) {
   return melhor;
 }
 
+/* ---------- raio rápido nos blocos: grade espacial na posição FINAL da casa (não depende da animação) ----------
+   O tour é planejado no ocioso, enquanto a obra ainda sobe; raycast do three nas instâncias testa um por um
+   (milhares de blocos × milhares de raios) e travava aparelho fraco. Aqui o raio anda célula por célula (DDA). */
+const CEL = 0.5;
+let grade = null; // { cel: Map<chave, índices[]>, caixas: Float32Array(6 por bloco), marca: Int32Array, sel }
+const chaveCel = (ix, iy, iz) => (ix + 1024) * 4194304 + (iz + 1024) * 2048 + (iy + 1024);
+
+function construirGrade() {
+  const caixas = new Float32Array(lista.length * 6);
+  const cel = new Map();
+  lista.forEach((bl, i) => {
+    const comp = ((BL - JUNTA) * bl.comp) / 2;
+    const hx = bl.girado ? BE / 2 : comp;
+    const hz = bl.girado ? comp : BE / 2;
+    const hy = (BA - JUNTA) / 2;
+    caixas.set([bl.x - hx, bl.y - hy, bl.z - hz, bl.x + hx, bl.y + hy, bl.z + hz], i * 6);
+    for (let ix = Math.floor((bl.x - hx) / CEL); ix <= Math.floor((bl.x + hx) / CEL); ix++) {
+      for (let iy = Math.floor((bl.y - hy) / CEL); iy <= Math.floor((bl.y + hy) / CEL); iy++) {
+        for (let iz = Math.floor((bl.z - hz) / CEL); iz <= Math.floor((bl.z + hz) / CEL); iz++) {
+          const k = chaveCel(ix, iy, iz);
+          const l = cel.get(k);
+          if (l) l.push(i); else cel.set(k, [i]);
+        }
+      }
+    }
+  });
+  grade = { cel, caixas, marca: new Int32Array(lista.length), sel: 0 };
+}
+
+/** bloco mais perto no caminho do raio (o = origem, d = direção normalizada); a parede da frente (0) é ignorada */
+function raioBlocos(o, d, far) {
+  if (!grade) construirGrade();
+  const { cel, caixas, marca } = grade;
+  const sel = ++grade.sel;
+  let ix = Math.floor(o.x / CEL);
+  let iy = Math.floor(o.y / CEL);
+  let iz = Math.floor(o.z / CEL);
+  const sx = d.x > 0 ? 1 : -1;
+  const sy = d.y > 0 ? 1 : -1;
+  const sz = d.z > 0 ? 1 : -1;
+  const dx = d.x !== 0 ? Math.abs(CEL / d.x) : Infinity;
+  const dy = d.y !== 0 ? Math.abs(CEL / d.y) : Infinity;
+  const dz = d.z !== 0 ? Math.abs(CEL / d.z) : Infinity;
+  let tx = d.x !== 0 ? ((d.x > 0 ? ix + 1 : ix) * CEL - o.x) / d.x : Infinity;
+  let ty = d.y !== 0 ? ((d.y > 0 ? iy + 1 : iy) * CEL - o.y) / d.y : Infinity;
+  let tz = d.z !== 0 ? ((d.z > 0 ? iz + 1 : iz) * CEL - o.z) / d.z : Infinity;
+  let t = 0;
+  let melhor = Infinity;
+  let bi = -1;
+  while (t <= far && t <= melhor) {
+    const l = cel.get(chaveCel(ix, iy, iz));
+    if (l) {
+      for (let n = 0; n < l.length; n++) {
+        const i = l[n];
+        if (marca[i] === sel) continue;
+        marca[i] = sel;
+        if (lista[i].parede === 0) continue;
+        // caixa × raio (slab)
+        let t0 = 0;
+        let t1 = far;
+        const b = i * 6;
+        let fora = false;
+        for (let e = 0; e < 3; e++) {
+          const oe = e === 0 ? o.x : e === 1 ? o.y : o.z;
+          const de = e === 0 ? d.x : e === 1 ? d.y : d.z;
+          if (de === 0) { if (oe < caixas[b + e] || oe > caixas[b + 3 + e]) { fora = true; break; } continue; }
+          let a0 = (caixas[b + e] - oe) / de;
+          let a1 = (caixas[b + 3 + e] - oe) / de;
+          if (a0 > a1) { const x = a0; a0 = a1; a1 = x; }
+          if (a0 > t0) t0 = a0;
+          if (a1 < t1) t1 = a1;
+          if (t0 > t1) { fora = true; break; }
+        }
+        if (!fora && t0 < melhor) { melhor = t0; bi = i; }
+      }
+    }
+    if (tx < ty && tx < tz) { t = tx; ix += sx; tx += dx; }
+    else if (ty < tz) { t = ty; iy += sy; ty += dy; }
+    else { t = tz; iz += sz; tz += dz; }
+  }
+  return bi < 0 ? null : { instanceId: bi, distance: melhor, point: new Vector3(o.x + d.x * melhor, o.y + d.y * melhor, o.z + d.z * melhor) };
+}
+
 /**
  * Os 6 quadros nas paredes que o drone olha DENTRO da casa (um por vantagem, na ORDEM): o raio da câmera até o que
  * ela olha acha a parede; o quadro fica nela, na altura dos olhos, virado pro cômodo.
  */
-function montarPlacas() {
+function* montarPlacasGen() {
   if (placas) {
     obra.remove(placas);
     placas.traverse((o) => {
@@ -1311,24 +1400,27 @@ function montarPlacas() {
   placas = new Group();
   placas.visible = false;
   obra.add(placas);
-  obra.updateMatrixWorld(true);
-  blocosMesh.computeBoundingSphere(); // a esfera das instâncias pode ter sido medida com a casa ainda no chão
   const paradas = new Map(); // índice do trecho do tour → [{ pos do quadro, [2 pontos de onde o drone lê] }, ...]
   const P = projeto;
   const caixas = [P.A, P.B].filter(Boolean);
   const dentro = (x, z) => caixas.some((c) => x > c.x0 + 0.2 && x < c.x1 - 0.2 && z > c.z0 + 0.2 && z < c.z1 - 0.2);
   const LARG = 0.9;
   const ALT = artesQuadros ? limitarEntre(LARG / artesQuadros.aspecto, 0.45, 0.9) : 0.6;
+  // raio até a PAREDE (blocos pela grade, que não depende da animação) — móveis, TV e quadros de decoração também contam:
+  // o quadro da vantagem não pode ficar atrás nem em cima deles
   const raio = (de, para) => {
-    const dir = para.clone().sub(de);
-    const d = dir.length();
-    _raycast.set(de, dir.divideScalar(d));
-    _raycast.far = d + 0.4;
-    // móveis, TV e quadros de decoração também contam: o quadro da vantagem não pode ficar atrás nem em cima deles
-    const h = _raycast.intersectObjects(mobilia ? [blocosMesh, mobilia] : [blocosMesh], true)
-      .find((x) => x.object !== blocosMesh || (lista[x.instanceId] && lista[x.instanceId].parede !== 0));
-    _raycast.far = Infinity;
-    return h && h.object === blocosMesh ? h : null;
+    _a.copy(para).sub(de);
+    const d = _a.length();
+    _a.divideScalar(d);
+    const hb = raioBlocos(de, _a, d + 0.4);
+    if (mobilia) {
+      _raycast.set(de, _a);
+      _raycast.far = hb ? hb.distance : d + 0.4;
+      const hm = _raycast.intersectObject(mobilia, true)[0];
+      _raycast.far = Infinity;
+      if (hm) return null;
+    }
+    return hb;
   };
   /** cabe um quadro inteiro aqui? os 4 cantos têm que cair na MESMA parede (nada de janela, porta ou quina) */
   const cabe = (cam, centro, n, idParede) => {
@@ -1366,6 +1458,7 @@ function montarPlacas() {
       }
       if (centro) break;
     }
+    yield; // devolve a vez pro navegador entre um ponto do caminho e outro
     if (!centro) continue;
     const k = usados.length;
     usados.push(centro);
@@ -1375,7 +1468,7 @@ function montarPlacas() {
     placas.add(placa);
     // o que acontece na parede em volta do quadro: o "Acabamento" tira a tinta da casa; os outros abrem a parede ao
     // lado do quadro e mostram o miolo do Blocão (concreto + EPS + concreto)
-    const acao = ORDEM[k] === "acabamento" ? { tinta: true } : { iBloco: blocoAoLado(centro, n, LARG), volta: blocosEmVolta(centro, n) };
+    const acao = ORDEM[k] === "acabamento" ? { tinta: true, id: ORDEM[k] } : { id: ORDEM[k], iBloco: blocoAoLado(centro, n, LARG), volta: blocosEmVolta(centro, n) };
     // o drone chega perto do quadro pelo caminho livre (o raio até a parede) e desliza devagar enquanto dá pra ler
     const visto = centro.clone().sub(cam).normalize();
     const d = Math.min(cam.distanceTo(centro) - 0.1, 2.2);
@@ -1383,6 +1476,138 @@ function montarPlacas() {
     paradas.set(i, (paradas.get(i) || []).concat({ pos: centro, ver: [olho(1), olho(0.8)], acao }));
   }
   return paradas;
+}
+
+/** versão de uma vez só (o plano normalmente já está pronto, feito no ocioso) */
+function montarPlacas() {
+  const g = montarPlacasGen();
+  let r = g.next();
+  while (!r.done) r = g.next();
+  return r.value;
+}
+
+/**
+ * PLANO do tour do site: quadros nas paredes + caminho do drone (com os atalhos). Só depende da casa e dos móveis, não
+ * da posição da câmera nem do andamento da obra — então é feito aos poucos no ocioso (planejarTourOcioso) e, na hora
+ * do tour, só falta montar o voo. As pontas do caminho (câmera de fora) entram depois.
+ */
+function* planoTourGen() {
+  const paradas = yield* montarPlacasGen();
+  const V = (x, y, z) => new Vector3(x, y, z);
+  const longe = () => V(0, 60, 400); // pontas provisórias: ficam fora da casa, então nunca viram atalho
+  const pts = [longe()];
+  const alvos = [V(0, 0, 0)];
+  const ler = [false];
+  const acoes = [null];
+  const fixo = [true]; // os pontos de leitura de cada quadro nunca saem do caminho
+  // só até sair da casa (o resto do voo do vídeo, pelo alto, gastaria o tempo do tour)
+  const caixas = [projeto.A, projeto.B].filter(Boolean);
+  const naCasa = ([x, , z]) => caixas.some((c) => x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1);
+  let ultimo = 0;
+  projeto.tour.forEach((w, i) => { if (naCasa(w)) ultimo = i; });
+  projeto.tour.slice(0, ultimo + 2).forEach(([x, y, z, lx, ly, lz], i) => {
+    const pa = paradas.get(i);
+    if (pa) pa.forEach((q) => { pts.push(q.ver[0], q.ver[1]); alvos.push(q.pos, q.pos); ler.push(false, true); acoes.push(q.acao, null); fixo.push(true, true); });
+    else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); acoes.push(null); fixo.push(false); }
+  });
+  pts.push(longe());
+  alvos.push(V(0, 0, 0));
+  ler.push(false);
+  acoes.push(null);
+  fixo.push(true);
+  // o corte da parede ao lado de cada quadro também já fica calculado (percorre a lista de blocos)
+  for (const a of acoes) if (a && a.volta) { a.corte = a.iBloco >= 0 ? montarCorte(a.iBloco, 0.55, 0.55, 1.6, 1.0) : { furo: new Set(), borda: new Set() }; yield; }
+  // atalho: o drone pula os desvios do caminho do vídeo quando a reta até mais adiante está livre (sem parede nem
+  // móvel, com folga pros lados) — voa devagar como um drone de verdade sem o tour ficar longo
+  const livre = (a, b) => {
+    const d = a.distanceTo(b);
+    if (d < 0.05) return true;
+    // só dentro da casa e no mesmo andar: por fora cortaria pela janela, entre andares pela laje
+    if (!naCasa([a.x, 0, a.z]) || !naCasa([b.x, 0, b.z]) || Math.abs(a.y - b.y) > 0.4) return false;
+    const dir = b.clone().sub(a).divideScalar(d);
+    const lado = new Vector3(-dir.z, 0, dir.x).normalize().multiplyScalar(0.3);
+    const outros = (mobilia ? [mobilia] : []).concat(solidos);
+    return [[0, 0], [1, 0], [-1, 0], [0, -0.3]].every(([k, dy]) => {
+      const o = a.clone().addScaledVector(lado, k).setY(a.y + dy);
+      if (raioBlocos(o, dir, d)) return false;
+      if (!outros.length) return true;
+      _raycast.set(o, dir);
+      _raycast.far = d;
+      const h = _raycast.intersectObjects(outros, true)[0];
+      _raycast.far = Infinity;
+      return !h;
+    });
+  };
+  const fica = [0];
+  for (let i = 0; i < pts.length - 1;) {
+    let j = i + 1;
+    for (let k = i + 2; k < pts.length; k++) {
+      if (fixo[k - 1] || !livre(pts[i], pts[k])) break;
+      j = k;
+    }
+    fica.push(j);
+    i = j;
+    yield;
+  }
+  const pegar = (l) => fica.map((i) => l[i]);
+  return { pts: pegar(pts), alvos: pegar(alvos), ler: pegar(ler), acoes: pegar(acoes) };
+}
+
+let tourPlano = null; // plano pronto da casa atual
+let planoCurso = null; // planejamento em andamento (no ocioso)
+const planoStats = { fatias: 0, maxMs: 0, totalMs: 0 };
+
+function planoSincrono() {
+  planoCurso = null; // cancela o planejamento aos poucos, se estava em andamento
+  const g = planoTourGen();
+  let r = g.next();
+  while (!r.done) r = g.next();
+  tourPlano = r.value;
+  return tourPlano;
+}
+
+/** Planeja o tour em fatias curtas, quando o navegador está ocioso; depois aquece os quadros na GPU. */
+async function planejarTourOcioso() {
+  if (tourPlano || planoCurso || !projeto || !projeto.tour || window.__gravandoVideo) return;
+  const eu = { projeto };
+  planoCurso = eu;
+  const vivo = () => planoCurso === eu && projeto === eu.projeto;
+  const ini = agora();
+  while (arteEstado === "carregando" && agora() - ini < 4000) await respirar(); // espera a arte: o quadro é medido por ela
+  if (!vivo()) return;
+  const g = planoTourGen();
+  for (;;) {
+    await respirar();
+    if (!vivo()) return;
+    const t0 = performance.now();
+    const r = g.next();
+    const dt = performance.now() - t0;
+    planoStats.fatias++;
+    planoStats.totalMs += dt;
+    if (dt > planoStats.maxMs) planoStats.maxMs = dt;
+    if (r.done) { tourPlano = r.value; break; }
+  }
+  planoCurso = null;
+  await aquecerQuadros();
+}
+
+/** Textura dos quadros e programa de shader na GPU AGORA (no ocioso), não no 1º quadro do tour. */
+async function aquecerQuadros() {
+  if (!placas || !renderer) return;
+  const mapas = [];
+  placas.traverse((o) => { if (o.isMesh && o.material && o.material.map) mapas.push(o.material.map); });
+  for (const m of new Set(mapas)) {
+    if (renderer.initTexture) renderer.initTexture(m);
+    await respirar();
+  }
+  if (voo || tour) return;
+  const antes = placas.visible;
+  placas.visible = true;
+  try {
+    if (renderer.compileAsync && renderer.extensions.has("KHR_parallel_shader_compile")) await renderer.compileAsync(cena, camera);
+    else renderer.compile(cena, camera);
+  } catch (e) { /* o primeiro desenho compila */ }
+  placas.visible = antes;
 }
 
 function iniciarTour(site = false) {
@@ -1398,60 +1623,20 @@ function iniciarTour(site = false) {
   const legendas = [null];
   if (site) {
     // site: o drone desliza devagar em frente a cada quadro (dá pra ler) e voa entre eles na velocidade de um drone real
-    const paradas = montarPlacas();
+    const plano = tourPlano || planoSincrono(); // normalmente já pronto (feito no ocioso): aqui só falta montar o voo
     placas.visible = true;
     Object.assign(olhoTour, { giro: 0, elev: 0, giroAlvo: 0, elevAlvo: 0, t: 0, dedo: false });
-    const ler = [false];
-    const acoes = [null];
-    // só até sair da casa (o resto do voo do vídeo, pelo alto, gastaria o tempo do tour)
     const caixas = [projeto.A, projeto.B].filter(Boolean);
-    const naCasa = ([x, , z]) => caixas.some((c) => x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1);
-    let ultimo = 0;
-    projeto.tour.forEach((w, i) => { if (naCasa(w)) ultimo = i; });
-    const fixo = [true]; // os pontos de leitura de cada quadro nunca saem do caminho
-    projeto.tour.slice(0, ultimo + 2).forEach(([x, y, z, lx, ly, lz], i) => {
-      const pa = paradas.get(i);
-      if (pa) pa.forEach((q) => { pts.push(q.ver[0], q.ver[1]); alvos.push(q.pos, q.pos); ler.push(false, true); acoes.push(q.acao, null); fixo.push(true, true); });
-      else { pts.push(V(x, y, z)); alvos.push(V(lx, ly, lz)); ler.push(false); acoes.push(null); fixo.push(false); }
-    });
-    pts.push(ini.pos.clone());
-    alvos.push(ini.alvo.clone());
-    ler.push(false);
-    acoes.push(null);
-    fixo.push(true);
-    // atalho: o drone pula os desvios do caminho do vídeo quando a reta até mais adiante está livre (sem parede nem
-    // móvel, com folga pros lados) — voa devagar como um drone de verdade sem o tour ficar longo
-    const livre = (a, b) => {
-      const d = a.distanceTo(b);
-      if (d < 0.05) return true;
-      // só dentro da casa e no mesmo andar: por fora cortaria pela janela, entre andares pela laje
-      if (!naCasa([a.x, 0, a.z]) || !naCasa([b.x, 0, b.z]) || Math.abs(a.y - b.y) > 0.4) return false;
-      const dir = b.clone().sub(a).divideScalar(d);
-      const lado = new Vector3(-dir.z, 0, dir.x).normalize().multiplyScalar(0.3);
-      const alvosRaio = [blocosMesh].concat(mobilia ? [mobilia] : [], solidos);
-      return [[0, 0], [1, 0], [-1, 0], [0, -0.3]].every(([k, dy]) => {
-        _raycast.set(a.clone().addScaledVector(lado, k).setY(a.y + dy), dir);
-        _raycast.far = d;
-        const h = _raycast.intersectObjects(alvosRaio, true).find((x) => x.object !== blocosMesh || (lista[x.instanceId] && lista[x.instanceId].parede !== 0));
-        _raycast.far = Infinity;
-        return !h;
-      });
-    };
-    const fica = [0];
-    for (let i = 0; i < pts.length - 1;) {
-      let j = i + 1;
-      for (let k = i + 2; k < pts.length; k++) {
-        if (fixo[k - 1] || !livre(pts[i], pts[k])) break;
-        j = k;
-      }
-      fica.push(j);
-      i = j;
-    }
-    const pegar = (l) => fica.map((i) => l[i]);
-    pts.splice(0, pts.length, ...pegar(pts));
-    alvos.splice(0, alvos.length, ...pegar(alvos));
-    ler.splice(0, ler.length, ...pegar(ler));
-    acoes.splice(0, acoes.length, ...pegar(acoes));
+    const ler = plano.ler.slice();
+    const acoes = plano.acoes.slice();
+    pts.length = 0;
+    alvos.length = 0;
+    plano.pts.forEach((v) => pts.push(v.clone()));
+    plano.alvos.forEach((v) => alvos.push(v.clone()));
+    pts[0].copy(ini.pos); // as pontas do caminho são a câmera de fora
+    alvos[0].copy(ini.alvo);
+    pts[pts.length - 1].copy(ini.pos);
+    alvos[alvos.length - 1].copy(ini.alvo);
     tourAcoes = { acoes, ler };
     const dist = (i) => Math.max(pts[i].distanceTo(pts[i - 1]), alvos[i].distanceTo(alvos[i - 1]) * 0.3, 0.35);
     // dentro da casa o drone voa devagar como um de verdade; do lado de fora pode correr
@@ -1478,11 +1663,13 @@ function iniciarTour(site = false) {
     aoTrecho: (i) => {
       if (site && tourAcoes) {
         // chegando num quadro: a parede em volta dele abre (ou a casa perde a tinta); saindo do quadro: fecha
-        if (tourAcoes.ler[i]) fecharPonto(); // primeiro fecha o quadro que ficou pra trás...
+        if (tourAcoes.ler[i]) { fecharPonto(); anunciarQuadro(null); } // primeiro fecha o quadro que ficou pra trás...
+        const aqui = tourAcoes.acoes[i]; // chegou diante de um quadro: o cartão repete o que está escrito nele
+        if (aqui && aqui.id) anunciarQuadro(aqui.id);
         const a = tourAcoes.acoes[i + 1]; // ...depois abre o próximo (podem ser o mesmo trecho)
         if (a && a.tinta) definirSemTinta(true);
         else if (a && a.volta) {
-          const c = a.iBloco >= 0 ? montarCorte(a.iBloco, 0.55, 0.55, 1.6, 1.0) : { furo: new Set(), borda: new Set() };
+          const c = { furo: a.corte.furo, borda: new Set(a.corte.borda) }; // corte já calculado no plano
           for (const k of a.volta) if (!c.furo.has(k)) c.borda.add(k);
           destaque = { i: a.iBloco, ...c, de: 0, para: 1, t0: agora() };
         }
@@ -1529,13 +1716,13 @@ function pararTour() {
 }
 
 /* ---------- PONTOS ESTRATÉGICOS: cada um mostra uma vantagem de construir com o Blocão ---------- */
-const VANTAGENS = {
-  fresca: ["Casa mais fresca", "O miolo de EPS segura o calor do sol: a casa fica mais fresca no verão e menos fria no inverno."],
-  silencio: ["Mais silêncio", "O EPS abafa o barulho da rua: quartos e home office bem mais silenciosos."],
-  rapida: ["Obra rápida", "Bloco grande e leve: a parede sobe em poucos dias, com menos gente na obra."],
-  leve: ["Bem mais leve", "Menos peso sobre a laje e a fundação: a estrutura fica mais econômica."],
-  acabamento: ["Acabamento fácil", "Parede reta e lisa: menos massa, menos sujeira e menos desperdício."],
-  mofo: ["Sem mofo", "O EPS não absorve água: parede sem mofo e sem infiltração."],
+const VANTAGENS = { // texto IGUAL ao que está escrito nos quadros (arte quadros-vantagens.webp): o cartão repete o quadro
+  fresca: ["Casa mais fresca", "O EPS segura o calor do sol"],
+  silencio: ["Mais silêncio", "O EPS abafa o barulho da rua"],
+  rapida: ["Obra rápida", "A parede sobe em poucos dias"],
+  leve: ["Bem mais leve", "Menos peso na laje e na fundação"],
+  acabamento: ["Acabamento fácil", "Parede reta, menos massa"],
+  mofo: ["Sem mofo", "Parede seca, sem infiltração"],
 };
 /** passo a passo e tour: a ordem em que as vantagens são mostradas (o "Acabamento" tira a tinta: fecha o tour) */
 const ORDEM = ["rapida", "leve", "fresca", "silencio", "mofo", "acabamento"];
@@ -1703,6 +1890,13 @@ function mostrarPonto(q, iBloco, atraso) {
 }
 
 /** fecha o corte aberto (devagar) e repõe a pintura */
+/** cartão do tour: EXATAMENTE o texto do quadro que o drone está mostrando (legível em qualquer celular) */
+function anunciarQuadro(id) {
+  if (!ouvintePonto) return;
+  if (!id) { ouvintePonto({ ativo: false, tour: true }); return; }
+  ouvintePonto({ ativo: true, tour: true, id, titulo: VANTAGENS[id][0], texto: VANTAGENS[id][1], passo: ORDEM.indexOf(id) + 1, total: ORDEM.length });
+}
+
 function fecharPonto() {
   if (destaque) destaque = { ...destaque, de: estadoDestaque(), para: 0, t0: agora() };
   definirSemTinta(false);
@@ -1870,6 +2064,7 @@ function montarPaisagem() {
   obra.add(paisagem);
   extrasProntos = true;
   pDesenhado = -1;
+  planejarTourOcioso(); // o tour é planejado aos poucos, antes de a obra terminar
 }
 
 /**
@@ -2126,7 +2321,25 @@ function usarRatio(r) {
   renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
 }
 
+/* Resolução adaptativa: se o aparelho não dá conta (quadros > 34 ms seguidos durante a rolagem/voo), baixa a resolução
+   de 0,25 em 0,25 até 0,75× — melhor imagem um pouco mais macia do que a casa engasgando. Uma resolução só (sem realocar). */
+let ultimoDesenho = 0;
+let quadrosLentos = 0;
+function adaptarResolucao() {
+  const t = performance.now();
+  const gasto = t - ultimoDesenho;
+  ultimoDesenho = t;
+  if (window.__gravandoVideo || !(voo || tour || pedido)) return;
+  if (gasto > 34 && gasto < 250) {
+    if (++quadrosLentos > 14 && ratioHD > 0.75) {
+      quadrosLentos = 0;
+      ratioHD = ratioLeve = Math.max(0.75, ratioHD - 0.25);
+    }
+  } else if (gasto < 26 && quadrosLentos > 0) quadrosLentos--;
+}
+
 function desenhar(hd) {
+  adaptarResolucao();
   usarRatio(hd ? ratioHD : ratioLeve);
   posicionarCamera(); // antes: o Blocão-guia é posicionado em relação à câmera
   aplicar();
@@ -2401,6 +2614,10 @@ girar(dx, dy = 0, dtMs = 16) {
   cortesTour: () => (tourAcoes ? tourAcoes.acoes.filter((x) => x && x.iBloco >= 0).length : 0),
   /** testes: quantos quadros de vantagem o tour pendurou nas paredes */
   placasTour: () => (placas ? placas.children.length : 0),
+  /** testes: o plano do tour já está pronto? e quanto custou cada fatia (ms) */
+  planoTour: () => ({ pronto: !!tourPlano, ...planoStats }),
+  /** testes: quantos programas de shader a GPU já compilou (se sobe no começo do tour, falta aquecer algo) */
+  programas: () => (renderer ? renderer.info.programs.length : 0),
   /** testes: quanto o dedo girou a vista durante o tour */
   olharTour: () => olhoTour.giroAlvo,
   /** "Blocão aparente": true tira a pintura das paredes (mostra o Blocão cru), false pinta de novo */

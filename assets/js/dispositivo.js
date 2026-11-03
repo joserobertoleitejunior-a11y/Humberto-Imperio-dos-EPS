@@ -45,7 +45,8 @@
     altura = a;
     h.style.setProperty("--vh", altura * 0.01 + "px");
   }
-  window.ImperioTela = { altura: function () { return altura; } };
+  // largura/altura em cache: ler window.innerWidth no meio da rolagem, depois de mexer no estilo, obriga o navegador a refazer o layout
+  window.ImperioTela = { altura: function () { return altura; }, largura: function () { return largura; } };
   medir(true);
   window.addEventListener("resize", medir, { passive: true });
   window.addEventListener("orientationchange", function () { setTimeout(function () { medir(true); }, 250); }, { passive: true });

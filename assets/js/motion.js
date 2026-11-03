@@ -12,6 +12,8 @@
 (function () {
   "use strict";
 
+  function lt() { return window.ImperioTela && window.ImperioTela.largura ? window.ImperioTela.largura() : window.innerWidth; } // largura em cache (sem forçar layout)
+
   // altura estável da tela (dispositivo.js): a barra de endereço do celular não mexe no 3D
   function alturaTela() { return window.ImperioTela ? window.ImperioTela.altura() : window.innerHeight; }
 
@@ -129,7 +131,7 @@
     var l = parseFloat(j.el.getAttribute("data-jornada-l")) || 0;
     var totalPx = j.el.offsetHeight - alturaTela();
     j.fim = l && totalPx > 0 ? Math.min(1, (l / 100) * alturaTela() / totalPx) : 1;
-    j.largura = Math.max(0, j.trilho.scrollWidth - window.innerWidth);
+    j.largura = Math.max(0, j.trilho.scrollWidth - lt());
     j.alturaV = Math.max(0, j.vertical.scrollHeight - j.vertical.parentElement.clientHeight * 0.6);
     j.alturaSecao = j.el.offsetHeight;
     j.topoSecao = j.el.getBoundingClientRect().top + window.scrollY;
@@ -139,7 +141,7 @@
 
   /** Deslocamento do trilho que deixa a ficha i no meio da tela (sem passar das pontas). */
   function centralizar(j, i) {
-    return Math.min(j.largura, Math.max(0, j.medidasPaineis[i].centro - window.innerWidth / 2));
+    return Math.min(j.largura, Math.max(0, j.medidasPaineis[i].centro - lt() / 2));
   }
 
   function pintarJornada() {
@@ -167,7 +169,7 @@
     var tx = (1 - hz) * 30 - hz * j.largura;
     // celular (1 ficha por tela): vai de ficha em ficha e cada uma passa CENTRALIZADA (desacelera nela, sem travar)
     var n = j.medidasPaineis.length;
-    if (window.innerWidth < 760 && n > 1) {
+    if (lt() < 760 && n > 1) {
       var k = hz * (n - 1);
       var a = Math.min(n - 2, Math.floor(k));
       var x0 = centralizar(j, a);
@@ -189,7 +191,7 @@
     var foco = 0;
     var melhor = 1e9;
     for (var i = 0; i < j.medidasPaineis.length; i++) {
-      var d = Math.abs(tx + j.medidasPaineis[i].centro - window.innerWidth / 2);
+      var d = Math.abs(tx + j.medidasPaineis[i].centro - lt() / 2);
       if (d < melhor) { melhor = d; foco = i; }
     }
     if (foco !== j.foco || (hz > 0.05) !== j.focoLigado) {
@@ -229,7 +231,7 @@
           var r = p;
           // "h": monta conforme entra pela DIREITA (painéis da jornada andam na horizontal)
           p = t.modo === "h" && t.el.closest("[data-jornada-h]")
-            ? limitar((window.innerWidth - r.left) / (window.innerWidth * 0.45))
+            ? limitar((lt() - r.left) / (lt() * 0.45))
             : limitar((vh - r.top) / (vh * 0.55));
         }
         pintarTitulo(t, p);

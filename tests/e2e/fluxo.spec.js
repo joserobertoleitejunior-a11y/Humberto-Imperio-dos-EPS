@@ -207,7 +207,33 @@ test("casa de Blocão: na mesma tela do bloco, a rolagem assenta os blocos e no 
   await page.mouse.move(cx.x, cx.y);
   await page.mouse.wheel(0, 900);
   await page.waitForTimeout(300);
-  expect(await page.evaluate(() => scrollY)).toBe(yTour);
+  expect(Math.abs((await page.evaluate(() => scrollY)) - yTour)).toBeLessThan(40);
+  // a rolagem fica PRESA na frente da maquete: nem o embalo do dedo (rolagem por código) tira a tela de lá
+  await page.evaluate(() => scrollBy(0, 700));
+  await page.waitForTimeout(300);
+  const yParada = await page.evaluate(() => scrollY);
+  expect(Math.abs(yParada - yTour)).toBeLessThan(40); // a parada é a poucos pixels de onde o tour começou
+  await page.evaluate(() => scrollBy(0, 700));
+  await page.waitForTimeout(300);
+  expect(Math.abs((await page.evaluate(() => scrollY)) - yParada)).toBeLessThan(3); // fica presa, no mesmo ponto
+  await page.evaluate(() => scrollBy(0, -400)); // pra cima também: fica presa até o tour acabar
+  await page.waitForTimeout(300);
+  expect(Math.abs((await page.evaluate(() => scrollY)) - yParada)).toBeLessThan(3); // fica presa, no mesmo ponto
+  // o cartão repete EXATAMENTE o que está escrito no quadro que o drone mostra (mesma arte, mesmo texto)
+  const FRASES = {
+    "Obra rápida": "A parede sobe em poucos dias",
+    "Bem mais leve": "Menos peso na laje e na fundação",
+    "Casa mais fresca": "O EPS segura o calor do sol",
+    "Mais silêncio": "O EPS abafa o barulho da rua",
+    "Sem mofo": "Parede seca, sem infiltração",
+    "Acabamento fácil": "Parede reta, menos massa",
+  };
+  await expect.poll(() => page.evaluate(() => {
+    const c = document.querySelector("[data-casa-vantagem]");
+    return c && !c.hidden ? [c.querySelector("[data-vantagem-titulo]").textContent, c.querySelector("[data-vantagem-texto]").textContent] : null;
+  }), { timeout: 30000 }).not.toBeNull();
+  const par = await page.evaluate(() => { const c = document.querySelector("[data-casa-vantagem]"); return [c.querySelector("[data-vantagem-titulo]").textContent, c.querySelector("[data-vantagem-texto]").textContent]; });
+  if (par[0] !== "Gostou?") expect(FRASES[par[0]]).toBe(par[1]);
   // ...e o dedo gira a vista sem parar o drone
   await page.mouse.down();
   await page.mouse.move(cx.x - 140, cx.y, { steps: 6 });

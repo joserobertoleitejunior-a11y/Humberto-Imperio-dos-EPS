@@ -12,6 +12,8 @@
 (function () {
   "use strict";
 
+  function lt() { return window.ImperioTela && window.ImperioTela.largura ? window.ImperioTela.largura() : window.innerWidth; } // largura em cache (sem forçar layout)
+
   // altura estável da tela (dispositivo.js): a barra de endereço do celular não mexe no 3D
   function alturaTela() { return window.ImperioTela ? window.ImperioTela.altura() : window.innerHeight; }
 
@@ -49,7 +51,7 @@
    *   0,50–1,00  horizontal: cada ficha acende a sua peça; na ficha do bloco real as peças se juntam de novo
    */
   function alvoJornada(j) {
-    var w = window.innerWidth;
+    var w = lt();
     var h = alturaTela();
     var celular = w < 760;
     var p = j.p;
@@ -95,7 +97,7 @@
   var palcoVisivel = true;
   var tamPalco = null;      // medidas em cache (só mudam no resize)
 
-  function modoCelular() { return window.innerWidth < 760; }
+  function modoCelular() { return lt() < 760; }
 
   function morarEm(el) {
     if (casa === el) return;
@@ -221,16 +223,16 @@
   function posicionarRotulos(pos) {
     if (!rotulos || rotulos.style.opacity === "0") return;
     var itens = rotulos.querySelectorAll("[data-rot]");
-    if (larguras.length && window.innerWidth !== larguraTela) { larguras = []; }
-    larguraTela = window.innerWidth;
+    if (larguras.length && lt() !== larguraTela) { larguras = []; }
+    larguraTela = lt();
     pos.forEach(function (pt, k) {
       // escalonadas na altura (a do meio mais alta) pra não se sobreporem com o bloco de lado
-      var sobe = (window.innerWidth < 760 ? [0, 26, 52] : [0, 40, 80])[k];
+      var sobe = (lt() < 760 ? [0, 26, 52] : [0, 40, 80])[k];
       if (!itens[k]) return;
       // etiqueta nunca sai da tela (largura medida uma vez por etiqueta)
       if (!larguras[k]) larguras[k] = itens[k].offsetWidth || 120;
       var larg = larguras[k];
-      var x = Math.min(window.innerWidth - larg / 2 - 8, Math.max(larg / 2 + 8, pt.x));
+      var x = Math.min(lt() - larg / 2 - 8, Math.max(larg / 2 + 8, pt.x));
       itens[k].style.transform = "translate3d(" + x.toFixed(1) + "px," + (pt.y - sobe).toFixed(1) + "px,0) translate(-50%,-115%)";
       itens[k].style.opacity = pt.visivel ? 1 : 0; // "Só EPS" / "Só concreto": some a etiqueta da peça escondida
     });
@@ -242,7 +244,7 @@
     canvas.className = "palco3d";
     canvas.setAttribute("aria-hidden", "true");
     document.body.appendChild(canvas);
-    import("./bloco3d.js?v=20261103a")
+    import("./bloco3d.js?v=20261103b")
       .then(function () {
         B = window.ImperioBloco3D;
         return B.iniciar(canvas);

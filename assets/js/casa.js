@@ -148,16 +148,55 @@
     });
   }
 
-  /** O tour começa sozinho assim que a maquete termina de ser construída na rolagem — uma vez por visita. */
+  /**
+   * O tour começa sozinho assim que a maquete termina de ser construída na rolagem — uma vez por visita — e a página
+   * PARA obrigatoriamente na frente da maquete (rolagem presa nessa posição) até o tour acabar. Sem isso, o embalo do
+   * dedo (fling) levava a tela pra além da maquete antes de o tour começar ou no meio dele.
+   */
   function ligarTourAuto() {
     var feito = false;
+    var liberado = false;   // clicou num link do menu: a pessoa quis sair, não prende
+    var apertadoDesde = 0;  // antes do tour: por quanto tempo a rolagem está sendo segurada (segurança)
+    var yFixo = null;       // onde a página fica presa durante o tour: onde ela estava quando o tour começou
+    /** rolagem (px) da posição "maquete pronta, de frente": 98,5 % da fase da casa */
+    function yParada() {
+      var j = window.ImperioMotion && window.ImperioMotion.jornada();
+      if (!j || !j.medido || !(j.fim < 1)) return null;
+      return j.topoSecao + (j.fim + (1 - j.fim) * 0.985) * (j.alturaSecao - alturaTela());
+    }
+    function segurar() {
+      var y = window.scrollY;
+      var alvo = yParada();
+      if (alvo === null || liberado || !camada.classList.contains("casa--3d")) return;
+      var passou;
+      var parar = alvo;
+      if (C3.emTourPontos()) { parar = yFixo !== null ? yFixo : alvo; passou = Math.abs(y - parar) > 1; } // durante o tour: parada exata
+      else if (!feito) passou = y > alvo + 1; // antes do tour: não deixa passar da maquete pronta
+      else return;
+      if (!passou) { apertadoDesde = 0; return; }
+      if (!feito) {
+        if (!apertadoDesde) apertadoDesde = Date.now();
+        if (Date.now() - apertadoDesde > 6000) { liberado = true; return; } // o tour não começou: nunca prende a página
+      }
+      window.scrollTo({ top: parar, left: 0, behavior: "instant" }); // instantâneo: com scroll-behavior: smooth no CSS a posição ficava "boiando"
+    }
     var tentar = function () {
       if (feito || !camada.classList.contains("casa--maquete")) return;
       if (!C3.tourPontos()) return;
       feito = true;
+      var topo = yParada();
+      yFixo = topo === null ? window.scrollY : Math.min(window.scrollY, topo);
       travarRolagem(true);
-      setTimeout(function () { if (!C3.emTourPontos()) travarRolagem(false); }, 25000); // segurança: nunca prende a página
+      setTimeout(function () { liberado = true; if (!C3.emTourPontos()) travarRolagem(false); }, 75000); // segurança: nunca prende a página (o tour dura ~30 s)
     };
+    window.addEventListener("scroll", segurar, { passive: true });
+    // clique num link do menu / botão Orçamento (#...): a pessoa escolheu ir embora — o tour para e a página solta
+    document.addEventListener("click", function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+      if (!a || a.closest("[data-casa]")) return;
+      liberado = true;
+      if (C3.emTourPontos()) { C3.pararTour(); travarRolagem(false); }
+    }, true);
     if (window.ImperioMotion) window.ImperioMotion.aoRolar(function () { if (!feito) requestAnimationFrame(tentar); });
   }
 
@@ -200,7 +239,7 @@
     canvas.className = "casa__canvas";
     canvas.setAttribute("aria-hidden", "true");
     palco.appendChild(canvas);
-    import("./casa3d.js?v=20261103a")
+    import("./casa3d.js?v=20261103b")
       .then(function () { return window.ImperioCasa3D.iniciar(canvas); })
       .then(function () {
         C3 = window.ImperioCasa3D;
