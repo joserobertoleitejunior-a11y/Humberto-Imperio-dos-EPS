@@ -700,3 +700,13 @@ input, select, textarea { font-size: max(16px, 1em); }
   .insta { grid-template-columns: 300px 1fr; gap: 40px; }
 }
 @media (prefers-reduced-motion: reduce) { .insta__post { transition: none; } }
+
+/* ---------- Tour explicada (vídeo dublado) ---------- */
+.tour { display: grid; gap: 28px; justify-items: center; }
+.tour .secao__cabeca { justify-self: start; margin-bottom: 0; }
+.tour__video { margin: 0; width: min(340px, 82vw); aspect-ratio: 9 / 16; border-radius: var(--raio-g); overflow: hidden; background: var(--cal-2); box-shadow: 0 30px 60px -34px rgba(30, 32, 35, 0.7); }
+.tour__video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 900px) {
+  .tour { grid-template-columns: 1fr 360px; align-items: center; gap: 56px; justify-items: stretch; }
+  .tour__video { justify-self: center; }
+}

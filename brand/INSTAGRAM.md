@@ -91,3 +91,11 @@ Gerados por `node brand/scripts/gerar_posts.js` (textos editáveis no próprio s
 
 ## 8. Depoimento e promoção (modelos) — `posts/10-depoimento` e `posts/11-promocao`
 Dependem de dado real do cliente: nada foi inventado. No topo de `brand/scripts/gerar_posts.js`, preencha `DEPOIMENTO` e `PROMO`, troque `pronto: true` e rode `node brand/scripts/gerar_posts.js` (a faixa vermelha "MODELO" e o tracejado somem).
+
+## 9. Peças do Alex Martins (arquiteto parceiro) no nosso padrão — `brand/instagram/alex/`
+Refeitas por `node brand/scripts/gerar_posts_alex.js` (fundo cal, grafite e azul, Archivo; HTML em `alex/src/`). Só o logotipo do Alex foi mantido (`logo-alex-martins.png`); a coroa do Império saiu e a marca é a nossa.
+- `A-comparativo-muro` (1080×1350): muro 5 × 3 m, tijolo (≈ 495) × Blocão (≈ 30).
+- `B-parceria-alex` (1080×1350): Alex Martins × Império do EPS.
+- `C-muro-bloco-13cm` (1080×1350): ficha do muro em Blocão 13 cm.
+- `D-ficha-muro-paisagem` (1920×1080): mesma ficha, para site, slides e WhatsApp.
+**Ficaram de fora até o Vinicius confirmar:** "reduz até 60 % a transferência de calor", "economize até 70 %", "menor custo". **Divergência a resolver:** a arte do Alex diz 13 cm = 3 + 7 + 3 cm; o catálogo do Vinicius diz 3,5 + 6 + 3,5 (usei o do Vinicius). Medida do bloco 100 × 50 cm vem da arte do Alex (confirmar).
