@@ -84,10 +84,7 @@ window.IMPERIO_CONFIG = {
    * Obra rápida · Bem mais leve · Casa mais fresca / Mais silêncio · Sem mofo · Acabamento fácil.
    * Arte atual: gerada no Gemini (recortada do print, cantos limpos). Vazio = os quadros são desenhados pelo site.
    */
-  quadrosVantagens: "assets/img/quadros-vantagens.webp?v=20261109b",
-
-  // duração (s) da narração da tour dublada (assets/audio/tour-explicada.mp3): o voo do drone é esticado pra casar com ela; 0/ausente = tour normal
-  tourDuracao: 39.8,
+  quadrosVantagens: "assets/img/quadros-vantagens.webp?v=20261109c",
 
   // Supabase (banco do painel). A anon key NÃO é segredo — a proteção é o
   // RLS (ver supabase/schema.sql). Vazio = site funciona só com WhatsApp

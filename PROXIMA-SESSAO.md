@@ -6,7 +6,7 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
 - Mexer **só** neste repositório. Os outros (remop-retifica, San-comercio, Pizzaria) servem só de consulta.
 - Branch: `claude/humberto-imperios-site-branding-ja9yt8`. Não abrir PR sem pedido.
 - Antes de enviar: `npm run lint`, `npm test` e os testes E2E do Playwright com `--workers=1`.
-- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261109b`.
+- Depois de mudar JS/CSS, trocar o `?v=` (cache) em todos os arquivos: hoje está `20261109c`.
 - Publicar também no artifact de prévia: https://claude.ai/artifact/3g6zDghHqHzAwY4pWKVG79
 
 ## Feito no último commit (testado: lint, 10 unitários e 15 E2E passando)
@@ -31,14 +31,11 @@ Leia isto primeiro. Depois, `MAPA-DO-SITE.md` explica o site inteiro.
    - A esfera de colisão dos blocos era medida com a casa ainda no chão.
    - Agora `montarPlacas()` recalcula `blocosMesh.computeBoundingSphere()` antes de procurar paredes.
 
-## Tour dublada interativa (novo)
+## Tour = o vídeo dublado (decisão do cliente)
 
-- A tour do drone agora é **ao vivo** e tem narração, legendas grandes e cartões animados, tudo no relógio `ImperioCasa3D.tempoTour()`.
-- Arquivos: `assets/js/tour-dublado.js` (overlay), `assets/js/tour-dublado-dados.js` (gerado), `assets/audio/tour-explicada.mp3`, bloco `[data-tourd]` no `index.html`, estilos `.tourd*` no `site.css`.
-- Gerar de novo os dados: `node brand/scripts/dados_tour_dublado.js brand/instagram/reel-promo/tempos-da-voz.json <narracao.mp3>`.
-- O voo dura `tourDuracao` (39,8 s, em `config.js`) para casar com a voz. **O pedido antigo era ≤20 s**: se o cliente preferir curto, tem que refazer a narração.
-- O dedo/mouse gira a vista sem parar o drone. Som só depois de um toque no botão "Ouvir a tour" (regra do navegador); sem som, as legendas rodam igual.
-- A seção `#tour` com o MP4 continua como alternativa.
+- A "tour" que explica o Blocão é o **MP4 dublado** (`video/tour-explicada.mp4`, seção `#tour`, link "Tour" no menu). O cliente pediu esse vídeo, com áudio e dublagem, e não a versão interativa.
+- A versão interativa (overlay sobre o 3D) foi **removida**; ela está no commit d9eb758 se quiser voltar.
+- O drone dentro da maquete continua como tour curto e mudo.
 
 ## Decisão pendente com o cliente: duração do tour
 

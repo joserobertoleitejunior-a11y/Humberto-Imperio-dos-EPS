@@ -257,5 +257,5 @@ Fundo grafite (`.secao--grafite`, novo). O vídeo da peça real (`video/reel-pec
 
 **`?semmoveis=1`** (só para gravar vídeo): a maquete fica sem móveis — só paredes, janelas e portas (`SEM_MOVEIS` em `casa3d.js`).
 
-## Tour dublada interativa
-`tour-dublado.js` + `tour-dublado-dados.js` desenham legendas, cartões animados e o botão "Ouvir a tour" por cima da maquete, sincronizados com `ImperioCasa3D.tempoTour()` (duração do voo: `config.tourDuracao`). Áudio: `assets/audio/tour-explicada.mp3`. Detalhes em `PROXIMA-SESSAO.md`.
+## Tour dublada
+A seção `#tour` toca `video/tour-explicada.mp4` (vídeo dublado). O drone da maquete segue mudo.
