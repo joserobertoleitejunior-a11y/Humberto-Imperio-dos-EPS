@@ -25,7 +25,7 @@ import {
   PerspectiveCamera, PlaneGeometry, PMREMGenerator, RepeatWrapping, RoomEnvironment, Scene, SRGBColorSpace, Vector3,
   WebGLRenderer, Raycaster, Vector2, Matrix4,
 } from "../vendor/three-imperio.min.js";
-import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261109a";
+import { cenario, escada, fundirPorMaterial, garagem, guardaCorpo, mobiliar } from "./casa-interior.js?v=20261109b";
 
 // Resolução nítida (2× = Retina) e FIXA: rolando ou parado, a mesma — sem realocar a imagem na GPU (sem trancos).
 const NIVEIS = {
@@ -1660,6 +1660,8 @@ function iniciarTour(site = false) {
   tour = { legendas, legenda: null, ini, site };
   iniciarVoo(criarVoo(pts, alvos, vels, {
     tour: true, fov: [ini.fov, site ? 56 : 62], off: [ini.off, 0], tourPontos: site, rampa: site ? 0.6 : undefined,
+    // com a tour dublada, o voo dura exatamente o que a narração dura (tourDuracao em config.js): legendas e cartões casam com o áudio
+    duracao: site && (window.IMPERIO_CONFIG || {}).tourDuracao ? ((window.IMPERIO_CONFIG || {}).tourDuracao - 0.6) / 0.75 : undefined,
     aoTrecho: (i) => {
       if (site && tourAcoes) {
         // chegando num quadro: a parede em volta dele abre (ou a casa perde a tinta); saindo do quadro: fecha
@@ -2618,6 +2620,8 @@ girar(dx, dy = 0, dtMs = 16) {
   /** tour do drone pelos pontos (sozinho, ≤ 20 s); devolve false se não deu pra começar agora */
   tourPontos: () => iniciarTour(true),
   emTourPontos: () => !!(voo && voo.tourPontos),
+  /** segundos desde o começo da tour do site (-1 fora dela): a tour dublada usa pra sincronizar legendas e áudio */
+  tempoTour: () => (voo && voo.tourPontos ? Math.max(0, (agora() - voo.t0) / 1000) : -1),
   /** testes: quantos quadros abrem a parede ao lado (os outros: acabamento tira a tinta) */
   cortesTour: () => (tourAcoes ? tourAcoes.acoes.filter((x) => x && x.iBloco >= 0).length : 0),
   /** testes: quantos quadros de vantagem o tour pendurou nas paredes */

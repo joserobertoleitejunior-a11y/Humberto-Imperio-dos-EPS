@@ -21,8 +21,8 @@
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/bloco-fechado.webp" as="image">
-  <script src="assets/js/dispositivo.js?v=20261109a"></script>
-  <link rel="stylesheet" href="assets/css/site.css?v=20261109a">
+  <script src="assets/js/dispositivo.js?v=20261109b"></script>
+  <link rel="stylesheet" href="assets/css/site.css?v=20261109b">
 
   <script type="application/ld+json">
   {
@@ -268,6 +268,14 @@
           </div>
           <div class="casa__passeio" data-casa-passeio hidden>
             <p class="casa__passeio-dica">Toque num ponto pra voar até lá · toque numa parede pra desmontar · arraste pra girar</p>
+          </div>
+          <!-- tour dublada interativa: legendas grandes, cartões animados e narração no relógio da tour (tour-dublado.js) -->
+          <div class="tourd" data-tourd hidden>
+            <div class="tourd__flash" data-tourd-flash hidden>E tem<br>mais</div>
+            <p class="tourd__dica" data-tourd-dica hidden>Arraste para olhar a casa</p>
+            <button class="tourd__som" type="button" data-tourd-som aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22" fill="currentColor"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8q3 4 0 8M19 5q6 7 0 14" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Ouvir a tour</span></button>
+            <div class="tourd__cartao" data-tourd-cartao hidden></div>
+            <p class="tourd__leg" data-tourd-leg hidden></p>
           </div>
           <div class="casa__tourbarra" data-casa-tourbarra hidden>
             <p class="casa__legenda" data-casa-legenda aria-live="polite" hidden></p>
@@ -611,19 +619,21 @@
 
   <div class="toast" data-toast hidden role="status" aria-live="polite"></div>
 
-  <script src="assets/js/config.js?v=20261109a"></script>
-  <script src="assets/js/observabilidade.js?v=20261109a"></script>
-  <script src="assets/js/supabase-init.js?v=20261109a"></script>
-  <script src="assets/js/analytics.js?v=20261109a"></script>
-  <script src="assets/js/main.js?v=20261109a"></script>
-  <script src="assets/js/especificacoes.js?v=20261109a"></script>
-  <script src="assets/js/motion.js?v=20261109a"></script>
-  <script src="assets/js/cliente.js?v=20261109a"></script>
-  <script src="assets/js/calculadora-nucleo.js?v=20261109a"></script>
-  <script src="assets/js/calculadora.js?v=20261109a"></script>
-  <script src="assets/js/conteudo.js?v=20261109a"></script>
-  <script src="assets/js/cena.js?v=20261109a"></script>
-  <script src="assets/js/casa.js?v=20261109a"></script>
-  <script src="assets/js/toque.js?v=20261109a"></script>
+  <script src="assets/js/config.js?v=20261109b"></script>
+  <script src="assets/js/observabilidade.js?v=20261109b"></script>
+  <script src="assets/js/supabase-init.js?v=20261109b"></script>
+  <script src="assets/js/analytics.js?v=20261109b"></script>
+  <script src="assets/js/main.js?v=20261109b"></script>
+  <script src="assets/js/especificacoes.js?v=20261109b"></script>
+  <script src="assets/js/motion.js?v=20261109b"></script>
+  <script src="assets/js/cliente.js?v=20261109b"></script>
+  <script src="assets/js/calculadora-nucleo.js?v=20261109b"></script>
+  <script src="assets/js/calculadora.js?v=20261109b"></script>
+  <script src="assets/js/conteudo.js?v=20261109b"></script>
+  <script src="assets/js/cena.js?v=20261109b"></script>
+  <script src="assets/js/tour-dublado-dados.js?v=20261109b"></script>
+  <script src="assets/js/tour-dublado.js?v=20261109b"></script>
+  <script src="assets/js/casa.js?v=20261109b"></script>
+  <script src="assets/js/toque.js?v=20261109b"></script>
 </body>
 </html>

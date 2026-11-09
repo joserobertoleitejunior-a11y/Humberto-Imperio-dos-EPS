@@ -256,3 +256,6 @@ Fundo grafite (`.secao--grafite`, novo). O vídeo da peça real (`video/reel-pec
 - **Aparelho fraco:** resolução adaptativa também na casa (`adaptarResolucao`: baixa de 0,25 em 0,25 até 0,75× se os quadros passam de 34 ms), nível `baixa` sem antialias, texturas de canvas com paleta pronta (3–4× mais rápidas), largura da tela em cache (`ImperioTela.largura()`: ler `innerWidth` no meio da rolagem forçava layout).
 
 **`?semmoveis=1`** (só para gravar vídeo): a maquete fica sem móveis — só paredes, janelas e portas (`SEM_MOVEIS` em `casa3d.js`).
+
+## Tour dublada interativa
+`tour-dublado.js` + `tour-dublado-dados.js` desenham legendas, cartões animados e o botão "Ouvir a tour" por cima da maquete, sincronizados com `ImperioCasa3D.tempoTour()` (duração do voo: `config.tourDuracao`). Áudio: `assets/audio/tour-explicada.mp3`. Detalhes em `PROXIMA-SESSAO.md`.

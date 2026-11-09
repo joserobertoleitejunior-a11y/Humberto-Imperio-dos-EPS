@@ -710,3 +710,27 @@ input, select, textarea { font-size: max(16px, 1em); }
   .tour { grid-template-columns: 1fr 360px; align-items: center; gap: 56px; justify-items: stretch; }
   .tour__video { justify-self: center; }
 }
+
+/* ---------- Tour dublada interativa (legendas grandes + cartões animados sobre a tour do drone) ---------- */
+.tourd { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+.tourd[hidden], .tourd [hidden] { display: none; }
+.tourd__leg { position: absolute; left: 50%; bottom: max(18px, 3vh); transform: translateX(-50%); width: min(94%, 760px); margin: 0; padding: 10px 16px 12px; text-align: center; font-size: clamp(24px, 6.2vw, 40px); line-height: 1.1; font-weight: 800; letter-spacing: -0.01em; color: #fff; background: rgba(30, 32, 35, 0.72); border-radius: 16px; text-wrap: balance; }
+.tourd__cartao { position: absolute; bottom: calc(max(18px, 3vh) + clamp(92px, 21vw, 150px)); left: 0; right: 0; margin-inline: auto; width: min(94%, 560px); display: flex; align-items: center; gap: 16px; padding: 12px 18px; border-radius: 18px; background: rgba(255, 255, 255, 0.94); box-shadow: 0 16px 36px -22px rgba(0, 0, 0, 0.7); }
+.tourd__svg { flex: none; width: clamp(80px, 24vw, 130px); height: auto; }
+.tourd__tx { display: grid; gap: 2px; min-width: 0; }
+.tourd__tx b { font-size: clamp(22px, 6vw, 34px); font-weight: 900; font-stretch: 125%; text-transform: uppercase; line-height: 1; }
+.tourd__tx span { font-size: clamp(16px, 4.4vw, 24px); font-weight: 700; line-height: 1.1; }
+.tourd__cartao--larga { display: block; padding: 10px 16px; }
+.tourd__esp { display: grid; gap: 4px; }
+.tourd__lin { display: flex; align-items: center; gap: 12px; }
+.tourd__lin b { flex: none; width: clamp(78px, 22vw, 120px); font-size: clamp(24px, 6.4vw, 38px); font-weight: 900; font-stretch: 125%; }
+.tourd__lin small { font-size: 0.5em; }
+.tourd__lin span { display: flex; flex: 1; height: clamp(18px, 4.6vw, 28px); border-radius: 6px; overflow: hidden; }
+.tourd__lin i { background: #a8a39a; }
+.tourd__lin i.eps { background: #fff; box-shadow: inset 0 0 0 2px #cfcac0; }
+.tourd__flash { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); padding: 14px 40px; border-radius: 20px; background: var(--azul); color: #fff; text-align: center; font-size: clamp(40px, 12vw, 90px); font-weight: 900; font-stretch: 125%; text-transform: uppercase; line-height: 1; }
+.tourd__dica { position: absolute; left: 50%; top: calc(var(--cabecalho, 68px) + 14px); transform: translateX(-50%); margin: 0; padding: 8px 18px; border-radius: 999px; background: rgba(30, 32, 35, 0.72); color: #fff; font-size: 16px; font-weight: 700; white-space: nowrap; }
+.tourd__som { position: absolute; right: 12px; top: calc(var(--cabecalho, 68px) + 56px); pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px; border: 0; border-radius: 999px; background: var(--azul); color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px -12px rgba(31, 75, 216, 0.9); }
+.tourd__som[aria-pressed="true"] { background: #1fa855; }
+
+@media (max-width: 600px) { .tourd__leg { left: 12px; right: 84px; width: auto; transform: none; } .tourd__cartao { left: 12px; right: 12px; width: auto; } }
